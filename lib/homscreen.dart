@@ -26,18 +26,13 @@ class _HomescreenState extends State<Homescreen> {
         ),
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: Center(
-          child: Text(
-            "Profile",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        title: const Text(
+          "Profile",
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        
-        backgroundColor: const Color.fromARGB(255, 11, 223, 18),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         child: Padding(
