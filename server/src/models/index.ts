@@ -5,6 +5,7 @@ export interface Patient {
   relation: string;
   gender: 'Male' | 'Female' | 'Other';
   address: string;
+  phone: string;
   age: number;
   place: string;
   village: string;
