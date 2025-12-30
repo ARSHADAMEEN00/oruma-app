@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:oruma_app/models/patient.dart';
+import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/models/equipment.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:oruma_app/services/equipment_service.dart';
@@ -16,27 +18,43 @@ class _EqSupplyState extends State<EqSupply> {
   
   // Form fields
   Equipment? _selectedEquipment;
-  final TextEditingController _patientNameController = TextEditingController();
-  final TextEditingController _patientPhoneController = TextEditingController();
-  final TextEditingController _patientAddressController = TextEditingController();
+  Patient? _selectedPatient;
   final TextEditingController _notesController = TextEditingController();
 
   // Data
   List<Equipment> _availableEquipment = [];
+  List<Patient> _patients = [];
   bool _loading = true;
   bool _submitting = false;
 
   @override
   void initState() {
     super.initState();
-    _fetchAvailableEquipment();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    setState(() => _loading = true);
+    await Future.wait([
+      _fetchAvailableEquipment(),
+      _fetchPatients(),
+    ]);
+    setState(() => _loading = false);
+  }
+
+  Future<void> _fetchPatients() async {
+    try {
+      final list = await PatientService.getAllPatients();
+      setState(() {
+        _patients = list;
+      });
+    } catch (e) {
+      debugPrint('Error fetching patients: $e');
+    }
   }
 
   @override
   void dispose() {
-    _patientNameController.dispose();
-    _patientPhoneController.dispose();
-    _patientAddressController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -46,7 +64,6 @@ class _EqSupplyState extends State<EqSupply> {
       final list = await EquipmentService.getAvailableEquipment();
       setState(() {
         _availableEquipment = list;
-        _loading = false;
       });
     } catch (e) {
       if (mounted) {
@@ -56,21 +73,20 @@ class _EqSupplyState extends State<EqSupply> {
             backgroundColor: Colors.red,
           ),
         );
-        setState(() => _loading = false);
+        setState(() => {});
       }
     }
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_selectedEquipment == null) {
+    if (_selectedEquipment == null || _selectedPatient == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Row(
+          content: Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Please select an equipment'),
+              const Icon(Icons.warning_amber_rounded, color: Colors.white),
+              const SizedBox(width: 8),
+              Text(_selectedEquipment == null ? 'Please select a equipment' : 'Please select a patient'),
             ],
           ),
           backgroundColor: Colors.orange,
@@ -88,9 +104,9 @@ class _EqSupplyState extends State<EqSupply> {
         equipmentId: _selectedEquipment!.id!,
         equipmentUniqueId: _selectedEquipment!.uniqueId,
         equipmentName: _selectedEquipment!.name,
-        patientName: _patientNameController.text.trim(),
-        patientPhone: _patientPhoneController.text.trim(),
-        patientAddress: _patientAddressController.text.trim(),
+        patientName: _selectedPatient!.name,
+        patientPhone: _selectedPatient!.phone,
+        patientAddress: _selectedPatient!.address,
         supplyDate: DateTime.now(),
         notes: _notesController.text.trim(),
       );
@@ -127,6 +143,106 @@ class _EqSupplyState extends State<EqSupply> {
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  Future<void> _showAddPatientDialog() async {
+    final nameCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final addressCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool localLoading = false;
+
+    final result = await showDialog<Patient>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Add New Patient'),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildTextField(
+                    controller: nameCtrl,
+                    label: 'Patient Name',
+                    hint: 'Full name',
+                    icon: Icons.person_outline,
+                    validator: (v) => v!.isEmpty ? 'Name is required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: phoneCtrl,
+                    label: 'Phone Number',
+                    hint: 'Contact number',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    validator: (v) => v!.isEmpty ? 'Phone is required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: addressCtrl,
+                    label: 'Address',
+                    hint: 'Full address',
+                    icon: Icons.location_on_outlined,
+                    maxLines: 2,
+                    validator: (v) => v!.isEmpty ? 'Address is required' : null,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: localLoading
+                  ? null
+                  : () async {
+                      if (!formKey.currentState!.validate()) return;
+                      setDialogState(() => localLoading = true);
+                      try {
+                        final newPatient = Patient(
+                          name: nameCtrl.text.trim(),
+                          phone: phoneCtrl.text.trim(),
+                          address: addressCtrl.text.trim(),
+                          relation: '',
+                          gender: 'Male', // Default or ask
+                          age: 0,
+                          place: '',
+                          village: '',
+                          disease: '',
+                          plan: '',
+                        );
+                        final created = await PatientService.createPatient(newPatient);
+                        if (context.mounted) Navigator.pop(context, created);
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error: $e')),
+                          );
+                        }
+                      } finally {
+                        setDialogState(() => localLoading = false);
+                      }
+                    },
+              child: localLoading
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Add Patient'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result != null) {
+      await _fetchPatients();
+      setState(() {
+        _selectedPatient = _patients.firstWhere((p) => p.id == result.id);
+      });
     }
   }
 
@@ -389,36 +505,83 @@ class _EqSupplyState extends State<EqSupply> {
                           ),
                           const SizedBox(height: 20),
 
-                          // Patient Details Card
                           _buildSectionCard(
                             title: 'Patient Information',
                             icon: Icons.person_rounded,
                             iconColor: Colors.blue,
                             children: [
-                              _buildTextField(
-                                controller: _patientNameController,
-                                label: 'Patient Name',
-                                hint: 'Full name of the patient',
-                                icon: Icons.person_outline,
-                                validator: (v) => v!.isEmpty ? 'Name is required' : null,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[50],
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: Colors.grey.shade300),
+                                      ),
+                                      child: DropdownButtonFormField<Patient>(
+                                        decoration: InputDecoration(
+                                          hintText: 'Select Patient',
+                                          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                                          prefixIcon: Icon(Icons.person_search, color: Colors.grey[500]),
+                                          border: InputBorder.none,
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        ),
+                                        value: _selectedPatient,
+                                        isExpanded: true,
+                                        dropdownColor: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        items: [
+                                          ..._patients.map((p) {
+                                            return DropdownMenuItem(
+                                              value: p,
+                                              child: Text(
+                                                '${p.name} (${p.village})',
+                                                style: const TextStyle(fontSize: 14),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            );
+                                          }),
+                                          const DropdownMenuItem<Patient>(
+                                            value: null,
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.person_add_alt_1_rounded, size: 18, color: Colors.blue),
+                                                  SizedBox(width: 8),
+                                                  Text('Add New Patient', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                                                ],
+                                              ),
+                                          ),
+                                        ],
+                                        onChanged: (val) {
+                                          if (val == null) {
+                                            _showAddPatientDialog();
+                                          } else {
+                                            setState(() => _selectedPatient = val);
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  GestureDetector(
+                                    onTap: _showAddPatientDialog,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.shade50,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: Colors.blue.shade200),
+                                      ),
+                                      child: Icon(Icons.person_add_alt_1_rounded, color: Colors.blue.shade700),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 16),
-                              _buildTextField(
-                                controller: _patientPhoneController,
-                                label: 'Phone Number',
-                                hint: 'Contact number',
-                                icon: Icons.phone_outlined,
-                                keyboardType: TextInputType.phone,
-                                validator: (v) => v!.isEmpty ? 'Phone is required' : null,
-                              ),
-                              const SizedBox(height: 16),
-                              _buildTextField(
-                                controller: _patientAddressController,
-                                label: 'Address',
-                                hint: 'Patient\'s address',
-                                icon: Icons.location_on_outlined,
-                                maxLines: 2,
-                              ),
+                              if (_selectedPatient != null) ...[
+                                const SizedBox(height: 16),
+                                _buildPatientPreview(_selectedPatient!),
+                              ],
                             ],
                           ),
                           const SizedBox(height: 20),
@@ -508,6 +671,70 @@ class _EqSupplyState extends State<EqSupply> {
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildPatientPreview(Patient patient) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue.shade100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: Colors.blue.shade100,
+                child: Text(
+                  patient.name[0].toUpperCase(),
+                  style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      patient.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                    Text(
+                      patient.phone,
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
+            ],
+          ),
+          if (patient.address.isNotEmpty) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Divider(height: 1),
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    patient.address,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 

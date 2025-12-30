@@ -112,8 +112,9 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
                 children: [
                   _buildHeader(),
                   const SizedBox(height: 24),
-                  _buildInfoSection("Personal Information", [
+                   _buildInfoSection("Personal Information", [
                     _buildInfoTile(Icons.person, "Full Name", _currentPatient.name),
+                    _buildInfoTile(Icons.phone, "Phone", _currentPatient.phone),
                     _buildInfoTile(Icons.info_outline, "Relation", _currentPatient.relation),
                     _buildInfoTile(Icons.wc, "Gender", _currentPatient.gender),
                     _buildInfoTile(Icons.cake, "Age", "${_currentPatient.age} years"),

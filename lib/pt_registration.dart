@@ -26,6 +26,7 @@ class _patientrigisterState extends State<patientrigister> {
   final TextEditingController addressController = TextEditingController();
   final TextEditingController ageController = TextEditingController();
   final TextEditingController placeController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
 
   // Dropdown options
   final List<String> villages = ["Kodur", "Ponmala", "Kuruva", "Malappuram"];
@@ -41,6 +42,7 @@ class _patientrigisterState extends State<patientrigister> {
       addressController.text = widget.patient!.address;
       ageController.text = widget.patient!.age.toString();
       placeController.text = widget.patient!.place;
+      phoneController.text = widget.patient!.phone;
       _gender = widget.patient!.gender;
       _selectedVillage = widget.patient!.village;
       _selectedDisease = widget.patient!.disease;
@@ -55,6 +57,7 @@ class _patientrigisterState extends State<patientrigister> {
     addressController.dispose();
     ageController.dispose();
     placeController.dispose();
+    phoneController.dispose();
     super.dispose();
   }
 
@@ -84,6 +87,16 @@ class _patientrigisterState extends State<patientrigister> {
                   labelText: "Relation of patient with Name",
                 ),
                 validator: (val) => val == null || val.isEmpty ? "Enter relation" : null,
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: phoneController,
+                decoration: const InputDecoration(
+                  labelText: "Phone Number",
+                  prefixIcon: Icon(Icons.phone),
+                ),
+                keyboardType: TextInputType.phone,
+                validator: (val) => val == null || val.isEmpty ? "Enter phone" : null,
               ),
               const SizedBox(height: 20),
               const Text(
@@ -243,6 +256,7 @@ class _patientrigisterState extends State<patientrigister> {
                               relation: relationController.text,
                               gender: _gender!,
                               address: addressController.text,
+                              phone: phoneController.text,
                               age: int.parse(ageController.text),
                               place: placeController.text,
                               village: _selectedVillage!,
