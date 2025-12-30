@@ -13,15 +13,20 @@ class ApiConfig {
   /// - Android Emulator: 10.0.2.2:3000
   /// - iOS Simulator: localhost:3000
   static String get baseUrl {
-    if (kIsWeb) {
+    if (kDebugMode) {
+      if (kIsWeb) {
+        return 'http://localhost:3000/api';
+      }
+      // For Android emulator use 10.0.2.2, for iOS/Desktop use localhost
       return 'http://localhost:3000/api';
     }
-    // For mobile/desktop, adjust as needed
-    return 'http://localhost:3000/api';
+    return 'https://oruma-app.onrender.com/api';
   }
 
   /// Health check endpoint
-  static String get healthUrl => 'http://localhost:3000/health';
+  static String get healthUrl => kDebugMode 
+    ? 'http://localhost:3000/health'
+    : 'https://oruma-app.onrender.com/health';
 
   /// API Endpoints
   static String get patientsEndpoint => '$baseUrl/patients';
