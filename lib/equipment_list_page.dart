@@ -201,10 +201,10 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
             trailing: PopupMenuButton<String>(
               onSelected: (value) async {
                 if (value == 'edit') {
-                   Navigator.push(
+                    Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => EquipmentEditPage(equipment: eq),
+                      builder: (context) => EquipmentFormPage(equipment: eq),
                     ),
                   ).then((result) {
                     if (result == true) _fetchAvailableEquipment();
@@ -232,12 +232,7 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
                 const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
               ],
             ),
-            onTap: () {
-               Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => EquipmentDetailPage(equipment: eq)),
-                ).then((_) => _fetchAvailableEquipment());
-            }
+            onTap: () => _showEquipmentDetails(eq),
           ),
         );
       },
@@ -305,9 +300,306 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
                 ),
               ],
             ),
+            onTap: () => _showSupplyDetails(supply),
           ),
         );
       },
+    );
+  }
+
+  void _showSupplyDetails(EquipmentSupply supply) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Colors.orange.shade50,
+                  child: Icon(
+                    Icons.medical_services,
+                    color: Colors.orange.shade400,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        supply.equipmentName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      Text(
+                        supply.equipmentUniqueId,
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+                _buildStatusBadge(supply.status),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Divider(),
+            const SizedBox(height: 16),
+            _buildDetailRow(Icons.person_outline, 'Patient', supply.patientName),
+            _buildDetailRow(Icons.phone_outlined, 'Phone', supply.patientPhone),
+            _buildDetailRow(Icons.calendar_today_outlined, 'Supply Date', _formatDate(supply.supplyDate)),
+            if (supply.patientAddress != null && supply.patientAddress!.isNotEmpty)
+              _buildDetailRow(Icons.location_on_outlined, 'Address', supply.patientAddress!),
+            if (supply.notes != null && supply.notes!.isNotEmpty)
+              _buildDetailRow(Icons.note_outlined, 'Notes', supply.notes!),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _returnSupply(supply);
+                },
+                icon: const Icon(Icons.assignment_return_outlined),
+                label: const Text('Mark as Returned'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: Colors.orange.shade50,
+                  foregroundColor: Colors.orange.shade700,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEquipmentDetails(Equipment eq) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.indigo.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(Icons.medical_services, color: Colors.indigo.shade400, size: 28),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        eq.name,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        eq.uniqueId,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _buildStatusBadge(eq.status),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Divider(),
+            const SizedBox(height: 16),
+            _buildDetailRow(Icons.place_outlined, 'Location', eq.place),
+            _buildDetailRow(Icons.store_outlined, 'Purchased From', eq.purchasedFrom ?? 'N/A'),
+            _buildDetailRow(Icons.phone_outlined, 'Contact', eq.phone ?? 'N/A'),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EquipmentFormPage(equipment: eq),
+                        ),
+                      ).then((result) {
+                        if (result == true) _fetchAvailableEquipment();
+                      });
+                    },
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('Edit Details'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: BorderSide(color: Colors.indigo.shade200),
+                      foregroundColor: Colors.indigo,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Delete Equipment?'),
+                          content: Text('Are you sure you want to delete ${eq.uniqueId}? This action cannot be undone.'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true), 
+                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        if (mounted) Navigator.pop(context);
+                        await EquipmentService.deleteEquipment(eq.id!);
+                        _fetchAvailableEquipment();
+                      }
+                    },
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('Delete'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      backgroundColor: Colors.red.shade50,
+                      foregroundColor: Colors.red.shade700,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    Color color = Colors.green;
+    final s = status.toLowerCase();
+    if (s == 'distributed' || s == 'active') color = Colors.orange;
+    if (s == 'maintenance' || s == 'lost') color = Colors.red;
+    if (s == 'returned') color = Colors.green;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 20, color: Colors.grey[600]),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.grey[500],
+                  fontSize: 12,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -355,48 +647,12 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
 // EQUIPMENT DETAIL PAGE, FORM PAGE, EDIT PAGE
 // ============================================
 
-// Detail Page
-class EquipmentDetailPage extends StatefulWidget {
-  final Equipment equipment;
-  const EquipmentDetailPage({super.key, required this.equipment});
-
-  @override
-  State<EquipmentDetailPage> createState() => _EquipmentDetailPageState();
-}
-
-class _EquipmentDetailPageState extends State<EquipmentDetailPage> {
-  Equipment? _equipment;
-  @override
-  void initState() {
-    super.initState();
-    _equipment = widget.equipment;
-  }
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(_equipment?.name ?? 'Details')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Unique ID: ${_equipment?.uniqueId}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            Text('Name: ${_equipment?.name}'),
-            Text('Status: ${_equipment?.status}'),
-            Text('Place: ${_equipment?.place}'),
-            Text('Purchased From: ${_equipment?.purchasedFrom}'),
-            Text('Phone: ${_equipment?.phone}'),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// (EquipmentDetailPage removed and replaced by _showEquipmentDetails bottom sheet)
 
 // Form Page (Create Bulk) - Same as previous logic
 class EquipmentFormPage extends StatefulWidget {
-  const EquipmentFormPage({super.key});
+  final Equipment? equipment;
+  const EquipmentFormPage({super.key, this.equipment});
 
   @override
   State<EquipmentFormPage> createState() => _EquipmentFormPageState();
@@ -404,27 +660,53 @@ class EquipmentFormPage extends StatefulWidget {
 
 class _EquipmentFormPageState extends State<EquipmentFormPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _quantityController = TextEditingController(text: '1');
-  final _purchasedFromController = TextEditingController();
-  final _placeController = TextEditingController();
-  final _phoneController = TextEditingController();
+  late TextEditingController _nameController;
+  late TextEditingController _quantityController;
+  late TextEditingController _purchasedFromController;
+  late TextEditingController _placeController;
+  late TextEditingController _phoneController;
   bool _isSubmitting = false;
+
+  bool get _isEditing => widget.equipment != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.equipment?.name ?? '');
+    _quantityController = TextEditingController(text: _isEditing ? '1' : '1');
+    _purchasedFromController = TextEditingController(text: widget.equipment?.purchasedFrom ?? '');
+    _placeController = TextEditingController(text: widget.equipment?.place ?? '');
+    _phoneController = TextEditingController(text: widget.equipment?.phone ?? '');
+  }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSubmitting = true);
     try {
-      final response = await EquipmentService.createEquipment(
-        name: _nameController.text.trim(),
-        quantity: int.parse(_quantityController.text.trim()),
-        purchasedFrom: _purchasedFromController.text.trim(),
-        place: _placeController.text.trim(),
-        phone: _phoneController.text.trim(),
-      );
-      if (mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Created ${response.count} items")));
-         Navigator.pop(context, true);
+      if (_isEditing) {
+        await EquipmentService.updateEquipment(
+          widget.equipment!.id!,
+          name: _nameController.text.trim(),
+          purchasedFrom: _purchasedFromController.text.trim(),
+          place: _placeController.text.trim(),
+          phone: _phoneController.text.trim(),
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Equipment updated successfully")));
+          Navigator.pop(context, true);
+        }
+      } else {
+        final response = await EquipmentService.createEquipment(
+          name: _nameController.text.trim(),
+          quantity: int.parse(_quantityController.text.trim()),
+          purchasedFrom: _purchasedFromController.text.trim(),
+          place: _placeController.text.trim(),
+          phone: _phoneController.text.trim(),
+        );
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Created ${response.count} items")));
+           Navigator.pop(context, true);
+        }
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -451,9 +733,9 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'Add Equipment',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          _isEditing ? 'Edit Equipment' : 'Add Equipment',
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -476,50 +758,50 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
               ),
               child: Column(
                 children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.indigo.shade400,
-                          Colors.indigo.shade600,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.indigo.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            _isEditing ? Colors.orange.shade400 : Colors.indigo.shade400,
+                            _isEditing ? Colors.orange.shade600 : Colors.indigo.shade600,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      ],
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (_isEditing ? Colors.orange : Colors.indigo).withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        _isEditing ? Icons.edit_note_rounded : Icons.medical_services_rounded,
+                        color: Colors.white,
+                        size: 36,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.medical_services_rounded,
-                      color: Colors.white,
-                      size: 36,
+                    const SizedBox(height: 16),
+                    Text(
+                      _isEditing ? 'Update Detail' : 'New Equipment',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'New Equipment',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
+                    const SizedBox(height: 4),
+                    Text(
+                      _isEditing ? 'Modify the information for this item' : 'Fill in the details to add new equipment',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[500],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Fill in the details to add new equipment',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[500],
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -544,20 +826,22 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
                           icon: Icons.medical_services_outlined,
                           validator: (v) => v!.isEmpty ? 'Name is required' : null,
                         ),
-                        const SizedBox(height: 16),
-                        _buildTextField(
-                          controller: _quantityController,
-                          label: 'Quantity',
-                          hint: 'Number of items',
-                          icon: Icons.numbers_rounded,
-                          keyboardType: TextInputType.number,
-                          validator: (v) {
-                            if (v!.isEmpty) return 'Quantity is required';
-                            final num = int.tryParse(v);
-                            if (num == null || num < 1) return 'Enter a valid number';
-                            return null;
-                          },
-                        ),
+                        if (!_isEditing) ...[
+                          const SizedBox(height: 16),
+                          _buildTextField(
+                            controller: _quantityController,
+                            label: 'Quantity',
+                            hint: 'Number of items',
+                            icon: Icons.numbers_rounded,
+                            keyboardType: TextInputType.number,
+                            validator: (v) {
+                              if (v!.isEmpty) return 'Quantity is required';
+                              final num = int.tryParse(v);
+                              if (num == null || num < 1) return 'Enter a valid number';
+                              return null;
+                            },
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -616,29 +900,29 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: _isSubmitting
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(_isEditing ? Icons.save_rounded : Icons.add_circle_outline, size: 22),
+                              const SizedBox(width: 10),
+                              Text(
+                                _isEditing ? 'Save Changes' : 'Create Equipment',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                              )
-                            : const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.add_circle_outline, size: 22),
-                                  SizedBox(width: 10),
-                                  Text(
-                                    'Create Equipment',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
                               ),
+                            ],
+                          ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -770,43 +1054,4 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
   }
 }
 
-// Edit Page (Single Item)
-class EquipmentEditPage extends StatefulWidget {
-  final Equipment equipment;
-  const EquipmentEditPage({super.key, required this.equipment});
-
-  @override
-  State<EquipmentEditPage> createState() => _EquipmentEditPageState();
-}
-
-class _EquipmentEditPageState extends State<EquipmentEditPage> {
-  // Simplified edit page logic
-  final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
-  late TextEditingController _placeController;
-  
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController(text: widget.equipment.name);
-    _placeController = TextEditingController(text: widget.equipment.place);
-  }
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-     await EquipmentService.updateEquipment(widget.equipment.id!, name: _nameController.text, place: _placeController.text);
-     if (mounted) Navigator.pop(context, true);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Edit')),
-      body: Padding(padding: const EdgeInsets.all(16), child: Form(key: _formKey, child: Column(children: [
-        TextFormField(controller: _nameController, decoration: const InputDecoration(labelText: 'Name')),
-        TextFormField(controller: _placeController, decoration: const InputDecoration(labelText: 'Place')),
-        ElevatedButton(onPressed: _submit, child: const Text('Save')),
-      ]))),
-    );
-  }
-}
+// (EquipmentEditPage removed and merged into EquipmentFormPage)
