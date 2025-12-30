@@ -4,6 +4,7 @@ import 'package:oruma_app/equipment_list_page.dart';
 import 'package:oruma_app/equipment_supply_list_page.dart';
 import 'package:oruma_app/homevisit.dart';
 import 'package:oruma_app/pt_registration.dart' show patientrigister;
+import 'package:oruma_app/patient_list_page.dart';
 
 
 class Homescreen extends StatefulWidget {
@@ -111,10 +112,10 @@ class _HomescreenState extends State<Homescreen> {
                 children: [
                   _buildActionCard(
                     context,
-                    title: "Patient Registration",
-                    icon: Icons.person_add_alt_1,
+                    title: "Patients",
+                    icon: Icons.people_rounded,
                     color: const Color(0xFF6366F1),
-                    page: const patientrigister(),
+                    page: const PatientListPage(),
                   ),
                   _buildActionCard(
                     context,
@@ -251,7 +252,7 @@ class _HomescreenState extends State<Homescreen> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const patientrigister()),
+                      MaterialPageRoute(builder: (context) => const PatientListPage()),
                     );
                   },
                 ),

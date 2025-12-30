@@ -3,7 +3,8 @@ import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/patient_service.dart';
 
 class patientrigister extends StatefulWidget {
-  const patientrigister({super.key});
+  final Patient? patient;
+  const patientrigister({super.key, this.patient});
 
   @override
   State<patientrigister> createState() => _patientrigisterState();
@@ -32,6 +33,22 @@ class _patientrigisterState extends State<patientrigister> {
   final List<String> plans = ["1/4", "1/8", "1/2", "1/1"];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.patient != null) {
+      nameController.text = widget.patient!.name;
+      relationController.text = widget.patient!.relation;
+      addressController.text = widget.patient!.address;
+      ageController.text = widget.patient!.age.toString();
+      placeController.text = widget.patient!.place;
+      _gender = widget.patient!.gender;
+      _selectedVillage = widget.patient!.village;
+      _selectedDisease = widget.patient!.disease;
+      _selectedPlan = widget.patient!.plan;
+    }
+  }
+
+  @override
   void dispose() {
     nameController.dispose();
     relationController.dispose();
@@ -43,8 +60,9 @@ class _patientrigisterState extends State<patientrigister> {
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.patient != null;
     return Scaffold(
-      appBar: AppBar(title: const Text("Patient Registration")),
+      appBar: AppBar(title: Text(isEditing ? "Edit Patient" : "Patient Registration")),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -219,7 +237,8 @@ class _patientrigisterState extends State<patientrigister> {
                           setState(() => _isLoading = true);
                           
                           try {
-                            final patient = Patient(
+                            final patientData = Patient(
+                              id: widget.patient?.id,
                               name: nameController.text,
                               relation: relationController.text,
                               gender: _gender!,
@@ -231,16 +250,28 @@ class _patientrigisterState extends State<patientrigister> {
                               plan: _selectedPlan!,
                             );
 
-                            await PatientService.createPatient(patient);
-
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("✅ Patient Registered Successfully"),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                              Navigator.pop(context, true); // Return true to indicate success
+                            if (isEditing) {
+                              final updated = await PatientService.updatePatient(widget.patient!.id!, patientData);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("✅ Patient Updated Successfully"),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                                Navigator.pop(context, updated); 
+                              }
+                            } else {
+                              await PatientService.createPatient(patientData);
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("✅ Patient Registered Successfully"),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                                Navigator.pop(context, true); 
+                              }
                             }
                           } catch (e) {
                             if (mounted) {
@@ -264,7 +295,7 @@ class _patientrigisterState extends State<patientrigister> {
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text("Register"),
+                    : Text(isEditing ? "Update" : "Register"),
               ),
             ],
           ),
@@ -273,3 +304,4 @@ class _patientrigisterState extends State<patientrigister> {
     );
   }
 }
+
