@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:oruma_app/models/equipment.dart';
+import 'package:oruma_app/services/equipment_service.dart';
 
 class EquipmentRegistration extends StatefulWidget {
   const EquipmentRegistration({Key? key}) : super(key: key);
@@ -9,6 +11,9 @@ class EquipmentRegistration extends StatefulWidget {
 
 class _EquipmentRegistrationState extends State<EquipmentRegistration> {
   final _formKey = GlobalKey<FormState>();
+
+  bool _isSubmitting = false;
+  String? _errorMessage;
 
   // Controllers
   final TextEditingController purchasedFromController = TextEditingController();
@@ -55,40 +60,64 @@ class _EquipmentRegistrationState extends State<EquipmentRegistration> {
     super.dispose();
   }
 
-  void submitEquipment() {
-    if (_formKey.currentState!.validate()) {
-      final qty = int.parse(quantityController.text);
+  Future<void> submitEquipment() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      for (int i = 0; i < qty; i++) {
-        final equipment = Equipment(
-          serialNo: generateSerial(itemNameController.text),
-          name: itemNameController.text,
-          quantity: 1, // each entry = 1 item
-          purchasedFrom: purchasedFromController.text,
-          place: placeController.text,
-          phone: phoneController.text,
-        );
+    final qty = int.tryParse(quantityController.text.trim()) ?? 0;
+    if (qty <= 0) {
+      setState(() => _errorMessage = 'Quantity must be greater than 0');
+      return;
+    }
 
-        setState(() {
-          equipmentList.add(equipment);
-          counter++; // increase per item
-        });
-      }
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Added $qty ${itemNameController.text}(s)')),
+    try {
+      final equipment = Equipment(
+        serialNo: generateSerial(itemNameController.text.trim()),
+        name: itemNameController.text.trim(),
+        quantity: qty,
+        purchasedFrom: purchasedFromController.text.trim(),
+        place: placeController.text.trim(),
+        phone: phoneController.text.trim(),
       );
 
-      // clear fields after submission
-      itemNameController.clear();
-      quantityController.clear();
-      purchasedFromController.clear();
-      placeController.clear();
-      phoneController.clear();
+      final savedEquipment = await EquipmentService.createEquipment(equipment);
+
       setState(() {
-        selectedValue = null;
+        equipmentList.insert(0, savedEquipment);
+        counter++;
       });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Equipment saved: ${equipment.name}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+      _clearForm();
+    } catch (e) {
+      setState(() => _errorMessage = e.toString());
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
+  }
+
+  void _clearForm() {
+    itemNameController.clear();
+    quantityController.clear();
+    purchasedFromController.clear();
+    placeController.clear();
+    phoneController.clear();
+    setState(() {
+      selectedValue = null;
+    });
   }
 
   @override
@@ -101,6 +130,29 @@ class _EquipmentRegistrationState extends State<EquipmentRegistration> {
           key: _formKey,
           child: Column(
             children: [
+              if (_errorMessage != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red.shade700),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: TextStyle(color: Colors.red.shade700),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
               // Item Name
               TextFormField(
                 controller: itemNameController,
@@ -187,6 +239,9 @@ class _EquipmentRegistrationState extends State<EquipmentRegistration> {
                 onChanged: (String? newValue) {
                   setState(() {
                     selectedValue = newValue;
+                    if (newValue != null) {
+                      itemNameController.text = newValue;
+                    }
                   });
                 },
                 validator: (val) =>
@@ -196,50 +251,62 @@ class _EquipmentRegistrationState extends State<EquipmentRegistration> {
               const SizedBox(height: 20),
 
               ElevatedButton(
-                onPressed: submitEquipment,
-                child: const Text('Submit'),
+                onPressed: _isSubmitting ? null : submitEquipment,
+                child: _isSubmitting
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Submit'),
               ),
 
               const SizedBox(height: 20),
 
               // Show list of added equipment
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: equipmentList.length,
-                itemBuilder: (context, index) {
-                  final eq = equipmentList[index];
-                  return ListTile(
-                    title: Text('${eq.serialNo} - ${eq.name}'),
-                    subtitle: Text(
-                      'Qty: ${eq.quantity}, From: ${eq.purchasedFrom}, Place: ${eq.place}, Phone: ${eq.phone}',
-                    ),
-                  );
-                },
-              ),
+              if (equipmentList.isNotEmpty) ...[
+                const Divider(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    'Recently Added Equipment',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: equipmentList.length,
+                  itemBuilder: (context, index) {
+                    final eq = equipmentList[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          child: Text(
+                            eq.serialNo.substring(0, 2),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        title: Text('${eq.serialNo} - ${eq.name}'),
+                        subtitle: Text(
+                          'Qty: ${eq.quantity} | From: ${eq.purchasedFrom}\n'
+                          'Place: ${eq.place} | Phone: ${eq.phone}',
+                        ),
+                        isThreeLine: true,
+                      ),
+                    );
+                  },
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
   }
-}
-
-// Equipment model
-class Equipment {
-  final String serialNo;
-  final String name;
-  final int quantity;
-  final String purchasedFrom;
-  final String place;
-  final String phone;
-
-  Equipment({
-    required this.serialNo,
-    required this.name,
-    required this.quantity,
-    required this.purchasedFrom,
-    required this.place,
-    required this.phone,
-  });
 }

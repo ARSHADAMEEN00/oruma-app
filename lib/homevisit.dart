@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:oruma_app/models/home_visit.dart';
+import 'package:oruma_app/services/home_visit_service.dart';
 
 class Homevisit extends StatefulWidget {
   const Homevisit({super.key});
@@ -13,6 +15,7 @@ class _HomevisitState extends State<Homevisit> {
   final TextEditingController addressController = TextEditingController();
   final TextEditingController notesController = TextEditingController();
   DateTime? visitDate;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -32,6 +35,62 @@ class _HomevisitState extends State<Homevisit> {
     );
     if (picked != null) {
       setState(() => visitDate = picked);
+    }
+  }
+
+  Future<void> _scheduleVisit() async {
+    final valid = _formKey.currentState!.validate();
+    final hasDate = visitDate != null;
+    setState(() {}); // refresh UI if needed
+    
+    if (!hasDate) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Select a visit date'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    
+    if (valid && hasDate) {
+      setState(() => _isLoading = true);
+      
+      try {
+        final homeVisit = HomeVisit(
+          patientName: patientController.text,
+          address: addressController.text,
+          visitDate: visitDate!.toIso8601String(),
+          notes: notesController.text.isNotEmpty ? notesController.text : null,
+        );
+
+        await HomeVisitService.createHomeVisit(homeVisit);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '✅ Visit scheduled for ${visitDate!.day}/${visitDate!.month}/${visitDate!.year}',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context, true);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ Failed: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
     }
   }
 
@@ -90,26 +149,14 @@ class _HomevisitState extends State<Homevisit> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () {
-                  final valid = _formKey.currentState!.validate();
-                  final hasDate = visitDate != null;
-                  setState(() {}); // refresh UI if needed
-                  if (valid && hasDate) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Visit scheduled for ${visitDate!.day}/${visitDate!.month}/${visitDate!.year}',
-                        ),
-                      ),
-                    );
-                    Navigator.pop(context);
-                  } else if (!hasDate) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Select a visit date')),
-                    );
-                  }
-                },
-                child: const Text('Schedule'),
+                onPressed: _isLoading ? null : _scheduleVisit,
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Schedule'),
               ),
             ],
           ),

@@ -1,0 +1,103 @@
+/// Patient model that matches the backend schema.
+class Patient {
+  final String? id;
+  final String name;
+  final String relation;
+  final String gender;
+  final String address;
+  final int age;
+  final String place;
+  final String village;
+  final String disease;
+  final String plan;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  const Patient({
+    this.id,
+    required this.name,
+    required this.relation,
+    required this.gender,
+    required this.address,
+    required this.age,
+    required this.place,
+    required this.village,
+    required this.disease,
+    required this.plan,
+    this.createdAt,
+    this.updatedAt,
+  });
+
+  /// Create Patient from JSON (API response).
+  factory Patient.fromJson(Map<String, dynamic> json) {
+    return Patient(
+      id: json['_id']?.toString() ?? json['id']?.toString(),
+      name: json['name']?.toString() ?? '',
+      relation: json['relation']?.toString() ?? '',
+      gender: json['gender']?.toString() ?? '',
+      address: json['address']?.toString() ?? '',
+      age: (json['age'] is int)
+          ? json['age'] as int
+          : int.tryParse(json['age']?.toString() ?? '0') ?? 0,
+      place: json['place']?.toString() ?? '',
+      village: json['village']?.toString() ?? '',
+      disease: json['disease']?.toString() ?? '',
+      plan: json['plan']?.toString() ?? '',
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString())
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.tryParse(json['updatedAt'].toString())
+          : null,
+    );
+  }
+
+  /// Convert Patient to JSON for API requests.
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'relation': relation,
+      'gender': gender,
+      'address': address,
+      'age': age,
+      'place': place,
+      'village': village,
+      'disease': disease,
+      'plan': plan,
+    };
+  }
+
+  /// Create a copy with updated fields.
+  Patient copyWith({
+    String? id,
+    String? name,
+    String? relation,
+    String? gender,
+    String? address,
+    int? age,
+    String? place,
+    String? village,
+    String? disease,
+    String? plan,
+  }) {
+    return Patient(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      relation: relation ?? this.relation,
+      gender: gender ?? this.gender,
+      address: address ?? this.address,
+      age: age ?? this.age,
+      place: place ?? this.place,
+      village: village ?? this.village,
+      disease: disease ?? this.disease,
+      plan: plan ?? this.plan,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'Patient(id: $id, name: $name, village: $village, disease: $disease)';
+  }
+}

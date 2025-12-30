@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/patient_service.dart';
 
 class patientrigister extends StatefulWidget {
@@ -10,6 +11,7 @@ class patientrigister extends StatefulWidget {
 
 class _patientrigisterState extends State<patientrigister> {
   final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
 
   // Dropdown values
   String? _selectedVillage;
@@ -207,42 +209,62 @@ class _patientrigisterState extends State<patientrigister> {
 
               // Submit Button
               ElevatedButton(
-                onPressed: () async {
-                  final isValid = _formKey.currentState!.validate();
-                  final genderSelected = _gender != null;
-                  setState(() {}); // refresh gender helper text if needed
-                  if (isValid && genderSelected) {
-                    final patient = Patient(
-                      name: nameController.text,
-                      relation: relationController.text,
-                      gender: _gender!,
-                      address: addressController.text,
-                      age: int.parse(ageController.text),
-                      place: placeController.text,
-                      village: _selectedVillage!,
-                      disease: _selectedDisease!,
-                      plan: _selectedPlan!,
-                    );
+                onPressed: _isLoading
+                    ? null
+                    : () async {
+                        final isValid = _formKey.currentState!.validate();
+                        final genderSelected = _gender != null;
+                        setState(() {}); // refresh gender helper text if needed
+                        if (isValid && genderSelected) {
+                          setState(() => _isLoading = true);
+                          
+                          try {
+                            final patient = Patient(
+                              name: nameController.text,
+                              relation: relationController.text,
+                              gender: _gender!,
+                              address: addressController.text,
+                              age: int.parse(ageController.text),
+                              place: placeController.text,
+                              village: _selectedVillage!,
+                              disease: _selectedDisease!,
+                              plan: _selectedPlan!,
+                            );
 
-                    final success = await PatientService.createPatient(patient);
+                            await PatientService.createPatient(patient);
 
-                    if (success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("✅ Patient Registered Successfully"),
-                        ),
-                      );
-                      Navigator.pop(context);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("❌ Failed to register patient"),
-                        ),
-                      );
-                    }
-                  }
-                },
-                child: const Text("Register"),
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("✅ Patient Registered Successfully"),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                              Navigator.pop(context, true); // Return true to indicate success
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("❌ Failed: ${e.toString()}"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          } finally {
+                            if (mounted) {
+                              setState(() => _isLoading = false);
+                            }
+                          }
+                        }
+                      },
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text("Register"),
               ),
             ],
           ),

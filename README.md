@@ -1,16 +1,125 @@
-# oruma_app
+# Oruma App
 
-A new Flutter project.
+A Flutter application for managing patient care, home visits, and equipment supply tracking.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+This project is a Flutter application with a Node.js/Express backend.
 
-A few resources to get you started if this is your first Flutter project:
+### Prerequisites
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Flutter SDK (3.9.2 or later)
+- Node.js (18+)
+- MongoDB (local or Atlas)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Project Structure
+
+```
+oruma_app/
+├── lib/                      # Flutter app source
+│   ├── main.dart             # App entry point
+│   ├── models/               # Data models
+│   │   ├── patient.dart
+│   │   ├── home_visit.dart
+│   │   ├── equipment.dart
+│   │   ├── equipment_supply.dart
+│   │   └── medicine_supply.dart
+│   └── services/             # API services
+│       ├── api_config.dart   # API configuration
+│       ├── api_service.dart  # HTTP client wrapper
+│       ├── patient_service.dart
+│       ├── home_visit_service.dart
+│       ├── equipment_service.dart
+│       ├── equipment_supply_service.dart
+│       └── medicine_supply_service.dart
+└── server/                   # Backend API
+    └── src/
+        ├── server.ts         # Express server
+        ├── routes/           # API routes
+        ├── services/         # Business logic
+        └── models/           # MongoDB schemas
+```
+
+## Running the App
+
+### 1. Start the Backend
+
+```bash
+cd server
+npm install
+npm run dev
+```
+
+The API server will start at `http://localhost:3000`
+
+### 2. Start the Flutter App
+
+```bash
+# For web
+flutter run -d chrome
+
+# For macOS
+flutter run -d macos
+
+# For iOS Simulator
+flutter run -d ios
+
+# For Android Emulator
+flutter run -d android
+```
+
+## API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /health` | Health check |
+| `GET /api/patients` | List all patients |
+| `POST /api/patients` | Create a patient |
+| `GET /api/patients/:id` | Get patient by ID |
+| `PUT /api/patients/:id` | Update patient |
+| `DELETE /api/patients/:id` | Delete patient |
+| `GET /api/home-visits` | List all home visits |
+| `POST /api/home-visits` | Schedule a home visit |
+| `GET /api/equipment` | List all equipment |
+| `POST /api/equipment` | Register equipment |
+| `GET /api/equipment-supplies` | List equipment supplies |
+| `POST /api/equipment-supplies` | Create equipment supply |
+| `GET /api/medicine-supplies` | List medicine supplies |
+| `POST /api/medicine-supplies` | Create medicine supply |
+
+## Configuration
+
+### API Base URL
+
+The API base URL is configured in `lib/services/api_config.dart`:
+
+```dart
+/// For web/desktop development
+static String get baseUrl => 'http://localhost:3000/api';
+
+/// For Android Emulator, use:
+/// static String get baseUrl => 'http://10.0.2.2:3000/api';
+```
+
+### Environment Variables
+
+Create a `.env` file in the `server` directory:
+
+```env
+PORT=3000
+MONGO_URI=mongodb://localhost:27017/oruma
+```
+
+## Features
+
+- **Patient Registration**: Add and manage patient records
+- **Home Visits**: Schedule and track home visits
+- **Equipment Management**: Register and track medical equipment
+- **Equipment Supply**: Log equipment supplied to patients
+- **Medicine Supply**: Track medicine distribution
+
+## Resources
+
+- [Flutter Documentation](https://docs.flutter.dev/)
+- [Express.js Documentation](https://expressjs.com/)
+- [MongoDB Documentation](https://www.mongodb.com/docs/)
