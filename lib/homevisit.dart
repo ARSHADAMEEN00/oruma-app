@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:oruma_app/models/home_visit.dart';
+import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/home_visit_service.dart';
+import 'package:oruma_app/services/patient_service.dart';
+import 'package:intl/intl.dart';
 
 class Homevisit extends StatefulWidget {
-  const Homevisit({super.key});
+  final HomeVisit? visit;
+
+  const Homevisit({super.key, this.visit});
 
   @override
   State<Homevisit> createState() => _HomevisitState();
@@ -11,15 +16,61 @@ class Homevisit extends StatefulWidget {
 
 class _HomevisitState extends State<Homevisit> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController patientController = TextEditingController();
-  final TextEditingController addressController = TextEditingController();
-  final TextEditingController notesController = TextEditingController();
+  late TextEditingController addressController;
+  late TextEditingController notesController;
   DateTime? visitDate;
   bool _isLoading = false;
+  
+  // Patient selection fields
+  List<Patient> _patients = [];
+  Patient? _selectedPatient;
+  bool _isLoadingPatients = true;
+
+  bool get isEditing => widget.visit != null;
+
+  @override
+  void initState() {
+    super.initState();
+    addressController = TextEditingController(text: widget.visit?.address ?? '');
+    notesController = TextEditingController(text: widget.visit?.notes ?? '');
+    if (widget.visit?.visitDate != null) {
+      visitDate = DateTime.tryParse(widget.visit!.visitDate);
+    }
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    setState(() => _isLoadingPatients = true);
+    try {
+      final patients = await PatientService.getAllPatients();
+      setState(() {
+        _patients = patients;
+        _isLoadingPatients = false;
+        
+        // If editing, try to find the matching patient
+        if (isEditing) {
+          try {
+            _selectedPatient = _patients.firstWhere(
+              (p) => p.name == widget.visit!.patientName,
+            );
+          } catch (_) {
+            // If not found (maybe name changed or deleted), we'll handle it
+            _selectedPatient = null;
+          }
+        }
+      });
+    } catch (e) {
+      setState(() => _isLoadingPatients = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load patients: $e')),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
-    patientController.dispose();
     addressController.dispose();
     notesController.dispose();
     super.dispose();
@@ -32,131 +83,394 @@ class _HomevisitState extends State<Homevisit> {
       initialDate: visitDate ?? now,
       firstDate: DateTime(now.year - 1),
       lastDate: DateTime(now.year + 2),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Theme.of(context).colorScheme.primary,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() => visitDate = picked);
     }
   }
 
-  Future<void> _scheduleVisit() async {
-    final valid = _formKey.currentState!.validate();
-    final hasDate = visitDate != null;
-    setState(() {}); // refresh UI if needed
-    
-    if (!hasDate) {
+  Future<void> _saveVisit() async {
+    if (_selectedPatient == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Select a visit date'),
+          content: Text('Please select or create a patient'),
           backgroundColor: Colors.orange,
         ),
       );
       return;
     }
+
+    if (!_formKey.currentState!.validate()) return;
     
-    if (valid && hasDate) {
-      setState(() => _isLoading = true);
-      
-      try {
-        final homeVisit = HomeVisit(
-          patientName: patientController.text,
-          address: addressController.text,
-          visitDate: visitDate!.toIso8601String(),
-          notes: notesController.text.isNotEmpty ? notesController.text : null,
-        );
+    if (visitDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a visit date'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
 
+    setState(() => _isLoading = true);
+    
+    try {
+      final homeVisit = HomeVisit(
+        id: widget.visit?.id,
+        patientName: _selectedPatient!.name,
+        address: addressController.text.trim(),
+        visitDate: visitDate!.toIso8601String(),
+        notes: notesController.text.trim().isNotEmpty ? notesController.text.trim() : null,
+      );
+
+      if (isEditing) {
+        await HomeVisitService.updateHomeVisit(widget.visit!.id!, homeVisit);
+      } else {
         await HomeVisitService.createHomeVisit(homeVisit);
+      }
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '✅ Visit scheduled for ${visitDate!.day}/${visitDate!.month}/${visitDate!.year}',
-              ),
-              backgroundColor: Colors.green,
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isEditing ? '✅ Visit updated successfully' : '✅ Visit scheduled successfully',
             ),
-          );
-          Navigator.pop(context, true);
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('❌ Failed: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Home Visit')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: patientController,
-                decoration: const InputDecoration(
-                  labelText: 'Patient Name',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) => val == null || val.isEmpty ? 'Enter name' : null,
-              ),
-              const SizedBox(height: 15),
-              TextFormField(
-                controller: addressController,
-                maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: 'Address',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) => val == null || val.isEmpty ? 'Enter address' : null,
-              ),
-              const SizedBox(height: 15),
-              Row(
+  Future<void> _showAddPatientDialog() async {
+    final nameCtrl = TextEditingController();
+    final addressCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool localLoading = false;
+
+    final result = await showDialog<Patient>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Add New Patient', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _pickDate,
-                      icon: const Icon(Icons.calendar_today),
-                      label: Text(
-                        visitDate == null
-                            ? 'Pick visit date'
-                            : '${visitDate!.day}/${visitDate!.month}/${visitDate!.year}',
-                      ),
-                    ),
+                  _buildSimpleTextField(
+                    controller: nameCtrl,
+                    label: 'Name',
+                    icon: Icons.person_outline,
+                    validator: (v) => v!.isEmpty ? 'Name is required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildSimpleTextField(
+                    controller: phoneCtrl,
+                    label: 'Phone',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    validator: (v) => v!.isEmpty ? 'Phone is required' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildSimpleTextField(
+                    controller: addressCtrl,
+                    label: 'Address',
+                    icon: Icons.location_on_outlined,
+                    maxLines: 2,
+                    validator: (v) => v!.isEmpty ? 'Address is required' : null,
                   ),
                 ],
               ),
-              const SizedBox(height: 15),
-              TextFormField(
-                controller: notesController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Notes / Requests',
-                  border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: localLoading ? null : () async {
+                if (!formKey.currentState!.validate()) return;
+                setDialogState(() => localLoading = true);
+                try {
+                  final newPatient = Patient(
+                    name: nameCtrl.text.trim(),
+                    phone: phoneCtrl.text.trim(),
+                    address: addressCtrl.text.trim(),
+                    relation: '',
+                    gender: 'Male',
+                    age: 0,
+                    place: '',
+                    village: '',
+                    disease: '',
+                    plan: '',
+                  );
+                  final created = await PatientService.createPatient(newPatient);
+                  if (context.mounted) Navigator.pop(context, created);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e')),
+                    );
+                  }
+                } finally {
+                  setDialogState(() => localLoading = false);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: localLoading
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Save Patient'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result != null) {
+      await _loadInitialData();
+      setState(() {
+        _selectedPatient = _patients.firstWhere((p) => p.name == result.name);
+        // Auto-fill address if it was empty
+        if (addressController.text.isEmpty) {
+          addressController.text = _selectedPatient!.address;
+        }
+      });
+    }
+  }
+
+  Widget _buildSimpleTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      validator: validator,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 20),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    return Scaffold(
+      backgroundColor: Colors.grey.shade50,
+      appBar: AppBar(
+        title: Text(isEditing ? 'Edit Home Visit' : 'Schedule Home Visit'),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+      ),
+      body: _isLoadingPatients 
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSectionTitle('Patient Information'),
+              const SizedBox(height: 16),
+              
+              // Patient Dropdown
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<Patient>(
+                        value: _selectedPatient,
+                        decoration: InputDecoration(
+                          labelText: 'Select Patient',
+                          prefixIcon: const Icon(Icons.person_search, size: 22),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: primaryColor, width: 1.5),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        items: [
+                          ..._patients.map((p) => DropdownMenuItem(
+                            value: p,
+                            child: Text(p.name, style: const TextStyle(fontSize: 15)),
+                          )),
+                          const DropdownMenuItem<Patient>(
+                            value: null,
+                            child: Row(
+                              children: [
+                                Icon(Icons.person_add_alt_1_rounded, color: Colors.blue, size: 20),
+                                SizedBox(width: 8),
+                                Text('Add New Patient', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          ),
+                        ],
+                        onChanged: (val) {
+                          if (val == null) {
+                            _showAddPatientDialog();
+                          } else {
+                            setState(() {
+                              _selectedPatient = val;
+                              // Auto-fill address if not editing or if address is empty
+                              if (addressController.text.isEmpty) {
+                                addressController.text = val.address;
+                              }
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 20),
+              _buildTextField(
+                controller: addressController,
+                label: 'Address',
+                icon: Icons.location_on_outlined,
+                maxLines: 2,
+                validator: (val) => val == null || val.isEmpty ? 'Please enter address' : null,
+              ),
+              const SizedBox(height: 32),
+              _buildSectionTitle('Visit Details'),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: _pickDate,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today_outlined, color: primaryColor, size: 22),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          visitDate == null
+                              ? 'Select Visit Date'
+                              : DateFormat('EEEE, d MMMM yyyy').format(visitDate!),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: visitDate == null ? Colors.grey.shade600 : Colors.black87,
+                          ),
+                        ),
+                      ),
+                      Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _scheduleVisit,
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Schedule'),
+              _buildTextField(
+                controller: notesController,
+                label: 'Notes / Special Requests',
+                icon: Icons.notes_outlined,
+                maxLines: 3,
+                required: false,
+              ),
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _saveVisit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Text(
+                          isEditing ? 'UPDATE VISIT' : 'SCHEDULE VISIT',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                ),
               ),
             ],
           ),
@@ -164,4 +478,64 @@ class _HomevisitState extends State<Homevisit> {
       ),
     );
   }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).colorScheme.primary,
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+    bool required = true,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        validator: validator,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, size: 22),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+      ),
+    );
+  }
 }
+

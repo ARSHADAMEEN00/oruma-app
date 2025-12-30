@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:oruma_app/eq_supply.dart';
 import 'package:oruma_app/equipment_list_page.dart';
 import 'package:oruma_app/equipment_supply_list_page.dart';
-import 'package:oruma_app/homevisit.dart';
+import 'package:oruma_app/home_visit_list_page.dart';
 import 'package:oruma_app/pt_registration.dart' show patientrigister;
 import 'package:oruma_app/patient_list_page.dart';
 
@@ -122,7 +122,7 @@ class _HomescreenState extends State<Homescreen> {
                     title: "Home Visit",
                     icon: Icons.home_work_rounded,
                     color: const Color(0xFF10B981),
-                    page: const Homevisit(),
+                    page: const HomeVisitListPage(),
                   ),
                   _buildActionCard(
                     context,
@@ -264,7 +264,7 @@ class _HomescreenState extends State<Homescreen> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const Homevisit()),
+                      MaterialPageRoute(builder: (context) => const HomeVisitListPage()),
                     );
                   },
                 ),
