@@ -14,6 +14,7 @@ class EquipmentListPage extends StatefulWidget {
 
 class _EquipmentListPageState extends State<EquipmentListPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  int _currentIndex = 0;
   
   // Available list data
   List<Equipment> _availableItems = [];
@@ -41,13 +42,15 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
   }
 
   void _handleTabSelection() {
-    if (!_tabController.indexIsChanging) {
-      if (_tabController.index == 0) {
+    if (_tabController.index != _currentIndex) {
+      setState(() {
+        _currentIndex = _tabController.index;
+      });
+      if (_currentIndex == 0) {
         _fetchAvailableEquipment();
       } else {
         _fetchDistributedEquipment();
       }
-      if (mounted) setState(() {});
     }
   }
 
@@ -631,6 +634,7 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
             const SnackBar(content: Text('✅ Equipment returned')),
           );
           _fetchDistributedEquipment();
+          _fetchAvailableEquipment();
         }
       } catch (e) {
         if (mounted) {

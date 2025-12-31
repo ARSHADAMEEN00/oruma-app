@@ -5,6 +5,9 @@ import 'package:oruma_app/equipment_supply_list_page.dart';
 import 'package:oruma_app/home_visit_list_page.dart';
 import 'package:oruma_app/pt_registration.dart' show patientrigister;
 import 'package:oruma_app/patient_list_page.dart';
+import 'package:provider/provider.dart';
+import 'package:oruma_app/services/auth_service.dart';
+import 'package:oruma_app/loginscreen.dart';
 
 
 class Homescreen extends StatefulWidget {
@@ -319,25 +322,20 @@ class _HomescreenState extends State<Homescreen> {
                   },
                 ),
 
-                _buildDrawerSection("SETTINGS"),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.settings_rounded,
-                  title: "Settings",
-                  onTap: () => Navigator.pop(context),
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.info_rounded,
-                  title: "About Us",
-                  onTap: () => Navigator.pop(context),
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.photo_library_rounded,
-                  title: "Gallery",
-                  onTap: () => Navigator.pop(context),
-                ),
+                // _buildDrawerSection("SETTINGS"),
+
+                // _buildDrawerItem(
+                //   context,
+                //   icon: Icons.info_rounded,
+                //   title: "About Us",
+                //   onTap: () => Navigator.pop(context),
+                // ),
+                // _buildDrawerItem(
+                //   context,
+                //   icon: Icons.photo_library_rounded,
+                //   title: "Gallery",
+                //   onTap: () => Navigator.pop(context),
+                // ),
               ],
             ),
           ),
@@ -390,7 +388,11 @@ class _HomescreenState extends State<Homescreen> {
                 IconButton(
                   icon: Icon(Icons.logout_rounded, color: Colors.grey.shade600),
                   onPressed: () {
-                    // Handle logout
+                    context.read<AuthService>().logout();
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const Loginscreen()),
+                      (route) => false,
+                    );
                   },
                 ),
               ],

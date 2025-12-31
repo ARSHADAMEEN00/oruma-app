@@ -32,12 +32,7 @@ class _LoginscreenState extends State<Loginscreen> {
       _isLoading = false;
     });
 
-    if (success && mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => Homescreen()),
-      );
-    } else if (mounted) {
+    if (!success && mounted) {
       setState(() {
         _errorMessage = 'Invalid email or password';
       });
