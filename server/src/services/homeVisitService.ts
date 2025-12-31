@@ -8,12 +8,17 @@ export const homeVisitService = {
   },
 
   getAll: async (): Promise<HomeVisit[]> => {
-    const list = await HomeVisitModel.find().sort({ createdAt: -1 }).lean();
+    const list = await HomeVisitModel.find()
+      .populate('createdBy', 'name')
+      .sort({ createdAt: -1 })
+      .lean();
     return list.map(toHomeVisit);
   },
 
   getById: async (id: string): Promise<HomeVisit | null> => {
-    const found = await HomeVisitModel.findById(id).lean();
+    const found = await HomeVisitModel.findById(id)
+      .populate('createdBy', 'name')
+      .lean();
     return found ? toHomeVisit(found) : null;
   },
 
@@ -21,7 +26,9 @@ export const homeVisitService = {
     const updated = await HomeVisitModel.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
-    }).lean();
+    })
+      .populate('createdBy', 'name')
+      .lean();
     return updated ? toHomeVisit(updated) : null;
   },
 
@@ -39,7 +46,9 @@ function toHomeVisit(doc: any): HomeVisit {
     visitDate: doc.visitDate,
     notes: doc.notes,
     createdAt: doc.createdAt,
-    createdBy: doc.createdBy ? doc.createdBy.toString() : undefined,
+    createdBy: doc.createdBy && typeof doc.createdBy === 'object' && 'name' in doc.createdBy
+      ? (doc.createdBy as any).name
+      : doc.createdBy?.toString(),
   };
 }
 

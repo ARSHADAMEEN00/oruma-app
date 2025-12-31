@@ -8,12 +8,17 @@ export const medicineSupplyService = {
   },
 
   getAll: async (): Promise<MedicineSupply[]> => {
-    const list = await MedicineSupplyModel.find().sort({ createdAt: -1 }).lean();
+    const list = await MedicineSupplyModel.find()
+      .populate('createdBy', 'name')
+      .sort({ createdAt: -1 })
+      .lean();
     return list.map(toMedicineSupply);
   },
 
   getById: async (id: string): Promise<MedicineSupply | null> => {
-    const found = await MedicineSupplyModel.findById(id).lean();
+    const found = await MedicineSupplyModel.findById(id)
+      .populate('createdBy', 'name')
+      .lean();
     return found ? toMedicineSupply(found) : null;
   },
 
@@ -21,7 +26,9 @@ export const medicineSupplyService = {
     const updated = await MedicineSupplyModel.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
-    }).lean();
+    })
+      .populate('createdBy', 'name')
+      .lean();
     return updated ? toMedicineSupply(updated) : null;
   },
 
@@ -40,7 +47,9 @@ function toMedicineSupply(doc: any): MedicineSupply {
     phone: doc.phone,
     address: doc.address,
     createdAt: doc.createdAt,
-    createdBy: doc.createdBy ? doc.createdBy.toString() : undefined,
+    createdBy: doc.createdBy && typeof doc.createdBy === 'object' && 'name' in doc.createdBy
+      ? (doc.createdBy as any).name
+      : doc.createdBy?.toString(),
   };
 }
 

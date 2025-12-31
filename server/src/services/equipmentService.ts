@@ -94,13 +94,19 @@ export const equipmentService = {
   },
 
   getAll: async (): Promise<Equipment[]> => {
-    const list = await EquipmentModel.find().sort({ createdAt: -1 }).lean();
+    const list = await EquipmentModel.find()
+      .populate('createdBy', 'name')
+      .sort({ createdAt: -1 })
+      .lean();
     return list.map(toEquipment);
   },
 
   // Get equipment filtered by status
   getByStatus: async (status: string): Promise<Equipment[]> => {
-    const list = await EquipmentModel.find({ status }).sort({ createdAt: -1 }).lean();
+    const list = await EquipmentModel.find({ status })
+      .populate('createdBy', 'name')
+      .sort({ createdAt: -1 })
+      .lean();
     return list.map(toEquipment);
   },
 
@@ -117,13 +123,17 @@ export const equipmentService = {
   },
 
   getById: async (id: string): Promise<Equipment | null> => {
-    const found = await EquipmentModel.findById(id).lean();
+    const found = await EquipmentModel.findById(id)
+      .populate('createdBy', 'name')
+      .lean();
     return found ? toEquipment(found) : null;
   },
 
   // Get by unique ID
   getByUniqueId: async (uniqueId: string): Promise<Equipment | null> => {
-    const found = await EquipmentModel.findOne({ uniqueId }).lean();
+    const found = await EquipmentModel.findOne({ uniqueId })
+      .populate('createdBy', 'name')
+      .lean();
     return found ? toEquipment(found) : null;
   },
 
@@ -131,7 +141,9 @@ export const equipmentService = {
     const updated = await EquipmentModel.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
-    }).lean();
+    })
+      .populate('createdBy', 'name')
+      .lean();
     return updated ? toEquipment(updated) : null;
   },
 
@@ -141,7 +153,9 @@ export const equipmentService = {
       id,
       { status },
       { new: true }
-    ).lean();
+    )
+      .populate('createdBy', 'name')
+      .lean();
     return updated ? toEquipment(updated) : null;
   },
 
@@ -163,6 +177,8 @@ function toEquipment(doc: any): Equipment {
     phone: doc.phone,
     status: doc.status,
     createdAt: doc.createdAt,
-    createdBy: doc.createdBy ? doc.createdBy.toString() : undefined,
+    createdBy: doc.createdBy && typeof doc.createdBy === 'object' && 'name' in doc.createdBy
+      ? (doc.createdBy as any).name
+      : doc.createdBy?.toString(),
   };
 }

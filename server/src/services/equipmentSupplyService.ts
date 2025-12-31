@@ -30,18 +30,26 @@ export const equipmentSupplyService = {
   },
 
   getAll: async (): Promise<EquipmentSupply[]> => {
-    const list = await EquipmentSupplyModel.find().sort({ createdAt: -1 }).lean();
+    const list = await EquipmentSupplyModel.find()
+      .populate('createdBy', 'name')
+      .sort({ createdAt: -1 })
+      .lean();
     return list.map(toEquipmentSupply);
   },
 
   getById: async (id: string): Promise<EquipmentSupply | null> => {
-    const found = await EquipmentSupplyModel.findById(id).lean();
+    const found = await EquipmentSupplyModel.findById(id)
+      .populate('createdBy', 'name')
+      .lean();
     return found ? toEquipmentSupply(found) : null;
   },
 
   // Get active supplies (currently with patients)
   getActive: async (): Promise<EquipmentSupply[]> => {
-    const list = await EquipmentSupplyModel.find({ status: 'active' }).sort({ createdAt: -1 }).lean();
+    const list = await EquipmentSupplyModel.find({ status: 'active' })
+      .populate('createdBy', 'name')
+      .sort({ createdAt: -1 })
+      .lean();
     return list.map(toEquipmentSupply);
   },
 
@@ -62,7 +70,9 @@ export const equipmentSupplyService = {
     const updated = await EquipmentSupplyModel.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
-    }).lean();
+    })
+      .populate('createdBy', 'name')
+      .lean();
     return updated ? toEquipmentSupply(updated) : null;
   },
 
@@ -100,6 +110,8 @@ function toEquipmentSupply(doc: any): EquipmentSupply {
     notes: doc.notes,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
-    createdBy: doc.createdBy ? doc.createdBy.toString() : undefined,
+    createdBy: doc.createdBy && typeof doc.createdBy === 'object' && 'name' in doc.createdBy
+      ? (doc.createdBy as any).name
+      : doc.createdBy?.toString(),
   };
 }
