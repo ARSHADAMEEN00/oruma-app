@@ -118,6 +118,24 @@ class _PatientListPageState extends State<PatientListPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
+            if (patient.registerId != null) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  "REG ID: ${patient.registerId}",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+            ],
             Text("${patient.age} years • ${patient.gender}"),
             Text(patient.village, style: TextStyle(color: Colors.grey.shade600)),
           ],

@@ -11,6 +11,7 @@ export interface Patient {
   village: string;
   disease: string;
   plan: string;
+  registerId?: string;
   createdAt?: Date;
 }
 

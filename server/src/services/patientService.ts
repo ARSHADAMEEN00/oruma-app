@@ -3,6 +3,41 @@ import { PatientModel } from '../models/patientModel';
 
 export const patientService = {
   create: async (patient: Patient): Promise<Patient> => {
+    const currentYear = new Date().getFullYear().toString().slice(-2);
+
+    // Find the latest patient in the current year using aggregation for numeric prefix sorting
+    const lastPatients = await PatientModel.aggregate([
+      {
+        $match: {
+          registerId: { $regex: new RegExp(`/${currentYear}$`) }
+        }
+      },
+      {
+        $addFields: {
+          idParts: { $split: ["$registerId", "/"] }
+        }
+      },
+      {
+        $addFields: {
+          idPrefix: { $toInt: { $arrayElemAt: ["$idParts", 0] } }
+        }
+      },
+      {
+        $sort: { idPrefix: -1 }
+      },
+      {
+        $limit: 1
+      }
+    ]);
+
+    let nextNumber = 1;
+    if (lastPatients.length > 0 && lastPatients[0].registerId) {
+      const currentId = lastPatients[0].registerId.split('/')[0];
+      nextNumber = parseInt(currentId, 10) + 1;
+    }
+
+    patient.registerId = `${nextNumber.toString().padStart(2, '0')}/${currentYear}`;
+
     const created = await PatientModel.create(patient);
     return toPatient(created);
   },
@@ -44,6 +79,7 @@ function toPatient(doc: any): Patient {
     village: doc.village,
     disease: doc.disease,
     plan: doc.plan,
+    registerId: doc.registerId,
     createdAt: doc.createdAt,
   };
 }

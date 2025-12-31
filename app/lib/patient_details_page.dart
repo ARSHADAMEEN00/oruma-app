@@ -113,6 +113,8 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
                   _buildHeader(),
                   const SizedBox(height: 24),
                    _buildInfoSection("Personal Information", [
+                    if (_currentPatient.registerId != null)
+                      _buildInfoTile(Icons.app_registration, "Register ID", _currentPatient.registerId!),
                     _buildInfoTile(Icons.person, "Full Name", _currentPatient.name),
                     _buildInfoTile(Icons.phone, "Phone", _currentPatient.phone),
                     _buildInfoTile(Icons.info_outline, "Relation", _currentPatient.relation),
@@ -163,6 +165,15 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
             _currentPatient.name,
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
+          if (_currentPatient.registerId != null)
+            Text(
+              "ID: ${_currentPatient.registerId}",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
           Text(
             _currentPatient.disease,
             style: TextStyle(fontSize: 16, color: Colors.grey.shade600),

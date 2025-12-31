@@ -11,6 +11,7 @@ class Patient {
   final String village;
   final String disease;
   final String plan;
+  final String? registerId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -26,6 +27,7 @@ class Patient {
     required this.village,
     required this.disease,
     required this.plan,
+    this.registerId,
     this.createdAt,
     this.updatedAt,
   });
@@ -46,6 +48,7 @@ class Patient {
       village: json['village']?.toString() ?? '',
       disease: json['disease']?.toString() ?? '',
       plan: json['plan']?.toString() ?? '',
+      registerId: json['registerId']?.toString(),
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString())
           : null,
@@ -68,6 +71,7 @@ class Patient {
       'village': village,
       'disease': disease,
       'plan': plan,
+      'registerId': registerId,
     };
   }
 
@@ -84,6 +88,7 @@ class Patient {
     String? village,
     String? disease,
     String? plan,
+    String? registerId,
   }) {
     return Patient(
       id: id ?? this.id,
@@ -97,6 +102,7 @@ class Patient {
       village: village ?? this.village,
       disease: disease ?? this.disease,
       plan: plan ?? this.plan,
+      registerId: registerId ?? this.registerId,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );

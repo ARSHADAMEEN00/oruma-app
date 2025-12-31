@@ -262,6 +262,7 @@ class _patientrigisterState extends State<patientrigister> {
                               village: _selectedVillage!,
                               disease: _selectedDisease!,
                               plan: _selectedPlan!,
+                              registerId: widget.patient?.registerId,
                             );
 
                             if (isEditing) {

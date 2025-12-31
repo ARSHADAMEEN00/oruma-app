@@ -15,6 +15,7 @@ const PatientSchema = new Schema<PatientDocument>(
     village: { type: String, required: true, trim: true },
     disease: { type: String, required: true, trim: true },
     plan: { type: String, required: true, trim: true },
+    registerId: { type: String, unique: true, sparse: true },
   },
   { timestamps: true }
 );
