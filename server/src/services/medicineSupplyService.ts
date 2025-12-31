@@ -1,41 +1,46 @@
 import { MedicineSupply } from '../models';
-
-let medicineSupplies: MedicineSupply[] = [];
-let medicineSupplyIdCounter = 1;
+import { MedicineSupplyModel } from '../models/medicineSupplyModel';
 
 export const medicineSupplyService = {
   create: async (supply: MedicineSupply): Promise<MedicineSupply> => {
-    const newSupply: MedicineSupply = {
-      ...supply,
-      id: `MS${medicineSupplyIdCounter++}`,
-      createdAt: new Date(),
-    };
-    medicineSupplies.push(newSupply);
-    return newSupply;
+    const created = await MedicineSupplyModel.create(supply);
+    return toMedicineSupply(created);
   },
 
   getAll: async (): Promise<MedicineSupply[]> => {
-    return [...medicineSupplies];
+    const list = await MedicineSupplyModel.find().sort({ createdAt: -1 }).lean();
+    return list.map(toMedicineSupply);
   },
 
-  getById: async (id: string): Promise<MedicineSupply | undefined> => {
-    return medicineSupplies.find(s => s.id === id);
+  getById: async (id: string): Promise<MedicineSupply | null> => {
+    const found = await MedicineSupplyModel.findById(id).lean();
+    return found ? toMedicineSupply(found) : null;
   },
 
   update: async (id: string, updates: Partial<MedicineSupply>): Promise<MedicineSupply | null> => {
-    const index = medicineSupplies.findIndex(s => s.id === id);
-    if (index === -1) return null;
-    
-    medicineSupplies[index] = { ...medicineSupplies[index], ...updates };
-    return medicineSupplies[index];
+    const updated = await MedicineSupplyModel.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true,
+    }).lean();
+    return updated ? toMedicineSupply(updated) : null;
   },
 
   delete: async (id: string): Promise<boolean> => {
-    const index = medicineSupplies.findIndex(s => s.id === id);
-    if (index === -1) return false;
-    
-    medicineSupplies.splice(index, 1);
-    return true;
+    const res = await MedicineSupplyModel.findByIdAndDelete(id);
+    return Boolean(res);
   },
 };
+
+function toMedicineSupply(doc: any): MedicineSupply {
+  return {
+    id: doc._id.toString(),
+    patientName: doc.patientName,
+    medicine: doc.medicine,
+    quantity: doc.quantity,
+    phone: doc.phone,
+    address: doc.address,
+    createdAt: doc.createdAt,
+  };
+}
+
 

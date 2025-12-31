@@ -1,41 +1,45 @@
 import { HomeVisit } from '../models';
-
-let homeVisits: HomeVisit[] = [];
-let visitIdCounter = 1;
+import { HomeVisitModel } from '../models/homeVisitModel';
 
 export const homeVisitService = {
   create: async (visit: HomeVisit): Promise<HomeVisit> => {
-    const newVisit: HomeVisit = {
-      ...visit,
-      id: `VISIT${visitIdCounter++}`,
-      createdAt: new Date(),
-    };
-    homeVisits.push(newVisit);
-    return newVisit;
+    const created = await HomeVisitModel.create(visit);
+    return toHomeVisit(created);
   },
 
   getAll: async (): Promise<HomeVisit[]> => {
-    return [...homeVisits];
+    const list = await HomeVisitModel.find().sort({ createdAt: -1 }).lean();
+    return list.map(toHomeVisit);
   },
 
-  getById: async (id: string): Promise<HomeVisit | undefined> => {
-    return homeVisits.find(v => v.id === id);
+  getById: async (id: string): Promise<HomeVisit | null> => {
+    const found = await HomeVisitModel.findById(id).lean();
+    return found ? toHomeVisit(found) : null;
   },
 
   update: async (id: string, updates: Partial<HomeVisit>): Promise<HomeVisit | null> => {
-    const index = homeVisits.findIndex(v => v.id === id);
-    if (index === -1) return null;
-    
-    homeVisits[index] = { ...homeVisits[index], ...updates };
-    return homeVisits[index];
+    const updated = await HomeVisitModel.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true,
+    }).lean();
+    return updated ? toHomeVisit(updated) : null;
   },
 
   delete: async (id: string): Promise<boolean> => {
-    const index = homeVisits.findIndex(v => v.id === id);
-    if (index === -1) return false;
-    
-    homeVisits.splice(index, 1);
-    return true;
+    const res = await HomeVisitModel.findByIdAndDelete(id);
+    return Boolean(res);
   },
 };
+
+function toHomeVisit(doc: any): HomeVisit {
+  return {
+    id: doc._id.toString(),
+    patientName: doc.patientName,
+    address: doc.address,
+    visitDate: doc.visitDate,
+    notes: doc.notes,
+    createdAt: doc.createdAt,
+  };
+}
+
 
