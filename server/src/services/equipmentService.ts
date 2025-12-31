@@ -109,7 +109,7 @@ export const equipmentService = {
       { $match: { status: 'available' } },
       { $group: { _id: '$name', count: { $sum: 1 } } }
     ]);
-    return result.reduce((acc, item) => {
+    return result.reduce((acc: Record<string, number>, item: any) => {
       acc[item._id] = item.count;
       return acc;
     }, {} as Record<string, number>);
