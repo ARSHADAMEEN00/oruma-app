@@ -187,3 +187,11 @@ server/
 - All endpoints return JSON responses.
 - Error responses follow the format: `{ error: "Error message" }`.
 
+
+
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "watch": "tsc --watch"
+  },

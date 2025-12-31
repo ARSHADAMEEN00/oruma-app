@@ -1,20 +1,34 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:oruma_app/homscreen.dart';
 import 'package:oruma_app/loginscreen.dart';
+import 'package:oruma_app/services/auth_service.dart';
+import 'package:provider/provider.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  final authService = AuthService();
+  await authService.init();
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: authService),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'Oruma App',
       builder: (context, child) {
         final content = child ?? const SizedBox.shrink();
         if (!kIsWeb) return content;
@@ -64,7 +78,11 @@ class MyApp extends StatelessWidget {
           contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         ),
       ),
-      home: Loginscreen(),
+      home: Consumer<AuthService>(
+        builder: (context, auth, _) {
+          return auth.isAuthenticated ? const Homescreen() : const Loginscreen();
+        },
+      ),
     );
   }
 }

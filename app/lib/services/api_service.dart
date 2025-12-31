@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api_config.dart';
 
 /// Result wrapper for API responses.
@@ -19,6 +20,18 @@ class ApiResult<T> {
 class ApiService {
   static final http.Client _client = http.Client();
 
+  /// Helper to get headers with Authorization token
+  static Future<Map<String, String>> _getHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    
+    final headers = Map<String, String>.from(ApiConfig.headers);
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+    return headers;
+  }
+
   /// Check if the server is healthy/reachable.
   static Future<bool> checkHealth() async {
     try {
@@ -37,8 +50,9 @@ class ApiService {
     T Function(dynamic json)? fromJson,
   }) async {
     try {
+      final headers = await _getHeaders();
       final response = await _client
-          .get(Uri.parse(url), headers: ApiConfig.headers)
+          .get(Uri.parse(url), headers: headers)
           .timeout(ApiConfig.timeout);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -61,10 +75,11 @@ class ApiService {
     T Function(dynamic json)? fromJson,
   }) async {
     try {
+      final headers = await _getHeaders();
       final response = await _client
           .post(
             Uri.parse(url),
-            headers: ApiConfig.headers,
+            headers: headers,
             body: json.encode(body),
           )
           .timeout(ApiConfig.timeout);
@@ -89,10 +104,11 @@ class ApiService {
     T Function(dynamic json)? fromJson,
   }) async {
     try {
+      final headers = await _getHeaders();
       final response = await _client
           .put(
             Uri.parse(url),
-            headers: ApiConfig.headers,
+            headers: headers,
             body: json.encode(body),
           )
           .timeout(ApiConfig.timeout);
@@ -113,8 +129,9 @@ class ApiService {
   /// Perform a DELETE request.
   static Future<ApiResult<bool>> delete(String url) async {
     try {
+      final headers = await _getHeaders();
       final response = await _client
-          .delete(Uri.parse(url), headers: ApiConfig.headers)
+          .delete(Uri.parse(url), headers: headers)
           .timeout(ApiConfig.timeout);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
