@@ -81,6 +81,7 @@ function toPatient(doc: any): Patient {
     plan: doc.plan,
     registerId: doc.registerId,
     createdAt: doc.createdAt,
+    createdBy: doc.createdBy ? doc.createdBy.toString() : undefined,
   };
 }
 

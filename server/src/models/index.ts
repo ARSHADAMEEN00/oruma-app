@@ -13,6 +13,7 @@ export interface Patient {
   plan: string;
   registerId?: string;
   createdAt?: Date;
+  createdBy?: string;
 }
 
 // Home Visit Model
@@ -23,6 +24,7 @@ export interface HomeVisit {
   visitDate: string; // ISO date string
   notes?: string;
   createdAt?: Date;
+  createdBy?: string;
 }
 
 // Equipment Model
@@ -37,6 +39,7 @@ export interface Equipment {
   phone: string;
   status?: 'available' | 'supplied' | 'maintenance';  // Track equipment status
   createdAt?: Date;
+  createdBy?: string;
 }
 
 // Equipment Supply Model - Links equipment to patients
@@ -55,6 +58,7 @@ export interface EquipmentSupply {
   notes?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  createdBy?: string;
 }
 
 // Medicine Supply Model
@@ -65,6 +69,17 @@ export interface MedicineSupply {
   quantity: number;
   phone: string;
   address?: string;
+  createdAt?: Date;
+  createdBy?: string; // User ID
+}
+
+// User Model
+export interface User {
+  id?: string;
+  email: string;
+  password?: string; // Hashed reference, not returned in API usually
+  name: string;
+  role?: 'admin' | 'user';
   createdAt?: Date;
 }
 

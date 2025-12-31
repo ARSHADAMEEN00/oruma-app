@@ -74,6 +74,7 @@ export const equipmentService = {
       place: eq.place,
       phone: eq.phone,
       status: 'available',
+      createdBy: eq.createdBy,
     }));
 
     const created = await EquipmentModel.insertMany(equipmentDocs);
@@ -162,5 +163,6 @@ function toEquipment(doc: any): Equipment {
     phone: doc.phone,
     status: doc.status,
     createdAt: doc.createdAt,
+    createdBy: doc.createdBy ? doc.createdBy.toString() : undefined,
   };
 }

@@ -4,11 +4,13 @@ import dotenv from 'dotenv';
 import { connectDb } from './db';
 
 // Import routes
+import authRoutes from './routes/authRoutes';
 import patientsRouter from './routes/patients';
 import homeVisitsRouter from './routes/homeVisits';
 import equipmentRouter from './routes/equipment';
 import equipmentSuppliesRouter from './routes/equipmentSupplies';
 import medicineSuppliesRouter from './routes/medicineSupplies';
+import { protect } from './middleware/auth';
 
 // Load environment variables
 dotenv.config();
@@ -28,11 +30,12 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // API Routes
-app.use('/api/patients', patientsRouter);
-app.use('/api/home-visits', homeVisitsRouter);
-app.use('/api/equipment', equipmentRouter);
-app.use('/api/equipment-supplies', equipmentSuppliesRouter);
-app.use('/api/medicine-supplies', medicineSuppliesRouter);
+app.use('/api/auth', authRoutes);
+app.use('/api/patients', protect, patientsRouter);
+app.use('/api/home-visits', protect, homeVisitsRouter);
+app.use('/api/equipment', protect, equipmentRouter);
+app.use('/api/equipment-supplies', protect, equipmentSuppliesRouter);
+app.use('/api/medicine-supplies', protect, medicineSuppliesRouter);
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {

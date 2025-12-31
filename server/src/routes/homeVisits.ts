@@ -31,10 +31,14 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/', async (req: Request, res: Response) => {
   try {
     const visitData: HomeVisit = req.body;
-    
+
     // Basic validation
     if (!visitData.patientName || !visitData.address || !visitData.visitDate) {
       return res.status(400).json({ error: 'Missing required fields: patientName, address, visitDate' });
+    }
+
+    if ((req as any).user) {
+      visitData.createdBy = (req as any).user._id;
     }
 
     const visit = await homeVisitService.create(visitData);
@@ -49,11 +53,11 @@ router.put('/:id', async (req: Request, res: Response) => {
   try {
     const updates: Partial<HomeVisit> = req.body;
     const visit = await homeVisitService.update(req.params.id, updates);
-    
+
     if (!visit) {
       return res.status(404).json({ error: 'Home visit not found' });
     }
-    
+
     res.json(visit);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update home visit' });
@@ -64,11 +68,11 @@ router.put('/:id', async (req: Request, res: Response) => {
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const deleted = await homeVisitService.delete(req.params.id);
-    
+
     if (!deleted) {
       return res.status(404).json({ error: 'Home visit not found' });
     }
-    
+
     res.json({ message: 'Home visit deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete home visit' });

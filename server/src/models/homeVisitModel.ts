@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { HomeVisit } from './index';
 
-export interface HomeVisitDocument extends HomeVisit, Document {}
+export interface HomeVisitDocument extends HomeVisit, Document { }
 
 const HomeVisitSchema = new Schema<HomeVisitDocument>(
   {
@@ -9,6 +9,7 @@ const HomeVisitSchema = new Schema<HomeVisitDocument>(
     address: { type: String, required: true, trim: true },
     visitDate: { type: String, required: true, trim: true },
     notes: { type: String, trim: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }
 );

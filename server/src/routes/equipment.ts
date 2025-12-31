@@ -76,6 +76,10 @@ router.post('/', async (req: Request, res: Response) => {
         .toUpperCase() || 'EQ';
     }
 
+    if ((req as any).user) {
+      equipmentData.createdBy = (req as any).user._id;
+    }
+
     const equipment = await equipmentService.create(equipmentData);
 
     // Return the created equipment array

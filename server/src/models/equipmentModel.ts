@@ -17,6 +17,7 @@ const EquipmentSchema = new Schema<EquipmentDocument>(
       enum: ['available', 'supplied', 'maintenance'],
       default: 'available'
     },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }
 );

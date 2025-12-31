@@ -46,6 +46,10 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Missing required fields: equipmentId, patientName, patientPhone' });
     }
 
+    if ((req as any).user) {
+      supplyData.createdBy = (req as any).user._id;
+    }
+
     const supply = await equipmentSupplyService.create(supplyData);
     res.status(201).json(supply);
   } catch (error: any) {

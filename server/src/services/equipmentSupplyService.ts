@@ -100,5 +100,6 @@ function toEquipmentSupply(doc: any): EquipmentSupply {
     notes: doc.notes,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
+    createdBy: doc.createdBy ? doc.createdBy.toString() : undefined,
   };
 }

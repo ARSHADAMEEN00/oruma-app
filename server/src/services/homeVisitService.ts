@@ -39,6 +39,7 @@ function toHomeVisit(doc: any): HomeVisit {
     visitDate: doc.visitDate,
     notes: doc.notes,
     createdAt: doc.createdAt,
+    createdBy: doc.createdBy ? doc.createdBy.toString() : undefined,
   };
 }
 

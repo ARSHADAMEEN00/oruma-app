@@ -40,6 +40,7 @@ function toMedicineSupply(doc: any): MedicineSupply {
     phone: doc.phone,
     address: doc.address,
     createdAt: doc.createdAt,
+    createdBy: doc.createdBy ? doc.createdBy.toString() : undefined,
   };
 }
 

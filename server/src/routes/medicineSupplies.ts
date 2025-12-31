@@ -31,10 +31,14 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/', async (req: Request, res: Response) => {
   try {
     const supplyData: MedicineSupply = req.body;
-    
+
     // Basic validation
     if (!supplyData.patientName || !supplyData.medicine || !supplyData.phone) {
       return res.status(400).json({ error: 'Missing required fields: patientName, medicine, phone' });
+    }
+
+    if ((req as any).user) {
+      supplyData.createdBy = (req as any).user._id;
     }
 
     const supply = await medicineSupplyService.create(supplyData);
@@ -49,11 +53,11 @@ router.put('/:id', async (req: Request, res: Response) => {
   try {
     const updates: Partial<MedicineSupply> = req.body;
     const supply = await medicineSupplyService.update(req.params.id, updates);
-    
+
     if (!supply) {
       return res.status(404).json({ error: 'Medicine supply not found' });
     }
-    
+
     res.json(supply);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update medicine supply' });
@@ -64,11 +68,11 @@ router.put('/:id', async (req: Request, res: Response) => {
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const deleted = await medicineSupplyService.delete(req.params.id);
-    
+
     if (!deleted) {
       return res.status(404).json({ error: 'Medicine supply not found' });
     }
-    
+
     res.json({ message: 'Medicine supply deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete medicine supply' });

@@ -20,6 +20,7 @@ const EquipmentSupplySchema = new Schema<EquipmentSupplyDocument>(
       default: 'active'
     },
     notes: { type: String, trim: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }
 );
