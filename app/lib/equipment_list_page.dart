@@ -4,6 +4,8 @@ import 'package:oruma_app/models/equipment.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:oruma_app/services/equipment_service.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
+import 'package:provider/provider.dart';
+import 'package:oruma_app/services/auth_service.dart';
 
 class EquipmentListPage extends StatefulWidget {
   const EquipmentListPage({super.key});
@@ -288,10 +290,14 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
                   }
                 }
               },
-              itemBuilder: (context) => [
-                const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
-              ],
+              itemBuilder: (context) {
+                final isAdmin = context.read<AuthService>().isAdmin;
+                return [
+                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                  if (isAdmin)
+                    const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+                ];
+              },
             ),
             onTap: () => _showEquipmentDetails(eq),
           ),
@@ -594,41 +600,43 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Delete Equipment?'),
-                          content: Text('Are you sure you want to delete ${eq.uniqueId}? This action cannot be undone.'),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true), 
-                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (confirm == true) {
-                        if (mounted) Navigator.pop(context);
-                        await EquipmentService.deleteEquipment(eq.id!);
-                        _fetchAvailableEquipment();
-                      }
-                    },
-                    icon: const Icon(Icons.delete_outline),
-                    label: const Text('Delete'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      backgroundColor: Colors.red.shade50,
-                      foregroundColor: Colors.red.shade700,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                if (context.read<AuthService>().isAdmin) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Equipment?'),
+                            content: Text('Are you sure you want to delete ${eq.uniqueId}? This action cannot be undone.'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true), 
+                                child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          if (mounted) Navigator.pop(context);
+                          await EquipmentService.deleteEquipment(eq.id!);
+                          _fetchAvailableEquipment();
+                        }
+                      },
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Delete'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: Colors.red.shade50,
+                        foregroundColor: Colors.red.shade700,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
             const SizedBox(height: 16),

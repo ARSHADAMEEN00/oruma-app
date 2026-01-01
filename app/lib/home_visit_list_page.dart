@@ -4,6 +4,8 @@ import 'package:oruma_app/home_visit_search_page.dart';
 import 'package:oruma_app/models/home_visit.dart';
 import 'package:oruma_app/services/home_visit_service.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:oruma_app/services/auth_service.dart';
 
 class HomeVisitListPage extends StatefulWidget {
   const HomeVisitListPage({super.key});
@@ -632,22 +634,24 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
           const SizedBox(height: 40),
           Row(
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _deleteVisit(visit);
-                  },
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  label: const Text("Delete", style: TextStyle(color: Colors.red)),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: const BorderSide(color: Colors.red),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              if (context.read<AuthService>().isAdmin) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _deleteVisit(visit);
+                    },
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    label: const Text("Delete", style: TextStyle(color: Colors.red)),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: const BorderSide(color: Colors.red),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
+                const SizedBox(width: 16),
+              ],
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () async {

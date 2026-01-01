@@ -3,6 +3,8 @@ import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/pt_registration.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:oruma_app/services/auth_service.dart';
 
 class PatientDetailsPage extends StatefulWidget {
   final Patient patient;
@@ -97,10 +99,11 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
               }
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: _isLoading ? null : _deletePatient,
-          ),
+          if (context.watch<AuthService>().isAdmin)
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: _isLoading ? null : _deletePatient,
+            ),
         ],
       ),
       body: _isLoading

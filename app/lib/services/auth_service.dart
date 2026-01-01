@@ -11,12 +11,17 @@ class AuthService with ChangeNotifier {
   
   String? _token;
   String? get token => _token;
+
+  String? _role;
+  String? get role => _role;
   
   bool get isAuthenticated => _token != null;
+  bool get isAdmin => _role == 'admin';
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString('auth_token');
+    _role = prefs.getString('auth_role');
     notifyListeners();
   }
 
@@ -34,9 +39,13 @@ class AuthService with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         _token = data['token'];
+        _role = data['role']; // Get role from response
         
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', _token!);
+        if (_role != null) {
+          await prefs.setString('auth_role', _role!);
+        }
         
         notifyListeners();
         return true;
@@ -50,8 +59,10 @@ class AuthService with ChangeNotifier {
 
   Future<void> logout() async {
     _token = null;
+    _role = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
+    await prefs.remove('auth_role');
     notifyListeners();
   }
 
