@@ -531,32 +531,18 @@ class _EqSupplyState extends State<EqSupply> {
                                         isExpanded: true,
                                         dropdownColor: Colors.white,
                                         borderRadius: BorderRadius.circular(12),
-                                        items: [
-                                          ..._patients.map((p) {
-                                            return DropdownMenuItem(
-                                              value: p,
-                                              child: Text(
-                                                '${p.name} (${p.village})',
-                                                style: const TextStyle(fontSize: 14),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            );
-                                          }),
-                                          const DropdownMenuItem<Patient>(
-                                            value: null,
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.person_add_alt_1_rounded, size: 18, color: Colors.blue),
-                                                  SizedBox(width: 8),
-                                                  Text('Add New Patient', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
-                                                ],
-                                              ),
-                                          ),
-                                        ],
+                                        items: _patients.map((p) {
+                                          return DropdownMenuItem(
+                                            value: p,
+                                            child: Text(
+                                              '${p.name} (${p.village})',
+                                              style: const TextStyle(fontSize: 14),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          );
+                                        }).toList(),
                                         onChanged: (val) {
-                                          if (val == null) {
-                                            _showAddPatientDialog();
-                                          } else {
+                                          if (val != null) {
                                             setState(() => _selectedPatient = val);
                                           }
                                         },

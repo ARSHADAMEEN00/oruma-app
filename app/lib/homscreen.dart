@@ -8,6 +8,8 @@ import 'package:oruma_app/patient_list_page.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/loginscreen.dart';
+import 'package:oruma_app/services/equipment_supply_service.dart';
+import 'package:oruma_app/models/equipment_supply.dart';
 
 
 class Homescreen extends StatefulWidget {
@@ -94,6 +96,10 @@ class _HomescreenState extends State<Homescreen> {
               ),
               const SizedBox(height: 24),
 
+              // Active Supplies Slider
+              _buildActiveSuppliesSlider(context),
+              const SizedBox(height: 24),
+
               // Quick Actions Title
               Text(
                 "Quick Actions",
@@ -129,20 +135,6 @@ class _HomescreenState extends State<Homescreen> {
                   ),
                   _buildActionCard(
                     context,
-                    title: "Add Equipment",
-                    icon: Icons.add_box_rounded,
-                    color: const Color(0xFFF59E0B),
-                    page: const EquipmentFormPage(),
-                  ),
-                  _buildActionCard(
-                    context,
-                    title: "Equipment Supply",
-                    icon: Icons.local_shipping_rounded,
-                    color: const Color(0xFFEF4444),
-                    page: const EqSupply(),
-                  ),
-                  _buildActionCard(
-                    context,
                     title: "Supply List",
                     icon: Icons.assignment_rounded,
                     color: const Color(0xFF8B5CF6),
@@ -161,6 +153,135 @@ class _HomescreenState extends State<Homescreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildActiveSuppliesSlider(BuildContext context) {
+    return FutureBuilder<List<EquipmentSupply>>(
+      future: EquipmentSupplyService.getActiveSupplies(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: CircularProgressIndicator(),
+          ));
+        } else if (snapshot.hasError) {
+          return const SizedBox.shrink(); // Hide if error
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink(); // Hide if no active supplies
+        }
+
+        final supplies = snapshot.data!;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Active Supplies (Not Returned)",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade800,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 140, // Height for the card
+              child: PageView.builder(
+                itemCount: supplies.length,
+                controller: PageController(viewportFraction: 0.92),
+                padEnds: false, // Align first item to start
+                itemBuilder: (context, index) {
+                  final supply = supplies[index];
+                  return Container(
+                    margin: const EdgeInsets.only(right: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey.shade200),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEF4444).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.medical_services_rounded,
+                                color: Color(0xFFEF4444),
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                           Expanded(
+                              child: Text(
+                                supply.equipmentName,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Icon(Icons.person_outline_rounded, 
+                              size: 16, color: Colors.grey.shade600),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                supply.patientName,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade700,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                         Row(
+                          children: [
+                            Icon(Icons.calendar_today_rounded, 
+                              size: 16, color: Colors.grey.shade600),
+                            const SizedBox(width: 4),
+                            Text(
+                              "Supplied: ${supply.supplyDate}",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
