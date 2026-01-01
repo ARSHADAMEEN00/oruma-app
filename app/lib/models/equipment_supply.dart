@@ -11,6 +11,7 @@ class EquipmentSupply {
   final DateTime? actualReturnDate;
   final String status; // 'active', 'returned', 'lost'
   final String? notes;
+  final String? createdBy;
 
   const EquipmentSupply({
     this.id,
@@ -25,6 +26,7 @@ class EquipmentSupply {
     this.actualReturnDate,
     this.status = 'active',
     this.notes,
+    this.createdBy,
   });
 
   factory EquipmentSupply.fromJson(Map<String, dynamic> json) {
@@ -45,6 +47,9 @@ class EquipmentSupply {
           : null,
       status: json['status']?.toString() ?? 'active',
       notes: json['notes']?.toString(),
+      createdBy: json['createdBy'] is Map
+          ? json['createdBy']['name']?.toString()
+          : json['createdBy']?.toString(),
     );
   }
 

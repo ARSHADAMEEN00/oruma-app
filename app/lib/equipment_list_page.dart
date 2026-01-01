@@ -379,6 +379,14 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
               _buildDetailRow(Icons.location_on_outlined, 'Address', supply.patientAddress!),
             if (supply.notes != null && supply.notes!.isNotEmpty)
               _buildDetailRow(Icons.note_outlined, 'Notes', supply.notes!),
+            if (supply.createdBy != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Created by: ${supply.createdBy}',
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+                ),
+              ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -473,6 +481,14 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
             _buildDetailRow(Icons.place_outlined, 'Location', eq.place),
             _buildDetailRow(Icons.store_outlined, 'Purchased From', eq.purchasedFrom ?? 'N/A'),
             _buildDetailRow(Icons.phone_outlined, 'Contact', eq.phone ?? 'N/A'),
+            if (eq.createdBy != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Created by: ${eq.createdBy}',
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+                ),
+              ),
             const SizedBox(height: 24),
             Row(
               children: [

@@ -583,6 +583,14 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
               ),
             if (supply.notes != null && supply.notes!.isNotEmpty)
               _buildDetailRow(Icons.note, 'Notes', supply.notes!),
+            if (supply.createdBy != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Created by: ${supply.createdBy}',
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+                ),
+              ),
             const SizedBox(height: 16),
           ],
         ),

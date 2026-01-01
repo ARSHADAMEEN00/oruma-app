@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:oruma_app/homevisit.dart';
+import 'package:oruma_app/home_visit_search_page.dart';
 import 'package:oruma_app/models/home_visit.dart';
 import 'package:oruma_app/services/home_visit_service.dart';
 import 'package:intl/intl.dart';
@@ -13,43 +14,124 @@ class HomeVisitListPage extends StatefulWidget {
 
 class _HomeVisitListPageState extends State<HomeVisitListPage> {
   late Future<List<HomeVisit>> _visitsFuture;
-  final TextEditingController _searchController = TextEditingController();
   List<HomeVisit> _allVisits = [];
-  List<HomeVisit> _filteredVisits = [];
-
+  
+  // Date navigation
+  late DateTime _selectedDate;
+  late DateTime _startOfWeek;
+  late List<DateTime> _weekDates;
+  late PageController _pageController;
+  
+  // Key to force PageView rebuild
+  Key _pageViewKey = UniqueKey();
+  
   @override
   void initState() {
     super.initState();
+    _selectedDate = DateTime.now();
+    _initializeWeek();
+    _pageController = PageController(initialPage: _getSelectedDateIndex());
     _refreshVisits();
+  }
+
+  void _initializeWeek() {
+    // Start from 3 days ago to show past visits too
+    final now = DateTime.now();
+    _startOfWeek = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 3));
+    // Generate 14 days (2 weeks view)
+    _weekDates = List.generate(14, (i) => _startOfWeek.add(Duration(days: i)));
+  }
+
+  int _getSelectedDateIndex() {
+    for (int i = 0; i < _weekDates.length; i++) {
+      if (_isSameDay(_weekDates[i], _selectedDate)) {
+        return i;
+      }
+    }
+    return 3; // Default to "today" position
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   void _refreshVisits() {
     setState(() {
       _visitsFuture = HomeVisitService.getAllHomeVisits().then((visits) {
         _allVisits = visits;
-        _filteredVisits = visits;
         return visits;
       });
     });
   }
 
-  void _filterVisits(String query) {
+  List<HomeVisit> _getVisitsForDate(DateTime date) {
+    return _allVisits.where((visit) {
+      final visitDate = DateTime.tryParse(visit.visitDate);
+      if (visitDate == null) return false;
+      return _isSameDay(visitDate, date);
+    }).toList();
+  }
+
+  int _getVisitCountForDate(DateTime date) {
+    return _getVisitsForDate(date).length;
+  }
+
+  void _onDateSelected(int index) {
     setState(() {
-      if (query.isEmpty) {
-        _filteredVisits = _allVisits;
-      } else {
-        _filteredVisits = _allVisits
-            .where((v) =>
-                v.patientName.toLowerCase().contains(query.toLowerCase()) ||
-                v.address.toLowerCase().contains(query.toLowerCase()))
-            .toList();
-      }
+      _selectedDate = _weekDates[index];
     });
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _rebuildPageView(int initialPage) {
+    _pageController.dispose();
+    _pageController = PageController(initialPage: initialPage);
+    _pageViewKey = UniqueKey();
+  }
+
+  void _goToPreviousWeek() {
+    setState(() {
+      _startOfWeek = _startOfWeek.subtract(const Duration(days: 7));
+      _weekDates = List.generate(14, (i) => _startOfWeek.add(Duration(days: i)));
+      _selectedDate = _weekDates[3]; // Select the 4th day
+      _rebuildPageView(3);
+    });
+  }
+
+  void _goToNextWeek() {
+    setState(() {
+      _startOfWeek = _startOfWeek.add(const Duration(days: 7));
+      _weekDates = List.generate(14, (i) => _startOfWeek.add(Duration(days: i)));
+      _selectedDate = _weekDates[3];
+      _rebuildPageView(3);
+    });
+  }
+
+  void _goToToday() {
+    setState(() {
+      final now = DateTime.now();
+      _startOfWeek = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 3));
+      _weekDates = List.generate(14, (i) => _startOfWeek.add(Duration(days: i)));
+      _selectedDate = DateTime.now();
+      _rebuildPageView(3);
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
+    final now = DateTime.now();
+    final isToday = _isSameDay(_selectedDate, now);
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -59,62 +141,70 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         actions: [
+          if (!isToday)
+            TextButton.icon(
+              onPressed: _goToToday,
+              icon: const Icon(Icons.today, size: 18),
+              label: const Text("Today"),
+              style: TextButton.styleFrom(foregroundColor: primaryColor),
+            ),
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HomeVisitSearchPage()),
+              );
+              _refreshVisits();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _refreshVisits,
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              onChanged: _filterVisits,
-              decoration: InputDecoration(
-                hintText: "Search visits...",
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
+      body: FutureBuilder<List<HomeVisit>>(
+        future: _visitsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return _buildErrorState(snapshot.error.toString());
+          }
+
+          return Column(
+            children: [
+              // Week Navigation Header
+              _buildWeekNavigationHeader(primaryColor),
+              
+              // Date Tabs
+              _buildDateTabs(primaryColor),
+              
+              // Selected Date Header
+              _buildSelectedDateHeader(),
+              
+              // Visits for Selected Date (PageView for swipe)
+              Expanded(
+                child: PageView.builder(
+                  key: _pageViewKey,
+                  controller: _pageController,
+                  itemCount: _weekDates.length,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _selectedDate = _weekDates[index];
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    final date = _weekDates[index];
+                    final visits = _getVisitsForDate(date);
+                    return _buildVisitsList(visits);
+                  },
                 ),
               ),
-            ),
-          ),
-          
-          Expanded(
-            child: FutureBuilder<List<HomeVisit>>(
-              future: _visitsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return _buildErrorState(snapshot.error.toString());
-                } else if (_filteredVisits.isEmpty) {
-                  return _buildEmptyState();
-                }
-
-                return ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: _filteredVisits.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final visit = _filteredVisits[index];
-                    return _buildVisitCard(context, visit);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
@@ -132,9 +222,242 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
     );
   }
 
-  Widget _buildVisitCard(BuildContext context, HomeVisit visit) {
-    final date = DateTime.tryParse(visit.visitDate);
-    final isUpcoming = date != null && date.isAfter(DateTime.now().subtract(const Duration(days: 1)));
+  Widget _buildWeekNavigationHeader(Color primaryColor) {
+    final monthYear = DateFormat('MMMM yyyy').format(_selectedDate);
+    
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            onPressed: _goToPreviousWeek,
+            icon: const Icon(Icons.chevron_left),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.grey.shade100,
+              foregroundColor: Colors.grey.shade700,
+            ),
+          ),
+          Text(
+            monthYear,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          IconButton(
+            onPressed: _goToNextWeek,
+            icon: const Icon(Icons.chevron_right),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.grey.shade100,
+              foregroundColor: Colors.grey.shade700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateTabs(Color primaryColor) {
+    return Container(
+      height: 90,
+      color: Colors.white,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        itemCount: _weekDates.length,
+        itemBuilder: (context, index) {
+          final date = _weekDates[index];
+          final isSelected = _isSameDay(date, _selectedDate);
+          final isToday = _isSameDay(date, DateTime.now());
+          final visitCount = _getVisitCountForDate(date);
+          final hasVisits = visitCount > 0;
+
+          return GestureDetector(
+            onTap: () => _onDateSelected(index),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 60,
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? primaryColor 
+                    : isToday 
+                        ? primaryColor.withOpacity(0.1) 
+                        : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(16),
+                border: isToday && !isSelected 
+                    ? Border.all(color: primaryColor, width: 2) 
+                    : null,
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: primaryColor.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    DateFormat('EEE').format(date).toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected 
+                          ? Colors.white.withOpacity(0.8) 
+                          : Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    DateFormat('d').format(date),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  if (hasVisits)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isSelected 
+                            ? Colors.white.withOpacity(0.25) 
+                            : primaryColor.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '$visitCount',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? Colors.white : primaryColor,
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSelectedDateHeader() {
+    final visitCount = _getVisitCountForDate(_selectedDate);
+    final isToday = _isSameDay(_selectedDate, DateTime.now());
+    final isTomorrow = _isSameDay(_selectedDate, DateTime.now().add(const Duration(days: 1)));
+    final isYesterday = _isSameDay(_selectedDate, DateTime.now().subtract(const Duration(days: 1)));
+    
+    String dateLabel;
+    if (isToday) {
+      dateLabel = "Today";
+    } else if (isTomorrow) {
+      dateLabel = "Tomorrow";
+    } else if (isYesterday) {
+      dateLabel = "Yesterday";
+    } else {
+      dateLabel = DateFormat('EEEE').format(_selectedDate);
+    }
+    
+    final fullDate = DateFormat('d MMMM yyyy').format(_selectedDate);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.shade200),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  dateLabel,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  fullDate,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: visitCount > 0 
+                  ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                  : Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.home_work_outlined,
+                  size: 18,
+                  color: visitCount > 0 
+                      ? Theme.of(context).colorScheme.primary 
+                      : Colors.grey.shade500,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '$visitCount ${visitCount == 1 ? 'visit' : 'visits'}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: visitCount > 0 
+                        ? Theme.of(context).colorScheme.primary 
+                        : Colors.grey.shade500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVisitsList(List<HomeVisit> visits) {
+    if (visits.isEmpty) {
+      return _buildEmptyDayState();
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: visits.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final visit = visits[index];
+        return _buildVisitCard(context, visit, index + 1);
+      },
+    );
+  }
+
+  Widget _buildVisitCard(BuildContext context, HomeVisit visit, int visitNumber) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Card(
       elevation: 0,
@@ -142,63 +465,99 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Colors.grey.shade200),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        leading: Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: (isUpcoming ? Colors.green : Colors.blue).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+      child: InkWell(
+        onTap: () => _showVisitDetails(context, visit),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
             children: [
-              Text(
-                date != null ? DateFormat('dd').format(date) : '??',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: isUpcoming ? Colors.green.shade700 : Colors.blue.shade700,
+              // Visit Number Badge
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [primaryColor, primaryColor.withOpacity(0.7)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    '#$visitNumber',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
                 ),
               ),
-              Text(
-                date != null ? DateFormat('MMM').format(date).toUpperCase() : 'N/A',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: isUpcoming ? Colors.green.shade700 : Colors.blue.shade700,
+              const SizedBox(width: 16),
+              
+              // Visit Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      visit.patientName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_outlined, 
+                            size: 14, color: Colors.grey.shade500),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            visit.address,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (visit.notes != null && visit.notes!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.notes_outlined, 
+                              size: 14, color: Colors.grey.shade500),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              visit.notes!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
               ),
+              
+              const Icon(Icons.chevron_right, color: Colors.grey),
             ],
           ),
         ),
-        title: Text(
-          visit.patientName,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    visit.address,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.grey.shade600),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-        onTap: () => _showVisitDetails(context, visit),
       ),
     );
   }
@@ -262,6 +621,14 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
           _buildDetailRow(Icons.location_on, "Address", visit.address),
           const SizedBox(height: 20),
           _buildDetailRow(Icons.notes, "Notes", visit.notes ?? "No notes provided"),
+          if (visit.createdBy != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: Text(
+                "Created by: ${visit.createdBy}",
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+              ),
+            ),
           const SizedBox(height: 40),
           Row(
             children: [
@@ -364,20 +731,35 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
     }
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyDayState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.event_busy_rounded, size: 64, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.event_available_outlined,
+              size: 48,
+              color: Colors.grey.shade400,
+            ),
+          ),
+          const SizedBox(height: 20),
           Text(
             "No visits scheduled",
-            style: TextStyle(fontSize: 18, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            "Use the button below to schedule one",
+            "This day is free!",
             style: TextStyle(color: Colors.grey.shade400),
           ),
         ],
@@ -394,7 +776,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
           children: [
             const Icon(Icons.error_outline_rounded, size: 64, color: Colors.red),
             const SizedBox(height: 16),
-            Text("Oops! Something went wrong", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text("Oops! Something went wrong", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(error, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600)),
             const SizedBox(height: 24),

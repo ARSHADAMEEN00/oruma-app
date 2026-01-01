@@ -138,6 +138,11 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
                        "Registered on: ${DateFormat('dd MMM yyyy, hh:mm a').format(_currentPatient.createdAt!)}",
                        style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
                      ),
+                  if (_currentPatient.createdBy != null)
+                     Text(
+                       "Created by: ${_currentPatient.createdBy}",
+                       style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+                     ),
                 ],
               ),
             ),

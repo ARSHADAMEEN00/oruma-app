@@ -10,6 +10,7 @@ class Equipment {
   final String place;
   final String phone;
   final String status;    // 'available', 'supplied', 'maintenance'
+  final String? createdBy;
   final DateTime? createdAt;
 
   const Equipment({
@@ -22,6 +23,7 @@ class Equipment {
     required this.place,
     required this.phone,
     this.status = 'available',
+    this.createdBy,
     this.createdAt,
   });
 
@@ -39,6 +41,9 @@ class Equipment {
       place: json['place']?.toString() ?? '',
       phone: json['phone']?.toString() ?? '',
       status: json['status']?.toString() ?? 'available',
+      createdBy: json['createdBy'] is Map
+          ? json['createdBy']['name']?.toString()
+          : json['createdBy']?.toString(),
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString())
           : null,

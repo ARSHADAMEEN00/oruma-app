@@ -5,6 +5,7 @@ class HomeVisit {
   final String address;
   final String visitDate; // ISO date string
   final String? notes;
+  final String? createdBy;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -14,6 +15,7 @@ class HomeVisit {
     required this.address,
     required this.visitDate,
     this.notes,
+    this.createdBy,
     this.createdAt,
     this.updatedAt,
   });
@@ -26,6 +28,9 @@ class HomeVisit {
       address: json['address']?.toString() ?? '',
       visitDate: json['visitDate']?.toString() ?? '',
       notes: json['notes']?.toString(),
+      createdBy: json['createdBy'] is Map
+          ? json['createdBy']['name']?.toString()
+          : json['createdBy']?.toString(),
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString())
           : null,

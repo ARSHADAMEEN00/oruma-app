@@ -12,6 +12,7 @@ class Patient {
   final String disease;
   final String plan;
   final String? registerId;
+  final String? createdBy;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -28,6 +29,7 @@ class Patient {
     required this.disease,
     required this.plan,
     this.registerId,
+    this.createdBy,
     this.createdAt,
     this.updatedAt,
   });
@@ -49,6 +51,9 @@ class Patient {
       disease: json['disease']?.toString() ?? '',
       plan: json['plan']?.toString() ?? '',
       registerId: json['registerId']?.toString(),
+      createdBy: json['createdBy'] is Map
+          ? json['createdBy']['name']?.toString()
+          : json['createdBy']?.toString(),
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'].toString())
           : null,
