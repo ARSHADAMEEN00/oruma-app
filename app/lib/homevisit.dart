@@ -25,6 +25,14 @@ class _HomevisitState extends State<Homevisit> {
   List<Patient> _patients = [];
   Patient? _selectedPatient;
   bool _isLoadingPatients = true;
+  
+  // Visit mode options
+  String _selectedVisitMode = 'new';
+  final List<Map<String, String>> _visitModeOptions = [
+    {'value': 'new', 'label': 'New Visit'},
+    {'value': 'monthly', 'label': 'Monthly Visit'},
+    {'value': 'emergency', 'label': 'Emergency Visit'},
+  ];
 
   bool get isEditing => widget.visit != null;
 
@@ -47,7 +55,7 @@ class _HomevisitState extends State<Homevisit> {
         _patients = patients;
         _isLoadingPatients = false;
         
-        // If editing, try to find the matching patient
+        // If editing, try to find the matching patient and visit mode
         if (isEditing) {
           try {
             _selectedPatient = _patients.firstWhere(
@@ -56,6 +64,10 @@ class _HomevisitState extends State<Homevisit> {
           } catch (_) {
             // If not found (maybe name changed or deleted), we'll handle it
             _selectedPatient = null;
+          }
+          // Set visit mode from existing visit
+          if (widget.visit!.visitMode.isNotEmpty) {
+            _selectedVisitMode = widget.visit!.visitMode;
           }
         }
       });
@@ -132,6 +144,7 @@ class _HomevisitState extends State<Homevisit> {
         patientName: _selectedPatient!.name,
         address: addressController.text.trim(),
         visitDate: visitDate!.toIso8601String(),
+        visitMode: _selectedVisitMode,
         notes: notesController.text.trim().isNotEmpty ? notesController.text.trim() : null,
       );
 
@@ -319,11 +332,12 @@ class _HomevisitState extends State<Homevisit> {
               _buildSectionTitle('Patient Information'),
               const SizedBox(height: 16),
               
-              // Patient Dropdown
+              // Patient Dropdown with Add Icon Button
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.02),
@@ -332,63 +346,68 @@ class _HomevisitState extends State<Homevisit> {
                     ),
                   ],
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<Patient>(
-                        value: _selectedPatient,
-                        decoration: InputDecoration(
-                          labelText: 'Select Patient',
-                          prefixIcon: const Icon(Icons.person_search, size: 22),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: primaryColor, width: 1.5),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                        ),
-                        items: [
-                          ..._patients.map((p) => DropdownMenuItem(
-                            value: p,
-                            child: Text(p.name, style: const TextStyle(fontSize: 15)),
-                          )),
-                          const DropdownMenuItem<Patient>(
-                            value: null,
-                            child: Row(
-                              children: [
-                                Icon(Icons.person_add_alt_1_rounded, color: Colors.blue, size: 20),
-                                SizedBox(width: 8),
-                                Text('Add New Patient', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
-                              ],
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<Patient>(
+                            value: _selectedPatient,
+                            decoration: const InputDecoration(
+                              labelText: 'Select Patient',
+                              prefixIcon: Icon(Icons.person_search, size: 22),
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                             ),
-                          ),
-                        ],
-                        onChanged: (val) {
-                          if (val == null) {
-                            _showAddPatientDialog();
-                          } else {
-                            setState(() {
-                              _selectedPatient = val;
-                              // Auto-fill address if not editing or if address is empty
-                              if (addressController.text.isEmpty) {
-                                addressController.text = val.address;
+                            items: _patients.map((p) => DropdownMenuItem(
+                              value: p,
+                              child: Text(p.name, style: const TextStyle(fontSize: 15)),
+                            )).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() {
+                                  _selectedPatient = val;
+                                  // Auto-fill address if not editing or if address is empty
+                                  if (addressController.text.isEmpty) {
+                                    addressController.text = val.address;
+                                  }
+                                });
                               }
-                            });
-                          }
-                        },
-                      ),
+                            },
+                          ),
+                        ),
+                        // Add Patient Icon Button
+                        Container(
+                          decoration: BoxDecoration(
+                            color: primaryColor.withOpacity(0.1),
+                            border: Border(left: BorderSide(color: Colors.grey.shade300)),
+                          ),
+                          child: IconButton(
+                            onPressed: _showAddPatientDialog,
+                            icon: Icon(
+                              Icons.person_add_alt_1_rounded,
+                              color: primaryColor,
+                              size: 24,
+                            ),
+                            tooltip: 'Add New Patient',
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
+              
+
               
               const SizedBox(height: 20),
               _buildTextField(
@@ -401,6 +420,72 @@ class _HomevisitState extends State<Homevisit> {
               const SizedBox(height: 32),
               _buildSectionTitle('Visit Details'),
               const SizedBox(height: 16),
+              
+              // Visit Mode Dropdown
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: DropdownButtonFormField<String>(
+                  value: _selectedVisitMode,
+                  decoration: InputDecoration(
+                    labelText: 'Visit Mode',
+                    prefixIcon: const Icon(Icons.medical_services_outlined, size: 22),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: primaryColor, width: 1.5),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                  items: _visitModeOptions.map((option) => DropdownMenuItem(
+                    value: option['value'],
+                    child: Row(
+                      children: [
+                        Icon(
+                          option['value'] == 'emergency' 
+                              ? Icons.emergency_outlined
+                              : option['value'] == 'monthly' 
+                                  ? Icons.calendar_month_outlined
+                                  : Icons.add_circle_outline,
+                          size: 18,
+                          color: option['value'] == 'emergency' 
+                              ? Colors.red
+                              : option['value'] == 'monthly' 
+                                  ? Colors.blue
+                                  : Colors.green,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(option['label']!, style: const TextStyle(fontSize: 15)),
+                      ],
+                    ),
+                  )).toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() {
+                        _selectedVisitMode = val;
+                      });
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(height: 20),
               InkWell(
                 onTap: _pickDate,
                 borderRadius: BorderRadius.circular(12),

@@ -4,6 +4,7 @@ class HomeVisit {
   final String patientName;
   final String address;
   final String visitDate; // ISO date string
+  final String visitMode; // 'monthly', 'emergency', 'new'
   final String? notes;
   final String? createdBy;
   final DateTime? createdAt;
@@ -14,6 +15,7 @@ class HomeVisit {
     required this.patientName,
     required this.address,
     required this.visitDate,
+    this.visitMode = 'new',
     this.notes,
     this.createdBy,
     this.createdAt,
@@ -27,6 +29,7 @@ class HomeVisit {
       patientName: json['patientName']?.toString() ?? '',
       address: json['address']?.toString() ?? '',
       visitDate: json['visitDate']?.toString() ?? '',
+      visitMode: json['visitMode']?.toString() ?? 'new',
       notes: json['notes']?.toString(),
       createdBy: json['createdBy'] is Map
           ? json['createdBy']['name']?.toString()
@@ -46,6 +49,7 @@ class HomeVisit {
       'patientName': patientName,
       'address': address,
       'visitDate': visitDate,
+      'visitMode': visitMode,
     };
     if (notes != null && notes!.isNotEmpty) {
       map['notes'] = notes;
@@ -59,6 +63,7 @@ class HomeVisit {
     String? patientName,
     String? address,
     String? visitDate,
+    String? visitMode,
     String? notes,
   }) {
     return HomeVisit(
@@ -66,6 +71,7 @@ class HomeVisit {
       patientName: patientName ?? this.patientName,
       address: address ?? this.address,
       visitDate: visitDate ?? this.visitDate,
+      visitMode: visitMode ?? this.visitMode,
       notes: notes ?? this.notes,
       createdAt: createdAt,
       updatedAt: updatedAt,
@@ -74,6 +80,7 @@ class HomeVisit {
 
   @override
   String toString() {
-    return 'HomeVisit(id: $id, patientName: $patientName, visitDate: $visitDate)';
+    return 'HomeVisit(id: $id, patientName: $patientName, visitDate: $visitDate, visitMode: $visitMode)';
   }
 }
+

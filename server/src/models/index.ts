@@ -16,12 +16,20 @@ export interface Patient {
   createdBy?: string;
 }
 
+// Visit Mode Enum
+export enum VisitMode {
+  MONTHLY = 'monthly',
+  EMERGENCY = 'emergency',
+  NEW = 'new',
+}
+
 // Home Visit Model
 export interface HomeVisit {
   id?: string;
   patientName: string;
   address: string;
   visitDate: string; // ISO date string
+  visitMode?: VisitMode;
   notes?: string;
   createdAt?: Date;
   createdBy?: string;
