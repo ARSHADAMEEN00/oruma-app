@@ -12,66 +12,162 @@ class PatientListPage extends StatefulWidget {
 }
 
 class _PatientListPageState extends State<PatientListPage> {
-  late Future<List<Patient>> _patientsFuture;
+  // Data
+  List<Patient> _allPatients = [];
+  bool _isLoading = true;
+  String? _error;
+
+  // Search
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _refreshPatients();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+    _loadPatients();
   }
 
-  void _refreshPatients() {
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadPatients() async {
     setState(() {
-      _patientsFuture = PatientService.getAllPatients();
+      _isLoading = true;
+      _error = null;
     });
+
+    try {
+      final list = await PatientService.getAllPatients();
+      if (mounted) {
+        setState(() {
+          _allPatients = list;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Patients"),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Search patients...',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(color: Colors.grey),
+                ),
+                style: const TextStyle(color: Colors.black),
+              )
+            : const Text("Patients"),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshPatients,
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            onPressed: () {
+              setState(() {
+                if (_isSearching) {
+                  _isSearching = false;
+                  _searchController.clear();
+                  _searchQuery = '';
+                } else {
+                  _isSearching = true;
+                }
+              });
+            },
           ),
+          if (!_isSearching)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _loadPatients,
+            ),
         ],
       ),
-      body: FutureBuilder<List<Patient>>(
-        future: _patientsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      body: Builder(
+        builder: (context) {
+          if (_isLoading) {
             return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
+          }
+          
+          if (_error != null) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.error_outline, size: 48, color: Colors.red),
                   const SizedBox(height: 16),
-                  Text("Error: ${snapshot.error}"),
+                  Text("Error: $_error"),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: _refreshPatients,
+                    onPressed: _loadPatients,
                     child: const Text("Retry"),
                   ),
                 ],
               ),
             );
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          }
+
+          final filteredPatients = _allPatients.where((p) {
+            if (_searchQuery.isEmpty) return true;
+            final q = _searchQuery.toLowerCase();
+            return p.name.toLowerCase().contains(q) ||
+                   p.village.toLowerCase().contains(q) ||
+                   (p.registerId ?? '').toLowerCase().contains(q) ||
+                   p.phone.toLowerCase().contains(q);
+          }).toList();
+
+          if (filteredPatients.isEmpty) {
+            if (_searchQuery.isNotEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.search_off, size: 64, color: Colors.grey[300]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No matching patients found',
+                      style: TextStyle(
+                        fontSize: 16, 
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
             return const Center(child: Text("No patients found."));
           }
 
-          final patients = snapshot.data!;
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: patients.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final patient = patients[index];
-              return _buildPatientCard(context, patient);
-            },
+          return RefreshIndicator(
+            onRefresh: _loadPatients,
+            child: ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: filteredPatients.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final patient = filteredPatients[index];
+                return _buildPatientCard(context, patient);
+              },
+            ),
           );
         },
       ),
@@ -82,7 +178,7 @@ class _PatientListPageState extends State<PatientListPage> {
             MaterialPageRoute(builder: (context) => const patientrigister()),
           );
           if (result == true) {
-            _refreshPatients();
+            _loadPatients();
           }
         },
         label: const Text("Add Patient"),
@@ -149,7 +245,7 @@ class _PatientListPageState extends State<PatientListPage> {
             ),
           );
           if (result == true) {
-            _refreshPatients();
+            _loadPatients();
           }
         },
       ),
