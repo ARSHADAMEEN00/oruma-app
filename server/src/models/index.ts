@@ -65,6 +65,7 @@ export interface EquipmentSupply {
   actualReturnDate?: string;  // When actually returned
   status: 'active' | 'returned' | 'lost';
   notes?: string;
+  returnNote?: string;
   createdAt?: Date;
   updatedAt?: Date;
   createdBy?: string;

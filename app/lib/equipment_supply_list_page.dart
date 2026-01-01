@@ -94,40 +94,120 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
   }
 
   Future<void> _returnSupply(EquipmentSupply supply) async {
-    final confirm = await showDialog<bool>(
+    final noteController = TextEditingController();
+    DateTime selectedDate = DateTime.now();
+
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.assignment_return, color: Colors.orange),
-            SizedBox(width: 8),
-            Text('Confirm Return'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.assignment_return, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('Confirm Return'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mark "${supply.equipmentUniqueId}" as returned from ${supply.patientName}?',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 20),
+                
+                // Date Picker Field
+                const Text(
+                  'Return Date',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate,
+                      firstDate: supply.supplyDate,
+                      lastDate: DateTime.now().add(const Duration(days: 1)),
+                    );
+                    if (picked != null) {
+                      setState(() => selectedDate = picked);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 16, color: Colors.indigo),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Note Field
+                TextField(
+                  controller: noteController,
+                  decoration: InputDecoration(
+                    labelText: 'Return Note (Optional)',
+                    hintText: 'Condition of equipment, etc.',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  ),
+                  maxLines: 2,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, {
+                'confirmed': true,
+                'date': selectedDate,
+                'note': noteController.text.trim(),
+              }),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Mark Returned'),
+            ),
           ],
         ),
-        content: Text(
-          'Mark "${supply.equipmentUniqueId}" as returned from ${supply.patientName}?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Mark Returned'),
-          ),
-        ],
       ),
     );
 
-    if (confirm == true && supply.id != null) {
+    if (result != null && result['confirmed'] == true && supply.id != null) {
       try {
-        await EquipmentSupplyService.returnSupply(supply.id!);
+        await EquipmentSupplyService.returnSupply(
+          supply.id!,
+          date: result['date'],
+          note: result['note'],
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -581,8 +661,16 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                 'Expected Return',
                 _formatDate(supply.returnDate!),
               ),
+            if (supply.actualReturnDate != null)
+              _buildDetailRow(
+                Icons.check_circle_outlined,
+                'Returned On',
+                _formatDate(supply.actualReturnDate!),
+              ),
             if (supply.notes != null && supply.notes!.isNotEmpty)
               _buildDetailRow(Icons.note, 'Notes', supply.notes!),
+            if (supply.returnNote != null && supply.returnNote!.isNotEmpty)
+              _buildDetailRow(Icons.assignment_return_outlined, 'Return Notes', supply.returnNote!),
             if (supply.createdBy != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8),

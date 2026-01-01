@@ -60,8 +60,17 @@ class EquipmentSupplyService {
   }
 
   /// Mark supply as returned
-  static Future<EquipmentSupply> returnSupply(String id) async {
-    return updateSupply(id, {'status': 'returned'});
+  static Future<EquipmentSupply> returnSupply(
+    String id, {
+    DateTime? date,
+    String? note,
+  }) async {
+    final updates = {
+      'status': 'returned',
+      if (date != null) 'actualReturnDate': date.toIso8601String(),
+      if (note != null && note.isNotEmpty) 'returnNote': note,
+    };
+    return updateSupply(id, updates);
   }
 
   /// Delete supply

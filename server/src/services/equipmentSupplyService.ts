@@ -64,7 +64,9 @@ export const equipmentSupplyService = {
         equipment.status = 'available';
         await equipment.save();
       }
-      updates.actualReturnDate = new Date().toISOString();
+      if (!updates.actualReturnDate) {
+        updates.actualReturnDate = new Date().toISOString();
+      }
     }
 
     const updated = await EquipmentSupplyModel.findByIdAndUpdate(id, updates, {
@@ -109,6 +111,7 @@ function toEquipmentSupply(doc: any): EquipmentSupply {
     actualReturnDate: doc.actualReturnDate,
     status: doc.status,
     notes: doc.notes,
+    returnNote: doc.returnNote,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
     createdBy: doc.createdBy && typeof doc.createdBy === 'object' && 'name' in doc.createdBy

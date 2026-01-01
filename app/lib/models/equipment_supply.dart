@@ -12,6 +12,7 @@ class EquipmentSupply {
   final DateTime? actualReturnDate;
   final String status; // 'active', 'returned', 'lost'
   final String? notes;
+  final String? returnNote;
   final String? createdBy;
   final DateTime? createdAt;
 
@@ -29,6 +30,7 @@ class EquipmentSupply {
     this.actualReturnDate,
     this.status = 'active',
     this.notes,
+    this.returnNote,
     this.createdBy,
     this.createdAt,
   });
@@ -52,6 +54,7 @@ class EquipmentSupply {
           : null,
       status: json['status']?.toString() ?? 'active',
       notes: json['notes']?.toString(),
+      returnNote: json['returnNote']?.toString(),
       createdBy: json['createdBy'] is Map
           ? json['createdBy']['name']?.toString()
           : json['createdBy']?.toString(),
@@ -72,8 +75,10 @@ class EquipmentSupply {
       'careOf': careOf,
       'supplyDate': supplyDate.toIso8601String(),
       'returnDate': returnDate?.toIso8601String(),
+      'actualReturnDate': actualReturnDate?.toIso8601String(),
       'status': status,
       'notes': notes,
+      'returnNote': returnNote,
       'createdAt': createdAt?.toIso8601String(),
     };
   }

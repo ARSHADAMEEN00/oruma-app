@@ -26,11 +26,21 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
   bool _loadingDistributed = true;
   String? _errorDistributed;
 
+  // Search
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(_handleTabSelection);
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
     _loadAllData();
   }
 
@@ -38,6 +48,7 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
   void dispose() {
     _tabController.removeListener(_handleTabSelection);
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -117,7 +128,18 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         elevation: 1,
-        title: const Text('Equipment List', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'Search...',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(color: Colors.grey),
+                ),
+                style: const TextStyle(color: Colors.black),
+              )
+            : const Text('Equipment List', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
@@ -140,12 +162,27 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
             onPressed: () {
-               _fetchAvailableEquipment();
-               _fetchDistributedEquipment();
+              setState(() {
+                if (_isSearching) {
+                  _isSearching = false;
+                  _searchController.clear();
+                  _searchQuery = '';
+                } else {
+                  _isSearching = true;
+                }
+              });
             },
           ),
+          if (!_isSearching)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                _fetchAvailableEquipment();
+                _fetchDistributedEquipment();
+              },
+            ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -180,12 +217,33 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
       );
     }
 
+    final filteredItems = _availableItems.where((eq) {
+      if (_searchQuery.isEmpty) return true;
+      final query = _searchQuery.toLowerCase();
+      return eq.name.toLowerCase().contains(query) ||
+          eq.uniqueId.toLowerCase().contains(query) ||
+          eq.place.toLowerCase().contains(query);
+    }).toList();
+
+    if (filteredItems.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 60, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text('No matching equipment found.', style: TextStyle(color: Colors.grey[600])),
+          ],
+        ),
+      );
+    }
+
     return ListView.separated(
       padding: const EdgeInsets.all(12),
-      itemCount: _availableItems.length,
+      itemCount: filteredItems.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final eq = _availableItems[index];
+        final eq = filteredItems[index];
         return Card(
           elevation: 2,
           shadowColor: Colors.black12,
@@ -259,12 +317,33 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
       );
     }
 
+    final filteredItems = _distributedItems.where((supply) {
+      if (_searchQuery.isEmpty) return true;
+      final query = _searchQuery.toLowerCase();
+      return supply.patientName.toLowerCase().contains(query) ||
+          supply.equipmentUniqueId.toLowerCase().contains(query) ||
+          supply.equipmentName.toLowerCase().contains(query);
+    }).toList();
+
+    if (filteredItems.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 60, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text('No matching distribution found.', style: TextStyle(color: Colors.grey[600])),
+          ],
+        ),
+      );
+    }
+
     return ListView.separated(
       padding: const EdgeInsets.all(12),
-      itemCount: _distributedItems.length,
+      itemCount: filteredItems.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final supply = _distributedItems[index];
+        final supply = filteredItems[index];
         return Card(
           elevation: 2,
           shadowColor: Colors.black12,
