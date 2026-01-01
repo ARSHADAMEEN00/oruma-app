@@ -20,6 +20,7 @@ class _EqSupplyState extends State<EqSupply> {
   Equipment? _selectedEquipment;
   Patient? _selectedPatient;
   final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _careOfController = TextEditingController();
 
   // Data
   List<Equipment> _availableEquipment = [];
@@ -56,6 +57,7 @@ class _EqSupplyState extends State<EqSupply> {
   @override
   void dispose() {
     _notesController.dispose();
+    _careOfController.dispose();
     super.dispose();
   }
 
@@ -107,6 +109,7 @@ class _EqSupplyState extends State<EqSupply> {
         patientName: _selectedPatient!.name,
         patientPhone: _selectedPatient!.phone,
         patientAddress: _selectedPatient!.address,
+        careOf: _careOfController.text.trim(),
         supplyDate: DateTime.now(),
         notes: _notesController.text.trim(),
       );
@@ -568,6 +571,13 @@ class _EqSupplyState extends State<EqSupply> {
                                 const SizedBox(height: 16),
                                 _buildPatientPreview(_selectedPatient!),
                               ],
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: _careOfController,
+                                label: 'C/O (Care Of)',
+                                hint: 'name of the person',
+                                icon: Icons.supervised_user_circle_outlined,
+                              ),
                             ],
                           ),
                           const SizedBox(height: 20),

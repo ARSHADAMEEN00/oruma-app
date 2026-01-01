@@ -586,9 +586,19 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
             if (supply.createdBy != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Created by: ${supply.createdBy}',
-                  style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Created by: ${supply.createdBy}',
+                      style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+                    ),
+                    if (supply.createdAt != null)
+                      Text(
+                        'Created on: ${_formatDate(supply.createdAt!)}',
+                        style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+                      ),
+                  ],
                 ),
               ),
             const SizedBox(height: 16),

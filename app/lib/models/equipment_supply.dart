@@ -6,12 +6,14 @@ class EquipmentSupply {
   final String patientName;
   final String patientPhone;
   final String? patientAddress;
+  final String? careOf;
   final DateTime supplyDate;
   final DateTime? returnDate;
   final DateTime? actualReturnDate;
   final String status; // 'active', 'returned', 'lost'
   final String? notes;
   final String? createdBy;
+  final DateTime? createdAt;
 
   const EquipmentSupply({
     this.id,
@@ -21,12 +23,14 @@ class EquipmentSupply {
     required this.patientName,
     required this.patientPhone,
     this.patientAddress,
+    this.careOf,
     required this.supplyDate,
     this.returnDate,
     this.actualReturnDate,
     this.status = 'active',
     this.notes,
     this.createdBy,
+    this.createdAt,
   });
 
   factory EquipmentSupply.fromJson(Map<String, dynamic> json) {
@@ -38,6 +42,7 @@ class EquipmentSupply {
       patientName: json['patientName']?.toString() ?? '',
       patientPhone: json['patientPhone']?.toString() ?? '',
       patientAddress: json['patientAddress']?.toString(),
+      careOf: json['careOf']?.toString(),
       supplyDate: DateTime.tryParse(json['supplyDate']?.toString() ?? '') ?? DateTime.now(),
       returnDate: json['returnDate'] != null 
           ? DateTime.tryParse(json['returnDate'].toString()) 
@@ -50,6 +55,9 @@ class EquipmentSupply {
       createdBy: json['createdBy'] is Map
           ? json['createdBy']['name']?.toString()
           : json['createdBy']?.toString(),
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString())
+          : null,
     );
   }
 
@@ -61,10 +69,12 @@ class EquipmentSupply {
       'patientName': patientName,
       'patientPhone': patientPhone,
       'patientAddress': patientAddress,
+      'careOf': careOf,
       'supplyDate': supplyDate.toIso8601String(),
       'returnDate': returnDate?.toIso8601String(),
       'status': status,
       'notes': notes,
+      'createdAt': createdAt?.toIso8601String(),
     };
   }
 }
