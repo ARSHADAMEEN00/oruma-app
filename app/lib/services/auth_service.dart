@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -8,13 +7,13 @@ import 'package:oruma_app/services/api_config.dart';
 class AuthService with ChangeNotifier {
   // Use ApiConfig to get the correct base URL
   String get _baseUrl => '${ApiConfig.baseUrl}/auth';
-  
+
   String? _token;
   String? get token => _token;
 
   String? _role;
   String? get role => _role;
-  
+
   bool get isAuthenticated => _token != null;
   bool get isAdmin => _role == 'admin';
 
@@ -30,23 +29,20 @@ class AuthService with ChangeNotifier {
       final response = await http.post(
         Uri.parse('$_baseUrl/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
+        body: jsonEncode({'email': email, 'password': password}),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         _token = data['token'];
         _role = data['role']; // Get role from response
-        
+
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', _token!);
         if (_role != null) {
           await prefs.setString('auth_role', _role!);
         }
-        
+
         notifyListeners();
         return true;
       }

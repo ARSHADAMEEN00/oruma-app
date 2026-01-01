@@ -83,4 +83,3 @@ class HomeVisit {
     return 'HomeVisit(id: $id, patientName: $patientName, visitDate: $visitDate, visitMode: $visitMode)';
   }
 }
-

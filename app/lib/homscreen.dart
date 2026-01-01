@@ -11,7 +11,6 @@ import 'package:oruma_app/loginscreen.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 
-
 class Homescreen extends StatefulWidget {
   const Homescreen({super.key});
 
@@ -66,7 +65,9 @@ class _HomescreenState extends State<Homescreen> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -88,7 +89,9 @@ class _HomescreenState extends State<Homescreen> {
                       "Manage patients, equipment & home visits",
                       style: TextStyle(
                         fontSize: 14,
-                        color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onPrimary.withOpacity(0.9),
                       ),
                     ),
                   ],
@@ -161,10 +164,12 @@ class _HomescreenState extends State<Homescreen> {
       future: EquipmentSupplyService.getActiveSupplies(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: Padding(
-            padding: EdgeInsets.all(20.0),
-            child: CircularProgressIndicator(),
-          ));
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child: CircularProgressIndicator(),
+            ),
+          );
         } else if (snapshot.hasError) {
           return const SizedBox.shrink(); // Hide if error
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -226,7 +231,7 @@ class _HomescreenState extends State<Homescreen> {
                               ),
                             ),
                             const SizedBox(width: 12),
-                           Expanded(
+                            Expanded(
                               child: Text(
                                 supply.equipmentName,
                                 style: const TextStyle(
@@ -242,8 +247,11 @@ class _HomescreenState extends State<Homescreen> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            Icon(Icons.person_outline_rounded, 
-                              size: 16, color: Colors.grey.shade600),
+                            Icon(
+                              Icons.person_outline_rounded,
+                              size: 16,
+                              color: Colors.grey.shade600,
+                            ),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
@@ -259,10 +267,13 @@ class _HomescreenState extends State<Homescreen> {
                           ],
                         ),
                         const SizedBox(height: 4),
-                         Row(
+                        Row(
                           children: [
-                            Icon(Icons.calendar_today_rounded, 
-                              size: 16, color: Colors.grey.shade600),
+                            Icon(
+                              Icons.calendar_today_rounded,
+                              size: 16,
+                              color: Colors.grey.shade600,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               "Supplied: ${supply.supplyDate}",
@@ -376,7 +387,9 @@ class _HomescreenState extends State<Homescreen> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const PatientListPage()),
+                      MaterialPageRoute(
+                        builder: (context) => const PatientListPage(),
+                      ),
                     );
                   },
                 ),
@@ -388,7 +401,9 @@ class _HomescreenState extends State<Homescreen> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const HomeVisitListPage()),
+                      MaterialPageRoute(
+                        builder: (context) => const HomeVisitListPage(),
+                      ),
                     );
                   },
                 ),
@@ -402,7 +417,9 @@ class _HomescreenState extends State<Homescreen> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const EquipmentListPage()),
+                      MaterialPageRoute(
+                        builder: (context) => const EquipmentListPage(),
+                      ),
                     );
                   },
                 ),
@@ -414,7 +431,9 @@ class _HomescreenState extends State<Homescreen> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const EquipmentFormPage()),
+                      MaterialPageRoute(
+                        builder: (context) => const EquipmentFormPage(),
+                      ),
                     );
                   },
                 ),
@@ -438,7 +457,9 @@ class _HomescreenState extends State<Homescreen> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const EquipmentSupplyListPage()),
+                      MaterialPageRoute(
+                        builder: (context) => const EquipmentSupplyListPage(),
+                      ),
                     );
                   },
                 ),
@@ -466,9 +487,7 @@ class _HomescreenState extends State<Homescreen> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
-              border: Border(
-                top: BorderSide(color: Colors.grey.shade200),
-              ),
+              border: Border(top: BorderSide(color: Colors.grey.shade200)),
             ),
             child: Row(
               children: [
@@ -476,7 +495,9 @@ class _HomescreenState extends State<Homescreen> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -511,7 +532,9 @@ class _HomescreenState extends State<Homescreen> {
                   onPressed: () {
                     context.read<AuthService>().logout();
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const Loginscreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const Loginscreen(),
+                      ),
                       (route) => false,
                     );
                   },
@@ -547,7 +570,7 @@ class _HomescreenState extends State<Homescreen> {
     bool isSelected = false,
   }) {
     final primaryColor = Theme.of(context).colorScheme.primary;
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       decoration: BoxDecoration(
@@ -569,9 +592,7 @@ class _HomescreenState extends State<Homescreen> {
           ),
         ),
         onTap: onTap,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         dense: true,
         visualDensity: const VisualDensity(vertical: -1),
       ),
@@ -591,7 +612,10 @@ class _HomescreenState extends State<Homescreen> {
       elevation: 0,
       child: InkWell(
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => page),
+          );
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(

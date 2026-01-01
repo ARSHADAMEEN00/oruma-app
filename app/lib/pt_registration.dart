@@ -65,7 +65,9 @@ class _patientrigisterState extends State<patientrigister> {
   Widget build(BuildContext context) {
     final isEditing = widget.patient != null;
     return Scaffold(
-      appBar: AppBar(title: Text(isEditing ? "Edit Patient" : "Patient Registration")),
+      appBar: AppBar(
+        title: Text(isEditing ? "Edit Patient" : "Patient Registration"),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -75,10 +77,9 @@ class _patientrigisterState extends State<patientrigister> {
               // Patient Name
               TextFormField(
                 controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: "Patient Name",
-                ),
-                validator: (val) => val == null || val.isEmpty ? "Enter name" : null,
+                decoration: const InputDecoration(labelText: "Patient Name"),
+                validator: (val) =>
+                    val == null || val.isEmpty ? "Enter name" : null,
               ),
               const SizedBox(height: 20),
               TextFormField(
@@ -86,7 +87,8 @@ class _patientrigisterState extends State<patientrigister> {
                 decoration: const InputDecoration(
                   labelText: "Relation of patient with Name",
                 ),
-                validator: (val) => val == null || val.isEmpty ? "Enter relation" : null,
+                validator: (val) =>
+                    val == null || val.isEmpty ? "Enter relation" : null,
               ),
               const SizedBox(height: 20),
               TextFormField(
@@ -96,7 +98,8 @@ class _patientrigisterState extends State<patientrigister> {
                   prefixIcon: Icon(Icons.phone),
                 ),
                 keyboardType: TextInputType.phone,
-                validator: (val) => val == null || val.isEmpty ? "Enter phone" : null,
+                validator: (val) =>
+                    val == null || val.isEmpty ? "Enter phone" : null,
               ),
               const SizedBox(height: 20),
               const Text(
@@ -155,7 +158,8 @@ class _patientrigisterState extends State<patientrigister> {
                   labelText: "Full Address",
                   border: OutlineInputBorder(),
                 ),
-                validator: (val) => val == null || val.isEmpty ? "Enter address" : null,
+                validator: (val) =>
+                    val == null || val.isEmpty ? "Enter address" : null,
               ),
               const SizedBox(height: 15),
 
@@ -183,7 +187,8 @@ class _patientrigisterState extends State<patientrigister> {
                   labelText: "Place",
                   border: OutlineInputBorder(),
                 ),
-                validator: (val) => val == null || val.isEmpty ? "Enter place" : null,
+                validator: (val) =>
+                    val == null || val.isEmpty ? "Enter place" : null,
               ),
               const SizedBox(height: 20),
 
@@ -248,7 +253,7 @@ class _patientrigisterState extends State<patientrigister> {
                         setState(() {}); // refresh gender helper text if needed
                         if (isValid && genderSelected) {
                           setState(() => _isLoading = true);
-                          
+
                           try {
                             final patientData = Patient(
                               id: widget.patient?.id,
@@ -266,26 +271,34 @@ class _patientrigisterState extends State<patientrigister> {
                             );
 
                             if (isEditing) {
-                              final updated = await PatientService.updatePatient(widget.patient!.id!, patientData);
+                              final updated =
+                                  await PatientService.updatePatient(
+                                    widget.patient!.id!,
+                                    patientData,
+                                  );
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text("✅ Patient Updated Successfully"),
+                                    content: Text(
+                                      "✅ Patient Updated Successfully",
+                                    ),
                                     backgroundColor: Colors.green,
                                   ),
                                 );
-                                Navigator.pop(context, updated); 
+                                Navigator.pop(context, updated);
                               }
                             } else {
                               await PatientService.createPatient(patientData);
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text("✅ Patient Registered Successfully"),
+                                    content: Text(
+                                      "✅ Patient Registered Successfully",
+                                    ),
                                     backgroundColor: Colors.green,
                                   ),
                                 );
-                                Navigator.pop(context, true); 
+                                Navigator.pop(context, true);
                               }
                             }
                           } catch (e) {
@@ -319,4 +332,3 @@ class _patientrigisterState extends State<patientrigister> {
     );
   }
 }
-

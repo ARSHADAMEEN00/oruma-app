@@ -15,7 +15,7 @@ class EqSupply extends StatefulWidget {
 
 class _EqSupplyState extends State<EqSupply> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Form fields
   Equipment? _selectedEquipment;
   Patient? _selectedPatient;
@@ -36,10 +36,7 @@ class _EqSupplyState extends State<EqSupply> {
 
   Future<void> _loadInitialData() async {
     setState(() => _loading = true);
-    await Future.wait([
-      _fetchAvailableEquipment(),
-      _fetchPatients(),
-    ]);
+    await Future.wait([_fetchAvailableEquipment(), _fetchPatients()]);
     setState(() => _loading = false);
   }
 
@@ -88,12 +85,18 @@ class _EqSupplyState extends State<EqSupply> {
             children: [
               const Icon(Icons.warning_amber_rounded, color: Colors.white),
               const SizedBox(width: 8),
-              Text(_selectedEquipment == null ? 'Please select a equipment' : 'Please select a patient'),
+              Text(
+                _selectedEquipment == null
+                    ? 'Please select a equipment'
+                    : 'Please select a patient',
+              ),
             ],
           ),
           backgroundColor: Colors.orange,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -128,7 +131,9 @@ class _EqSupplyState extends State<EqSupply> {
             ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
         Navigator.pop(context, true);
@@ -140,7 +145,9 @@ class _EqSupplyState extends State<EqSupply> {
             content: Text('Error: $e'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -220,20 +227,26 @@ class _EqSupplyState extends State<EqSupply> {
                           disease: '',
                           plan: '',
                         );
-                        final created = await PatientService.createPatient(newPatient);
+                        final created = await PatientService.createPatient(
+                          newPatient,
+                        );
                         if (context.mounted) Navigator.pop(context, created);
                       } catch (e) {
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: $e')),
-                          );
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text('Error: $e')));
                         }
                       } finally {
                         setDialogState(() => localLoading = false);
                       }
                     },
               child: localLoading
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Text('Add Patient'),
             ),
           ],
@@ -343,7 +356,7 @@ class _EqSupplyState extends State<EqSupply> {
                       ],
                     ),
                   ),
-                  
+
                   // Form Section
                   Padding(
                     padding: const EdgeInsets.all(20),
@@ -363,15 +376,26 @@ class _EqSupplyState extends State<EqSupply> {
                                 decoration: BoxDecoration(
                                   color: Colors.grey[50],
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey.shade300),
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
                                 ),
                                 child: DropdownButtonFormField<Equipment>(
                                   decoration: InputDecoration(
                                     hintText: 'Choose from available equipment',
-                                    hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                                    prefixIcon: Icon(Icons.inventory_2_outlined, color: Colors.grey[500]),
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey[400],
+                                      fontSize: 14,
+                                    ),
+                                    prefixIcon: Icon(
+                                      Icons.inventory_2_outlined,
+                                      color: Colors.grey[500],
+                                    ),
                                     border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
                                   ),
                                   value: _selectedEquipment,
                                   isExpanded: true,
@@ -387,8 +411,11 @@ class _EqSupplyState extends State<EqSupply> {
                                       ),
                                     );
                                   }).toList(),
-                                  onChanged: (val) => setState(() => _selectedEquipment = val),
-                                  validator: (val) => val == null ? 'Please select equipment' : null,
+                                  onChanged: (val) =>
+                                      setState(() => _selectedEquipment = val),
+                                  validator: (val) => val == null
+                                      ? 'Please select equipment'
+                                      : null,
                                 ),
                               ),
 
@@ -407,7 +434,9 @@ class _EqSupplyState extends State<EqSupply> {
                                       end: Alignment.bottomRight,
                                     ),
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.orange.shade200),
+                                    border: Border.all(
+                                      color: Colors.orange.shade200,
+                                    ),
                                   ),
                                   child: Row(
                                     children: [
@@ -415,10 +444,14 @@ class _EqSupplyState extends State<EqSupply> {
                                         padding: const EdgeInsets.all(10),
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.orange.withOpacity(0.2),
+                                              color: Colors.orange.withOpacity(
+                                                0.2,
+                                              ),
                                               blurRadius: 8,
                                             ),
                                           ],
@@ -432,7 +465,8 @@ class _EqSupplyState extends State<EqSupply> {
                                       const SizedBox(width: 14),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               _selectedEquipment!.name,
@@ -444,7 +478,11 @@ class _EqSupplyState extends State<EqSupply> {
                                             const SizedBox(height: 4),
                                             Row(
                                               children: [
-                                                Icon(Icons.tag, size: 14, color: Colors.grey[600]),
+                                                Icon(
+                                                  Icons.tag,
+                                                  size: 14,
+                                                  color: Colors.grey[600],
+                                                ),
                                                 const SizedBox(width: 4),
                                                 Text(
                                                   _selectedEquipment!.uniqueId,
@@ -454,7 +492,11 @@ class _EqSupplyState extends State<EqSupply> {
                                                   ),
                                                 ),
                                                 const SizedBox(width: 12),
-                                                Icon(Icons.place, size: 14, color: Colors.grey[600]),
+                                                Icon(
+                                                  Icons.place,
+                                                  size: 14,
+                                                  color: Colors.grey[600],
+                                                ),
                                                 const SizedBox(width: 4),
                                                 Expanded(
                                                   child: Text(
@@ -463,7 +505,8 @@ class _EqSupplyState extends State<EqSupply> {
                                                       color: Colors.grey[600],
                                                       fontSize: 13,
                                                     ),
-                                                    overflow: TextOverflow.ellipsis,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   ),
                                                 ),
                                               ],
@@ -489,16 +532,23 @@ class _EqSupplyState extends State<EqSupply> {
                                   decoration: BoxDecoration(
                                     color: Colors.red.shade50,
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.red.shade200),
+                                    border: Border.all(
+                                      color: Colors.red.shade200,
+                                    ),
                                   ),
                                   child: Row(
                                     children: [
-                                      Icon(Icons.warning_rounded, color: Colors.red.shade600),
+                                      Icon(
+                                        Icons.warning_rounded,
+                                        color: Colors.red.shade600,
+                                      ),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Text(
                                           'No equipment available for distribution',
-                                          style: TextStyle(color: Colors.red.shade700),
+                                          style: TextStyle(
+                                            color: Colors.red.shade700,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -520,15 +570,27 @@ class _EqSupplyState extends State<EqSupply> {
                                       decoration: BoxDecoration(
                                         color: Colors.grey[50],
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: Colors.grey.shade300),
+                                        border: Border.all(
+                                          color: Colors.grey.shade300,
+                                        ),
                                       ),
                                       child: DropdownButtonFormField<Patient>(
                                         decoration: InputDecoration(
                                           hintText: 'Select Patient',
-                                          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-                                          prefixIcon: Icon(Icons.person_search, color: Colors.grey[500]),
+                                          hintStyle: TextStyle(
+                                            color: Colors.grey[400],
+                                            fontSize: 14,
+                                          ),
+                                          prefixIcon: Icon(
+                                            Icons.person_search,
+                                            color: Colors.grey[500],
+                                          ),
                                           border: InputBorder.none,
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 16,
+                                                vertical: 12,
+                                              ),
                                         ),
                                         value: _selectedPatient,
                                         isExpanded: true,
@@ -539,14 +601,18 @@ class _EqSupplyState extends State<EqSupply> {
                                             value: p,
                                             child: Text(
                                               '${p.name} (${p.village})',
-                                              style: const TextStyle(fontSize: 14),
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                              ),
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           );
                                         }).toList(),
                                         onChanged: (val) {
                                           if (val != null) {
-                                            setState(() => _selectedPatient = val);
+                                            setState(
+                                              () => _selectedPatient = val,
+                                            );
                                           }
                                         },
                                       ),
@@ -560,9 +626,14 @@ class _EqSupplyState extends State<EqSupply> {
                                       decoration: BoxDecoration(
                                         color: Colors.blue.shade50,
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: Colors.blue.shade200),
+                                        border: Border.all(
+                                          color: Colors.blue.shade200,
+                                        ),
                                       ),
-                                      child: Icon(Icons.person_add_alt_1_rounded, color: Colors.blue.shade700),
+                                      child: Icon(
+                                        Icons.person_add_alt_1_rounded,
+                                        color: Colors.blue.shade700,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -604,7 +675,10 @@ class _EqSupplyState extends State<EqSupply> {
                             width: double.infinity,
                             height: 56,
                             child: ElevatedButton(
-                              onPressed: _submitting || _availableEquipment.isEmpty ? null : _submit,
+                              onPressed:
+                                  _submitting || _availableEquipment.isEmpty
+                                  ? null
+                                  : _submit,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.orange,
                                 foregroundColor: Colors.white,
@@ -621,13 +695,20 @@ class _EqSupplyState extends State<EqSupply> {
                                       height: 24,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2.5,
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
                                       ),
                                     )
                                   : const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        Icon(Icons.local_shipping_rounded, size: 22),
+                                        Icon(
+                                          Icons.local_shipping_rounded,
+                                          size: 22,
+                                        ),
                                         SizedBox(width: 10),
                                         Text(
                                           'Confirm Distribution',
@@ -688,7 +769,10 @@ class _EqSupplyState extends State<EqSupply> {
                 backgroundColor: Colors.blue.shade100,
                 child: Text(
                   patient.name[0].toUpperCase(),
-                  style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.blue.shade700,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -698,7 +782,10 @@ class _EqSupplyState extends State<EqSupply> {
                   children: [
                     Text(
                       patient.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
                     Text(
                       patient.phone,
@@ -718,7 +805,11 @@ class _EqSupplyState extends State<EqSupply> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.location_on_outlined, size: 14, color: Colors.grey[600]),
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 14,
+                  color: Colors.grey[600],
+                ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -765,11 +856,7 @@ class _EqSupplyState extends State<EqSupply> {
                   color: iconColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  icon,
-                  color: iconColor,
-                  size: 20,
-                ),
+                child: Icon(icon, color: iconColor, size: 20),
               ),
               const SizedBox(width: 12),
               Text(
@@ -810,7 +897,10 @@ class _EqSupplyState extends State<EqSupply> {
         prefixIcon: Icon(icon, color: Colors.grey[500], size: 22),
         filled: true,
         fillColor: Colors.grey[50],
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey.shade300),

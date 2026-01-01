@@ -7,7 +7,8 @@ class EquipmentSupplyListPage extends StatefulWidget {
   const EquipmentSupplyListPage({super.key});
 
   @override
-  State<EquipmentSupplyListPage> createState() => _EquipmentSupplyListPageState();
+  State<EquipmentSupplyListPage> createState() =>
+      _EquipmentSupplyListPageState();
 }
 
 class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
@@ -112,7 +113,9 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: const Row(
             children: [
               Icon(Icons.assignment_return, color: Colors.orange),
@@ -130,7 +133,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                   style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Date Picker Field
                 const Text(
                   'Return Date',
@@ -155,14 +158,21 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                   },
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey.shade300),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.calendar_today, size: 16, color: Colors.indigo),
+                        const Icon(
+                          Icons.calendar_today,
+                          size: 16,
+                          color: Colors.indigo,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
@@ -183,7 +193,10 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
                   ),
                   maxLines: 2,
                 ),
@@ -231,10 +244,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('❌ Error: $e'),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text('❌ Error: $e'), backgroundColor: Colors.red),
           );
         }
       }
@@ -345,10 +355,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
             },
           ),
           if (!_isSearching)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _loadData,
-            ),
+            IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -360,10 +367,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _buildActiveList(),
-          _buildHistoryList(),
-        ],
+        children: [_buildActiveList(), _buildHistoryList()],
       ),
     );
   }
@@ -576,13 +580,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
       children: [
         Icon(icon, size: 14, color: Colors.grey[500]),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 13,
-          ),
-        ),
+        Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
       ],
     );
   }
@@ -607,10 +605,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: TextStyle(color: Colors.grey[500]),
-          ),
+          Text(subtitle, style: TextStyle(color: Colors.grey[500])),
         ],
       ),
     );
@@ -717,8 +712,13 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
             // Patient Details
             _buildDetailRow(Icons.person, 'Patient', supply.patientName),
             _buildDetailRow(Icons.phone, 'Phone', supply.patientPhone),
-            if (supply.patientAddress != null && supply.patientAddress!.isNotEmpty)
-              _buildDetailRow(Icons.location_on, 'Address', supply.patientAddress!),
+            if (supply.patientAddress != null &&
+                supply.patientAddress!.isNotEmpty)
+              _buildDetailRow(
+                Icons.location_on,
+                'Address',
+                supply.patientAddress!,
+              ),
             _buildDetailRow(
               Icons.calendar_today,
               'Supply Date',
@@ -739,7 +739,11 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
             if (supply.notes != null && supply.notes!.isNotEmpty)
               _buildDetailRow(Icons.note, 'Notes', supply.notes!),
             if (supply.returnNote != null && supply.returnNote!.isNotEmpty)
-              _buildDetailRow(Icons.assignment_return_outlined, 'Return Notes', supply.returnNote!),
+              _buildDetailRow(
+                Icons.assignment_return_outlined,
+                'Return Notes',
+                supply.returnNote!,
+              ),
             if (supply.createdBy != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -748,12 +752,18 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                   children: [
                     Text(
                       'Created by: ${supply.createdBy}',
-                      style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+                      style: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 11,
+                      ),
                     ),
                     if (supply.createdAt != null)
                       Text(
                         'Created on: ${_formatDate(supply.createdAt!)}',
-                        style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+                        style: TextStyle(
+                          color: Colors.grey.shade400,
+                          fontSize: 11,
+                        ),
                       ),
                   ],
                 ),

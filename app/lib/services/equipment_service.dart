@@ -15,7 +15,8 @@ class CreateEquipmentResponse {
   });
 
   factory CreateEquipmentResponse.fromJson(Map<String, dynamic> json) {
-    final equipmentList = (json['equipment'] as List<dynamic>?)
+    final equipmentList =
+        (json['equipment'] as List<dynamic>?)
             ?.map((e) => Equipment.fromJson(e as Map<String, dynamic>))
             .toList() ??
         [];
@@ -97,7 +98,8 @@ class EquipmentService {
   }
 
   /// Update an existing equipment.
-  static Future<Equipment> updateEquipment(String id, {
+  static Future<Equipment> updateEquipment(
+    String id, {
     String? name,
     String? serialNo,
     String? purchasedFrom,

@@ -75,26 +75,26 @@ class _EquipmentRegistrationState extends State<EquipmentRegistration> {
     });
 
     try {
-      final equipment = Equipment(
-        serialNo: generateSerial(itemNameController.text.trim()),
+      final response = await EquipmentService.createEquipment(
         name: itemNameController.text.trim(),
         quantity: qty,
         purchasedFrom: purchasedFromController.text.trim(),
         place: placeController.text.trim(),
         phone: phoneController.text.trim(),
+        serialNo: generateSerial(itemNameController.text.trim()),
       );
 
-      final savedEquipment = await EquipmentService.createEquipment(equipment);
-
       setState(() {
-        equipmentList.insert(0, savedEquipment);
-        counter++;
+        equipmentList.insertAll(0, response.equipment);
+        counter += qty;
       });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Equipment saved: ${equipment.name}'),
+            content: Text(
+              '✅ Equipment saved: ${itemNameController.text.trim()} ($qty items)',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -283,7 +283,9 @@ class _EquipmentRegistrationState extends State<EquipmentRegistration> {
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer,
                           child: Text(
                             eq.serialNo.substring(0, 2),
                             style: TextStyle(

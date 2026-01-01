@@ -47,7 +47,10 @@ class EquipmentSupplyService {
   }
 
   /// Update supply (e.g. mark returned)
-  static Future<EquipmentSupply> updateSupply(String id, Map<String, dynamic> updates) async {
+  static Future<EquipmentSupply> updateSupply(
+    String id,
+    Map<String, dynamic> updates,
+  ) async {
     final result = await ApiService.put<Map<String, dynamic>>(
       '${ApiConfig.equipmentSuppliesEndpoint}/$id',
       body: updates,

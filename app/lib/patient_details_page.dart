@@ -30,7 +30,9 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Delete Patient"),
-        content: Text("Are you sure you want to delete ${_currentPatient.name}? This action cannot be undone."),
+        content: Text(
+          "Are you sure you want to delete ${_currentPatient.name}? This action cannot be undone.",
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -57,9 +59,9 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Error: ${e.toString()}")),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
         }
       } finally {
         if (mounted) setState(() => _isLoading = false);
@@ -79,7 +81,8 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => patientrigister(patient: _currentPatient),
+                  builder: (context) =>
+                      patientrigister(patient: _currentPatient),
                 ),
               );
               if (result != null && result is Patient) {
@@ -89,11 +92,13 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
               } else if (result == true) {
                 // If it just returned true, refetch
                 try {
-                   final updated = await PatientService.getPatientById(_currentPatient.id!);
-                   setState(() {
-                     _currentPatient = updated;
-                   });
-                } catch(e) {
+                  final updated = await PatientService.getPatientById(
+                    _currentPatient.id!,
+                  );
+                  setState(() {
+                    _currentPatient = updated;
+                  });
+                } catch (e) {
                   // ignore
                 }
               }
@@ -115,37 +120,75 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
                 children: [
                   _buildHeader(),
                   const SizedBox(height: 24),
-                   _buildInfoSection("Personal Information", [
+                  _buildInfoSection("Personal Information", [
                     if (_currentPatient.registerId != null)
-                      _buildInfoTile(Icons.app_registration, "Register ID", _currentPatient.registerId!),
-                    _buildInfoTile(Icons.person, "Full Name", _currentPatient.name),
+                      _buildInfoTile(
+                        Icons.app_registration,
+                        "Register ID",
+                        _currentPatient.registerId!,
+                      ),
+                    _buildInfoTile(
+                      Icons.person,
+                      "Full Name",
+                      _currentPatient.name,
+                    ),
                     _buildInfoTile(Icons.phone, "Phone", _currentPatient.phone),
-                    _buildInfoTile(Icons.info_outline, "Relation", _currentPatient.relation),
+                    _buildInfoTile(
+                      Icons.info_outline,
+                      "Relation",
+                      _currentPatient.relation,
+                    ),
                     _buildInfoTile(Icons.wc, "Gender", _currentPatient.gender),
-                    _buildInfoTile(Icons.cake, "Age", "${_currentPatient.age} years"),
+                    _buildInfoTile(
+                      Icons.cake,
+                      "Age",
+                      "${_currentPatient.age} years",
+                    ),
                   ]),
                   const SizedBox(height: 24),
                   _buildInfoSection("Location", [
-                    _buildInfoTile(Icons.location_on, "Address", _currentPatient.address),
+                    _buildInfoTile(
+                      Icons.location_on,
+                      "Address",
+                      _currentPatient.address,
+                    ),
                     _buildInfoTile(Icons.place, "Place", _currentPatient.place),
-                    _buildInfoTile(Icons.home, "Village", _currentPatient.village),
+                    _buildInfoTile(
+                      Icons.home,
+                      "Village",
+                      _currentPatient.village,
+                    ),
                   ]),
                   const SizedBox(height: 24),
                   _buildInfoSection("Medical Details", [
-                    _buildInfoTile(Icons.medical_services, "Disease", _currentPatient.disease),
-                    _buildInfoTile(Icons.assignment, "Plan", _currentPatient.plan),
+                    _buildInfoTile(
+                      Icons.medical_services,
+                      "Disease",
+                      _currentPatient.disease,
+                    ),
+                    _buildInfoTile(
+                      Icons.assignment,
+                      "Plan",
+                      _currentPatient.plan,
+                    ),
                   ]),
                   const SizedBox(height: 24),
                   if (_currentPatient.createdAt != null)
-                     Text(
-                       "Registered on: ${DateFormat('dd MMM yyyy, hh:mm a').format(_currentPatient.createdAt!)}",
-                       style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-                     ),
+                    Text(
+                      "Registered on: ${DateFormat('dd MMM yyyy, hh:mm a').format(_currentPatient.createdAt!)}",
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                      ),
+                    ),
                   if (_currentPatient.createdBy != null)
-                     Text(
-                       "Created by: ${_currentPatient.createdBy}",
-                       style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
-                     ),
+                    Text(
+                      "Created by: ${_currentPatient.createdBy}",
+                      style: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 11,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -158,7 +201,9 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
         children: [
           CircleAvatar(
             radius: 40,
-            backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.primary.withOpacity(0.1),
             child: Text(
               _currentPatient.name[0].toUpperCase(),
               style: TextStyle(
@@ -206,9 +251,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.grey.shade200),
           ),
-          child: Column(
-            children: children,
-          ),
+          child: Column(children: children),
         ),
       ],
     );
@@ -216,9 +259,23 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
 
   Widget _buildInfoTile(IconData icon, String label, String value) {
     return ListTile(
-      leading: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 20),
-      title: Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-      subtitle: Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black87)),
+      leading: Icon(
+        icon,
+        color: Theme.of(context).colorScheme.primary,
+        size: 20,
+      ),
+      title: Text(
+        label,
+        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+      ),
+      subtitle: Text(
+        value,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: Colors.black87,
+        ),
+      ),
     );
   }
 }

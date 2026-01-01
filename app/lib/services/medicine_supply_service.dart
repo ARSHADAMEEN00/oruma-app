@@ -35,7 +35,9 @@ class MedicineSupplyService {
   }
 
   /// Create a new medicine supply.
-  static Future<MedicineSupply> createMedicineSupply(MedicineSupply supply) async {
+  static Future<MedicineSupply> createMedicineSupply(
+    MedicineSupply supply,
+  ) async {
     final result = await ApiService.post<Map<String, dynamic>>(
       ApiConfig.medicineSuppliesEndpoint,
       body: supply.toJson(),
@@ -49,7 +51,10 @@ class MedicineSupplyService {
   }
 
   /// Update an existing medicine supply.
-  static Future<MedicineSupply> updateMedicineSupply(String id, MedicineSupply supply) async {
+  static Future<MedicineSupply> updateMedicineSupply(
+    String id,
+    MedicineSupply supply,
+  ) async {
     final result = await ApiService.put<Map<String, dynamic>>(
       '${ApiConfig.medicineSuppliesEndpoint}/$id',
       body: supply.toJson(),

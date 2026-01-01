@@ -15,7 +15,7 @@ class ApiResult<T> {
 }
 
 /// Base API service for making HTTP requests.
-/// 
+///
 /// Provides common methods for GET, POST, PUT, and DELETE operations.
 class ApiService {
   static final http.Client _client = http.Client();
@@ -24,7 +24,7 @@ class ApiService {
   static Future<Map<String, String>> _getHeaders() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
-    
+
     final headers = Map<String, String>.from(ApiConfig.headers);
     if (token != null) {
       headers['Authorization'] = 'Bearer $token';
@@ -77,11 +77,7 @@ class ApiService {
     try {
       final headers = await _getHeaders();
       final response = await _client
-          .post(
-            Uri.parse(url),
-            headers: headers,
-            body: json.encode(body),
-          )
+          .post(Uri.parse(url), headers: headers, body: json.encode(body))
           .timeout(ApiConfig.timeout);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -106,11 +102,7 @@ class ApiService {
     try {
       final headers = await _getHeaders();
       final response = await _client
-          .put(
-            Uri.parse(url),
-            headers: headers,
-            body: json.encode(body),
-          )
+          .put(Uri.parse(url), headers: headers, body: json.encode(body))
           .timeout(ApiConfig.timeout);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {

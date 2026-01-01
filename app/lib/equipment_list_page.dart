@@ -14,10 +14,11 @@ class EquipmentListPage extends StatefulWidget {
   State<EquipmentListPage> createState() => _EquipmentListPageState();
 }
 
-class _EquipmentListPageState extends State<EquipmentListPage> with SingleTickerProviderStateMixin {
+class _EquipmentListPageState extends State<EquipmentListPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _currentIndex = 0;
-  
+
   // Available list data
   List<Equipment> _availableItems = [];
   bool _loadingAvailable = true;
@@ -141,7 +142,10 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
                 ),
                 style: const TextStyle(color: Colors.black),
               )
-            : const Text('Equipment List', style: TextStyle(fontWeight: FontWeight.bold)),
+            : const Text(
+                'Equipment List',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
@@ -153,8 +157,14 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
               unselectedLabelColor: Colors.grey[600],
               indicatorColor: Colors.indigo,
               indicatorWeight: 3,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.normal,
+                fontSize: 14,
+              ),
               tabs: const [
                 Tab(text: 'Available'),
                 Tab(text: 'Distributed'),
@@ -194,18 +204,17 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
       ),
       body: TabBarView(
         controller: _tabController,
-        children: [
-          _buildAvailableList(),
-          _buildDistributedList(),
-        ],
+        children: [_buildAvailableList(), _buildDistributedList()],
       ),
     );
   }
 
   // --- Available List Tab ---
   Widget _buildAvailableList() {
-    if (_loadingAvailable) return const Center(child: CircularProgressIndicator());
-    if (_errorAvailable != null) return Center(child: Text('Error: $_errorAvailable'));
+    if (_loadingAvailable)
+      return const Center(child: CircularProgressIndicator());
+    if (_errorAvailable != null)
+      return Center(child: Text('Error: $_errorAvailable'));
     if (_availableItems.isEmpty) {
       return Center(
         child: Column(
@@ -213,7 +222,10 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
           children: [
             Icon(Icons.inventory_2_outlined, size: 60, color: Colors.grey[400]),
             const SizedBox(height: 16),
-            Text('No available equipment.', style: TextStyle(color: Colors.grey[600])),
+            Text(
+              'No available equipment.',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
           ],
         ),
       );
@@ -234,7 +246,10 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
           children: [
             Icon(Icons.search_off, size: 60, color: Colors.grey[400]),
             const SizedBox(height: 16),
-            Text('No matching equipment found.', style: TextStyle(color: Colors.grey[600])),
+            Text(
+              'No matching equipment found.',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
           ],
         ),
       );
@@ -253,7 +268,10 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
             contentPadding: const EdgeInsets.all(12),
             leading: CircleAvatar(
               backgroundColor: Colors.indigo.shade50,
-              child: Icon(Icons.medical_services, color: Colors.indigo.shade400),
+              child: Icon(
+                Icons.medical_services,
+                color: Colors.indigo.shade400,
+              ),
             ),
             title: Text(
               eq.uniqueId,
@@ -264,7 +282,7 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
             trailing: PopupMenuButton<String>(
               onSelected: (value) async {
                 if (value == 'edit') {
-                    Navigator.push(
+                  Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => EquipmentFormPage(equipment: eq),
@@ -279,8 +297,14 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
                       title: const Text('Delete?'),
                       content: Text('Delete ${eq.uniqueId}?'),
                       actions: [
-                        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Delete'),
+                        ),
                       ],
                     ),
                   );
@@ -295,7 +319,13 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
                 return [
                   const PopupMenuItem(value: 'edit', child: Text('Edit')),
                   if (isAdmin)
-                    const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Text(
+                        'Delete',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
                 ];
               },
             ),
@@ -308,16 +338,25 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
 
   // --- Distributed List Tab ---
   Widget _buildDistributedList() {
-    if (_loadingDistributed) return const Center(child: CircularProgressIndicator());
-    if (_errorDistributed != null) return Center(child: Text('Error: $_errorDistributed'));
+    if (_loadingDistributed)
+      return const Center(child: CircularProgressIndicator());
+    if (_errorDistributed != null)
+      return Center(child: Text('Error: $_errorDistributed'));
     if (_distributedItems.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.assignment_turned_in_outlined, size: 60, color: Colors.grey[400]),
+            Icon(
+              Icons.assignment_turned_in_outlined,
+              size: 60,
+              color: Colors.grey[400],
+            ),
             const SizedBox(height: 16),
-            Text('No distributed equipment.', style: TextStyle(color: Colors.grey[600])),
+            Text(
+              'No distributed equipment.',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
           ],
         ),
       );
@@ -338,7 +377,10 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
           children: [
             Icon(Icons.search_off, size: 60, color: Colors.grey[400]),
             const SizedBox(height: 16),
-            Text('No matching distribution found.', style: TextStyle(color: Colors.grey[600])),
+            Text(
+              'No matching distribution found.',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
           ],
         ),
       );
@@ -457,11 +499,24 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
             const SizedBox(height: 24),
             const Divider(),
             const SizedBox(height: 16),
-            _buildDetailRow(Icons.person_outline, 'Patient', supply.patientName),
+            _buildDetailRow(
+              Icons.person_outline,
+              'Patient',
+              supply.patientName,
+            ),
             _buildDetailRow(Icons.phone_outlined, 'Phone', supply.patientPhone),
-            _buildDetailRow(Icons.calendar_today_outlined, 'Supply Date', _formatDate(supply.supplyDate)),
-            if (supply.patientAddress != null && supply.patientAddress!.isNotEmpty)
-              _buildDetailRow(Icons.location_on_outlined, 'Address', supply.patientAddress!),
+            _buildDetailRow(
+              Icons.calendar_today_outlined,
+              'Supply Date',
+              _formatDate(supply.supplyDate),
+            ),
+            if (supply.patientAddress != null &&
+                supply.patientAddress!.isNotEmpty)
+              _buildDetailRow(
+                Icons.location_on_outlined,
+                'Address',
+                supply.patientAddress!,
+              ),
             if (supply.notes != null && supply.notes!.isNotEmpty)
               _buildDetailRow(Icons.note_outlined, 'Notes', supply.notes!),
             if (supply.createdBy != null)
@@ -487,7 +542,9 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
                   backgroundColor: Colors.orange.shade50,
                   foregroundColor: Colors.orange.shade700,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -532,7 +589,11 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
                     color: Colors.indigo.shade50,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(Icons.medical_services, color: Colors.indigo.shade400, size: 28),
+                  child: Icon(
+                    Icons.medical_services,
+                    color: Colors.indigo.shade400,
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -564,7 +625,11 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
             const Divider(),
             const SizedBox(height: 16),
             _buildDetailRow(Icons.place_outlined, 'Location', eq.place),
-            _buildDetailRow(Icons.store_outlined, 'Purchased From', eq.purchasedFrom ?? 'N/A'),
+            _buildDetailRow(
+              Icons.store_outlined,
+              'Purchased From',
+              eq.purchasedFrom ?? 'N/A',
+            ),
             _buildDetailRow(Icons.phone_outlined, 'Contact', eq.phone ?? 'N/A'),
             if (eq.createdBy != null)
               Padding(
@@ -584,7 +649,8 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => EquipmentFormPage(equipment: eq),
+                          builder: (context) =>
+                              EquipmentFormPage(equipment: eq),
                         ),
                       ).then((result) {
                         if (result == true) _fetchAvailableEquipment();
@@ -596,7 +662,9 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       side: BorderSide(color: Colors.indigo.shade200),
                       foregroundColor: Colors.indigo,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
@@ -609,12 +677,20 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
                           context: context,
                           builder: (context) => AlertDialog(
                             title: const Text('Delete Equipment?'),
-                            content: Text('Are you sure you want to delete ${eq.uniqueId}? This action cannot be undone.'),
+                            content: Text(
+                              'Are you sure you want to delete ${eq.uniqueId}? This action cannot be undone.',
+                            ),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
                               TextButton(
-                                onPressed: () => Navigator.pop(context, true), 
-                                child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.red),
+                                ),
                               ),
                             ],
                           ),
@@ -632,7 +708,9 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
                         backgroundColor: Colors.red.shade50,
                         foregroundColor: Colors.red.shade700,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
@@ -690,10 +768,7 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  color: Colors.grey[500],
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Colors.grey[500], fontSize: 12),
               ),
               Text(
                 value,
@@ -718,9 +793,14 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirm Return'),
-        content: Text('Mark ${supply.equipmentUniqueId} as returned from ${supply.patientName}?'),
+        content: Text(
+          'Mark ${supply.equipmentUniqueId} as returned from ${supply.patientName}?',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Confirm'),
@@ -733,17 +813,17 @@ class _EquipmentListPageState extends State<EquipmentListPage> with SingleTicker
       try {
         await EquipmentSupplyService.returnSupply(supply.id!);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('✅ Equipment returned')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('✅ Equipment returned')));
           _fetchDistributedEquipment();
           _fetchAvailableEquipment();
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('❌ Error: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('❌ Error: $e')));
         }
       }
     }
@@ -781,9 +861,15 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
     super.initState();
     _nameController = TextEditingController(text: widget.equipment?.name ?? '');
     _quantityController = TextEditingController(text: _isEditing ? '1' : '1');
-    _purchasedFromController = TextEditingController(text: widget.equipment?.purchasedFrom ?? '');
-    _placeController = TextEditingController(text: widget.equipment?.place ?? '');
-    _phoneController = TextEditingController(text: widget.equipment?.phone ?? '');
+    _purchasedFromController = TextEditingController(
+      text: widget.equipment?.purchasedFrom ?? '',
+    );
+    _placeController = TextEditingController(
+      text: widget.equipment?.place ?? '',
+    );
+    _phoneController = TextEditingController(
+      text: widget.equipment?.phone ?? '',
+    );
   }
 
   Future<void> _submit() async {
@@ -799,7 +885,9 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
           phone: _phoneController.text.trim(),
         );
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Equipment updated successfully")));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Equipment updated successfully")),
+          );
           Navigator.pop(context, true);
         }
       } else {
@@ -811,12 +899,17 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
           phone: _phoneController.text.trim(),
         );
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Created ${response.count} items")));
-           Navigator.pop(context, true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Created ${response.count} items")),
+          );
+          Navigator.pop(context, true);
         }
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -865,54 +958,60 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
               ),
               child: Column(
                 children: [
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            _isEditing ? Colors.orange.shade400 : Colors.indigo.shade400,
-                            _isEditing ? Colors.orange.shade600 : Colors.indigo.shade600,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: (_isEditing ? Colors.orange : Colors.indigo).withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          _isEditing
+                              ? Colors.orange.shade400
+                              : Colors.indigo.shade400,
+                          _isEditing
+                              ? Colors.orange.shade600
+                              : Colors.indigo.shade600,
                         ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      child: Icon(
-                        _isEditing ? Icons.edit_note_rounded : Icons.medical_services_rounded,
-                        color: Colors.white,
-                        size: 36,
-                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (_isEditing ? Colors.orange : Colors.indigo)
+                              .withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _isEditing ? 'Update Detail' : 'New Equipment',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[800],
-                      ),
+                    child: Icon(
+                      _isEditing
+                          ? Icons.edit_note_rounded
+                          : Icons.medical_services_rounded,
+                      color: Colors.white,
+                      size: 36,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _isEditing ? 'Modify the information for this item' : 'Fill in the details to add new equipment',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[500],
-                      ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _isEditing ? 'Update Detail' : 'New Equipment',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _isEditing
+                        ? 'Modify the information for this item'
+                        : 'Fill in the details to add new equipment',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                  ),
                 ],
               ),
             ),
-            
+
             // Form Section
             Padding(
               padding: const EdgeInsets.all(20),
@@ -931,7 +1030,8 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
                           label: 'Equipment Name',
                           hint: 'e.g., Wheelchair, Oxygen Cylinder',
                           icon: Icons.medical_services_outlined,
-                          validator: (v) => v!.isEmpty ? 'Name is required' : null,
+                          validator: (v) =>
+                              v!.isEmpty ? 'Name is required' : null,
                         ),
                         if (!_isEditing) ...[
                           const SizedBox(height: 16),
@@ -944,7 +1044,8 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
                             validator: (v) {
                               if (v!.isEmpty) return 'Quantity is required';
                               final num = int.tryParse(v);
-                              if (num == null || num < 1) return 'Enter a valid number';
+                              if (num == null || num < 1)
+                                return 'Enter a valid number';
                               return null;
                             },
                           ),
@@ -1007,29 +1108,38 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(_isEditing ? Icons.save_rounded : Icons.add_circle_outline, size: 22),
-                              const SizedBox(width: 10),
-                              Text(
-                                _isEditing ? 'Save Changes' : 'Create Equipment',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
                                 ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    _isEditing
+                                        ? Icons.save_rounded
+                                        : Icons.add_circle_outline,
+                                    size: 22,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    _isEditing
+                                        ? 'Save Changes'
+                                        : 'Create Equipment',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -1092,11 +1202,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
                   color: Colors.indigo.shade50,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  icon,
-                  color: Colors.indigo,
-                  size: 20,
-                ),
+                child: Icon(icon, color: Colors.indigo, size: 20),
               ),
               const SizedBox(width: 12),
               Text(
@@ -1135,7 +1241,10 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
         prefixIcon: Icon(icon, color: Colors.grey[500], size: 22),
         filled: true,
         fillColor: Colors.grey[50],
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey.shade300),

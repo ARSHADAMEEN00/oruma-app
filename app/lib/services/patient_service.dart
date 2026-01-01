@@ -64,9 +64,7 @@ class PatientService {
 
   /// Delete a patient.
   static Future<bool> deletePatient(String id) async {
-    final result = await ApiService.delete(
-      '${ApiConfig.patientsEndpoint}/$id',
-    );
+    final result = await ApiService.delete('${ApiConfig.patientsEndpoint}/$id');
 
     if (result.isSuccess) {
       return true;

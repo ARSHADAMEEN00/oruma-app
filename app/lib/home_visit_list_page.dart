@@ -17,16 +17,16 @@ class HomeVisitListPage extends StatefulWidget {
 class _HomeVisitListPageState extends State<HomeVisitListPage> {
   late Future<List<HomeVisit>> _visitsFuture;
   List<HomeVisit> _allVisits = [];
-  
+
   // Date navigation
   late DateTime _selectedDate;
   late DateTime _startOfWeek;
   late List<DateTime> _weekDates;
   late PageController _pageController;
-  
+
   // Key to force PageView rebuild
   Key _pageViewKey = UniqueKey();
-  
+
   @override
   void initState() {
     super.initState();
@@ -39,7 +39,11 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
   void _initializeWeek() {
     // Start from 3 days ago to show past visits too
     final now = DateTime.now();
-    _startOfWeek = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 3));
+    _startOfWeek = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(const Duration(days: 3));
     // Generate 14 days (2 weeks view)
     _weekDates = List.generate(14, (i) => _startOfWeek.add(Duration(days: i)));
   }
@@ -98,7 +102,10 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
   void _goToPreviousWeek() {
     setState(() {
       _startOfWeek = _startOfWeek.subtract(const Duration(days: 7));
-      _weekDates = List.generate(14, (i) => _startOfWeek.add(Duration(days: i)));
+      _weekDates = List.generate(
+        14,
+        (i) => _startOfWeek.add(Duration(days: i)),
+      );
       _selectedDate = _weekDates[3]; // Select the 4th day
       _rebuildPageView(3);
     });
@@ -107,7 +114,10 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
   void _goToNextWeek() {
     setState(() {
       _startOfWeek = _startOfWeek.add(const Duration(days: 7));
-      _weekDates = List.generate(14, (i) => _startOfWeek.add(Duration(days: i)));
+      _weekDates = List.generate(
+        14,
+        (i) => _startOfWeek.add(Duration(days: i)),
+      );
       _selectedDate = _weekDates[3];
       _rebuildPageView(3);
     });
@@ -116,8 +126,15 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
   void _goToToday() {
     setState(() {
       final now = DateTime.now();
-      _startOfWeek = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 3));
-      _weekDates = List.generate(14, (i) => _startOfWeek.add(Duration(days: i)));
+      _startOfWeek = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(const Duration(days: 3));
+      _weekDates = List.generate(
+        14,
+        (i) => _startOfWeek.add(Duration(days: i)),
+      );
       _selectedDate = DateTime.now();
       _rebuildPageView(3);
     });
@@ -138,7 +155,10 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text("Home Visits", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Home Visits",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -155,7 +175,9 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
             onPressed: () async {
               await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const HomeVisitSearchPage()),
+                MaterialPageRoute(
+                  builder: (context) => const HomeVisitSearchPage(),
+                ),
               );
               _refreshVisits();
             },
@@ -179,13 +201,13 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
             children: [
               // Week Navigation Header
               _buildWeekNavigationHeader(primaryColor),
-              
+
               // Date Tabs
               _buildDateTabs(primaryColor),
-              
+
               // Selected Date Header
               _buildSelectedDateHeader(),
-              
+
               // Visits for Selected Date (PageView for swipe)
               Expanded(
                 child: PageView.builder(
@@ -226,7 +248,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
 
   Widget _buildWeekNavigationHeader(Color primaryColor) {
     final monthYear = DateFormat('MMMM yyyy').format(_selectedDate);
-    
+
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -243,10 +265,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
           ),
           Text(
             monthYear,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           IconButton(
             onPressed: _goToNextWeek,
@@ -283,14 +302,14 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
               width: 60,
               margin: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
-                color: isSelected 
-                    ? primaryColor 
-                    : isToday 
-                        ? primaryColor.withOpacity(0.1) 
-                        : Colors.grey.shade100,
+                color: isSelected
+                    ? primaryColor
+                    : isToday
+                    ? primaryColor.withOpacity(0.1)
+                    : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(16),
-                border: isToday && !isSelected 
-                    ? Border.all(color: primaryColor, width: 2) 
+                border: isToday && !isSelected
+                    ? Border.all(color: primaryColor, width: 2)
                     : null,
                 boxShadow: isSelected
                     ? [
@@ -310,8 +329,8 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: isSelected 
-                          ? Colors.white.withOpacity(0.8) 
+                      color: isSelected
+                          ? Colors.white.withOpacity(0.8)
                           : Colors.grey.shade600,
                     ),
                   ),
@@ -327,10 +346,13 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                   const SizedBox(height: 4),
                   if (hasVisits)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
-                        color: isSelected 
-                            ? Colors.white.withOpacity(0.25) 
+                        color: isSelected
+                            ? Colors.white.withOpacity(0.25)
                             : primaryColor.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -357,9 +379,15 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
   Widget _buildSelectedDateHeader() {
     final visitCount = _getVisitCountForDate(_selectedDate);
     final isToday = _isSameDay(_selectedDate, DateTime.now());
-    final isTomorrow = _isSameDay(_selectedDate, DateTime.now().add(const Duration(days: 1)));
-    final isYesterday = _isSameDay(_selectedDate, DateTime.now().subtract(const Duration(days: 1)));
-    
+    final isTomorrow = _isSameDay(
+      _selectedDate,
+      DateTime.now().add(const Duration(days: 1)),
+    );
+    final isYesterday = _isSameDay(
+      _selectedDate,
+      DateTime.now().subtract(const Duration(days: 1)),
+    );
+
     String dateLabel;
     if (isToday) {
       dateLabel = "Today";
@@ -370,7 +398,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
     } else {
       dateLabel = DateFormat('EEEE').format(_selectedDate);
     }
-    
+
     final fullDate = DateFormat('d MMMM yyyy').format(_selectedDate);
 
     return Container(
@@ -378,9 +406,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.shade200),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
       ),
       child: Row(
         children: [
@@ -398,10 +424,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                 const SizedBox(height: 2),
                 Text(
                   fullDate,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                 ),
               ],
             ),
@@ -409,7 +432,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: visitCount > 0 
+              color: visitCount > 0
                   ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
                   : Colors.grey.shade100,
               borderRadius: BorderRadius.circular(20),
@@ -420,8 +443,8 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                 Icon(
                   Icons.home_work_outlined,
                   size: 18,
-                  color: visitCount > 0 
-                      ? Theme.of(context).colorScheme.primary 
+                  color: visitCount > 0
+                      ? Theme.of(context).colorScheme.primary
                       : Colors.grey.shade500,
                 ),
                 const SizedBox(width: 6),
@@ -429,8 +452,8 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                   '$visitCount ${visitCount == 1 ? 'visit' : 'visits'}',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: visitCount > 0 
-                        ? Theme.of(context).colorScheme.primary 
+                    color: visitCount > 0
+                        ? Theme.of(context).colorScheme.primary
                         : Colors.grey.shade500,
                   ),
                 ),
@@ -458,7 +481,11 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
     );
   }
 
-  Widget _buildVisitCard(BuildContext context, HomeVisit visit, int visitNumber) {
+  Widget _buildVisitCard(
+    BuildContext context,
+    HomeVisit visit,
+    int visitNumber,
+  ) {
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Card(
@@ -498,7 +525,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                 ),
               ),
               const SizedBox(width: 16),
-              
+
               // Visit Details
               Expanded(
                 child: Column(
@@ -514,8 +541,11 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(Icons.location_on_outlined, 
-                            size: 14, color: Colors.grey.shade500),
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 14,
+                          color: Colors.grey.shade500,
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -534,8 +564,11 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.notes_outlined, 
-                              size: 14, color: Colors.grey.shade500),
+                          Icon(
+                            Icons.notes_outlined,
+                            size: 14,
+                            color: Colors.grey.shade500,
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -555,7 +588,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                   ],
                 ),
               ),
-              
+
               const Icon(Icons.chevron_right, color: Colors.grey),
             ],
           ),
@@ -596,12 +629,19 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                   children: [
                     const Text(
                       "Home Visit Details",
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       visit.patientName,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -617,12 +657,19 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
             ],
           ),
           const SizedBox(height: 32),
-          _buildDetailRow(Icons.calendar_today, "Visit Date", 
-            date != null ? DateFormat('EEEE, d MMMM yyyy').format(date) : "N/A"),
+          _buildDetailRow(
+            Icons.calendar_today,
+            "Visit Date",
+            date != null ? DateFormat('EEEE, d MMMM yyyy').format(date) : "N/A",
+          ),
           const SizedBox(height: 20),
           _buildDetailRow(Icons.location_on, "Address", visit.address),
           const SizedBox(height: 20),
-          _buildDetailRow(Icons.notes, "Notes", visit.notes ?? "No notes provided"),
+          _buildDetailRow(
+            Icons.notes,
+            "Notes",
+            visit.notes ?? "No notes provided",
+          ),
           if (visit.createdBy != null)
             Padding(
               padding: const EdgeInsets.only(top: 16),
@@ -642,11 +689,16 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                       _deleteVisit(visit);
                     },
                     icon: const Icon(Icons.delete_outline, color: Colors.red),
-                    label: const Text("Delete", style: TextStyle(color: Colors.red)),
+                    label: const Text(
+                      "Delete",
+                      style: TextStyle(color: Colors.red),
+                    ),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       side: const BorderSide(color: Colors.red),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ),
@@ -658,7 +710,9 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                     Navigator.pop(context);
                     final result = await Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => Homevisit(visit: visit)),
+                      MaterialPageRoute(
+                        builder: (context) => Homevisit(visit: visit),
+                      ),
                     );
                     if (result == true) _refreshVisits();
                   },
@@ -669,7 +723,9 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -690,9 +746,23 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade500,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black87)),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
             ],
           ),
         ),
@@ -705,9 +775,14 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Delete Visit?"),
-        content: Text("Are you sure you want to delete the visit for ${visit.patientName}?"),
+        content: Text(
+          "Are you sure you want to delete the visit for ${visit.patientName}?",
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
@@ -722,7 +797,10 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
         _refreshVisits();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Visit deleted successfully"), backgroundColor: Colors.green),
+            const SnackBar(
+              content: Text("Visit deleted successfully"),
+              backgroundColor: Colors.green,
+            ),
           );
         }
       } catch (e) {
@@ -778,13 +856,27 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline_rounded, size: 64, color: Colors.red),
+            const Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: Colors.red,
+            ),
             const SizedBox(height: 16),
-            const Text("Oops! Something went wrong", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              "Oops! Something went wrong",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
-            Text(error, textAlign: TextAlign.center, style: TextStyle(color: Colors.grey.shade600)),
+            Text(
+              error,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
             const SizedBox(height: 24),
-            ElevatedButton(onPressed: _refreshVisits, child: const Text("Try Again")),
+            ElevatedButton(
+              onPressed: _refreshVisits,
+              child: const Text("Try Again"),
+            ),
           ],
         ),
       ),

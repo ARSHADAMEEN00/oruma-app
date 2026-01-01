@@ -106,7 +106,7 @@ class _PatientListPageState extends State<PatientListPage> {
           if (_isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          
+
           if (_error != null) {
             return Center(
               child: Column(
@@ -129,9 +129,9 @@ class _PatientListPageState extends State<PatientListPage> {
             if (_searchQuery.isEmpty) return true;
             final q = _searchQuery.toLowerCase();
             return p.name.toLowerCase().contains(q) ||
-                   p.village.toLowerCase().contains(q) ||
-                   (p.registerId ?? '').toLowerCase().contains(q) ||
-                   p.phone.toLowerCase().contains(q);
+                p.village.toLowerCase().contains(q) ||
+                (p.registerId ?? '').toLowerCase().contains(q) ||
+                p.phone.toLowerCase().contains(q);
           }).toList();
 
           if (filteredPatients.isEmpty) {
@@ -145,7 +145,7 @@ class _PatientListPageState extends State<PatientListPage> {
                     Text(
                       'No matching patients found',
                       style: TextStyle(
-                        fontSize: 16, 
+                        fontSize: 16,
                         color: Colors.grey[600],
                         fontWeight: FontWeight.w500,
                       ),
@@ -197,7 +197,9 @@ class _PatientListPageState extends State<PatientListPage> {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         leading: CircleAvatar(
-          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          backgroundColor: Theme.of(
+            context,
+          ).colorScheme.primary.withOpacity(0.1),
           child: Text(
             patient.name.isNotEmpty ? patient.name[0].toUpperCase() : "?",
             style: TextStyle(
@@ -233,7 +235,10 @@ class _PatientListPageState extends State<PatientListPage> {
               const SizedBox(height: 4),
             ],
             Text("${patient.age} years • ${patient.gender}"),
-            Text(patient.village, style: TextStyle(color: Colors.grey.shade600)),
+            Text(
+              patient.village,
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
           ],
         ),
         trailing: const Icon(Icons.chevron_right),

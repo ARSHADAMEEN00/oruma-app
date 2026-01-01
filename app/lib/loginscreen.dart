@@ -135,7 +135,9 @@ class _LoginscreenState extends State<Loginscreen> {
                           ),
                         ),
                         child: _isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
                             : const Text(
                                 "Login",
                                 style: TextStyle(
@@ -148,7 +150,7 @@ class _LoginscreenState extends State<Loginscreen> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 20),
               const Text(
                 "949 500 61 93",

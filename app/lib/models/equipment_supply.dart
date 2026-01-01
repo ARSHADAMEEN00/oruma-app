@@ -45,12 +45,14 @@ class EquipmentSupply {
       patientPhone: json['patientPhone']?.toString() ?? '',
       patientAddress: json['patientAddress']?.toString(),
       careOf: json['careOf']?.toString(),
-      supplyDate: DateTime.tryParse(json['supplyDate']?.toString() ?? '') ?? DateTime.now(),
-      returnDate: json['returnDate'] != null 
-          ? DateTime.tryParse(json['returnDate'].toString()) 
+      supplyDate:
+          DateTime.tryParse(json['supplyDate']?.toString() ?? '') ??
+          DateTime.now(),
+      returnDate: json['returnDate'] != null
+          ? DateTime.tryParse(json['returnDate'].toString())
           : null,
-      actualReturnDate: json['actualReturnDate'] != null 
-          ? DateTime.tryParse(json['actualReturnDate'].toString()) 
+      actualReturnDate: json['actualReturnDate'] != null
+          ? DateTime.tryParse(json['actualReturnDate'].toString())
           : null,
       status: json['status']?.toString() ?? 'active',
       notes: json['notes']?.toString(),

@@ -49,7 +49,10 @@ class HomeVisitService {
   }
 
   /// Update an existing home visit.
-  static Future<HomeVisit> updateHomeVisit(String id, HomeVisit homeVisit) async {
+  static Future<HomeVisit> updateHomeVisit(
+    String id,
+    HomeVisit homeVisit,
+  ) async {
     final result = await ApiService.put<Map<String, dynamic>>(
       '${ApiConfig.homeVisitsEndpoint}/$id',
       body: homeVisit.toJson(),

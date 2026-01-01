@@ -2,14 +2,14 @@
 /// Each equipment now has a unique ID for individual tracking.
 class Equipment {
   final String? id;
-  final String uniqueId;  // Unique ID like "WH-001", "WH-002"
-  final String serialNo;  // Base serial number (e.g., "WH")
+  final String uniqueId; // Unique ID like "WH-001", "WH-002"
+  final String serialNo; // Base serial number (e.g., "WH")
   final String name;
-  final int quantity;     // Always 1 for individual items
+  final int quantity; // Always 1 for individual items
   final String purchasedFrom;
   final String place;
   final String phone;
-  final String status;    // 'available', 'supplied', 'maintenance'
+  final String status; // 'available', 'supplied', 'maintenance'
   final String? createdBy;
   final DateTime? createdAt;
 

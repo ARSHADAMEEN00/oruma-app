@@ -14,7 +14,7 @@ class HomeVisitSearchPage extends StatefulWidget {
 class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  
+
   List<HomeVisit> _allVisits = [];
   List<HomeVisit> _filteredVisits = [];
   bool _isLoading = true;
@@ -64,7 +64,7 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
               visit.address.toLowerCase().contains(lowerQuery) ||
               (visit.notes?.toLowerCase().contains(lowerQuery) ?? false);
         }).toList();
-        
+
         // Sort by date (most recent first)
         _filteredVisits.sort((a, b) {
           final dateA = DateTime.tryParse(a.visitDate);
@@ -102,15 +102,15 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
             hintText: "Search by patient name, address...",
             hintStyle: TextStyle(color: Colors.grey.shade400),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 0,
+              vertical: 14,
+            ),
           ),
         ),
         actions: [
           if (_searchController.text.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: _clearSearch,
-            ),
+            IconButton(icon: const Icon(Icons.close), onPressed: _clearSearch),
         ],
       ),
       body: _buildBody(primaryColor),
@@ -131,10 +131,7 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
             const SizedBox(height: 16),
             Text("Error: $_error"),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadVisits,
-              child: const Text("Retry"),
-            ),
+            ElevatedButton(onPressed: _loadVisits, child: const Text("Retry")),
           ],
         ),
       );
@@ -162,11 +159,7 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
               color: Colors.grey.shade100,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.search,
-              size: 48,
-              color: Colors.grey.shade400,
-            ),
+            child: Icon(Icons.search, size: 48, color: Colors.grey.shade400),
           ),
           const SizedBox(height: 20),
           Text(
@@ -271,7 +264,7 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
             ],
           ),
         ),
-        
+
         // Results list
         Expanded(
           child: ListView.separated(
@@ -291,12 +284,14 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
   Widget _buildVisitCard(HomeVisit visit, Color primaryColor) {
     final date = DateTime.tryParse(visit.visitDate);
     final now = DateTime.now();
-    final isToday = date != null && 
-        date.year == now.year && 
-        date.month == now.month && 
+    final isToday =
+        date != null &&
+        date.year == now.year &&
+        date.month == now.month &&
         date.day == now.day;
-    final isPast = date != null && date.isBefore(DateTime(now.year, now.month, now.day));
-    
+    final isPast =
+        date != null && date.isBefore(DateTime(now.year, now.month, now.day));
+
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -315,11 +310,11 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: isToday 
-                      ? Colors.green.withOpacity(0.1) 
-                      : isPast 
-                          ? Colors.grey.withOpacity(0.1)
-                          : Colors.blue.withOpacity(0.1),
+                  color: isToday
+                      ? Colors.green.withOpacity(0.1)
+                      : isPast
+                      ? Colors.grey.withOpacity(0.1)
+                      : Colors.blue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -330,30 +325,32 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
-                        color: isToday 
+                        color: isToday
                             ? Colors.green.shade700
-                            : isPast 
-                                ? Colors.grey.shade600
-                                : Colors.blue.shade700,
+                            : isPast
+                            ? Colors.grey.shade600
+                            : Colors.blue.shade700,
                       ),
                     ),
                     Text(
-                      date != null ? DateFormat('MMM').format(date).toUpperCase() : 'N/A',
+                      date != null
+                          ? DateFormat('MMM').format(date).toUpperCase()
+                          : 'N/A',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: isToday 
+                        color: isToday
                             ? Colors.green.shade700
-                            : isPast 
-                                ? Colors.grey.shade600
-                                : Colors.blue.shade700,
+                            : isPast
+                            ? Colors.grey.shade600
+                            : Colors.blue.shade700,
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 16),
-              
+
               // Visit Details
               Expanded(
                 child: Column(
@@ -372,7 +369,10 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
                         ),
                         if (isToday)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.green.shade100,
                               borderRadius: BorderRadius.circular(8),
@@ -391,8 +391,11 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(Icons.location_on_outlined, 
-                            size: 14, color: Colors.grey.shade500),
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 14,
+                          color: Colors.grey.shade500,
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -411,8 +414,11 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.notes_outlined, 
-                              size: 14, color: Colors.grey.shade500),
+                          Icon(
+                            Icons.notes_outlined,
+                            size: 14,
+                            color: Colors.grey.shade500,
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -432,7 +438,7 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
                   ],
                 ),
               ),
-              
+
               const Icon(Icons.chevron_right, color: Colors.grey),
             ],
           ),
@@ -468,12 +474,19 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
                     children: [
                       const Text(
                         "Home Visit Details",
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         visit.patientName,
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -489,12 +502,21 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
               ],
             ),
             const SizedBox(height: 32),
-            _buildDetailRow(Icons.calendar_today, "Visit Date", 
-              date != null ? DateFormat('EEEE, d MMMM yyyy').format(date) : "N/A"),
+            _buildDetailRow(
+              Icons.calendar_today,
+              "Visit Date",
+              date != null
+                  ? DateFormat('EEEE, d MMMM yyyy').format(date)
+                  : "N/A",
+            ),
             const SizedBox(height: 20),
             _buildDetailRow(Icons.location_on, "Address", visit.address),
             const SizedBox(height: 20),
-            _buildDetailRow(Icons.notes, "Notes", visit.notes ?? "No notes provided"),
+            _buildDetailRow(
+              Icons.notes,
+              "Notes",
+              visit.notes ?? "No notes provided",
+            ),
             if (visit.createdBy != null)
               Padding(
                 padding: const EdgeInsets.only(top: 16),
@@ -511,7 +533,9 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
                   Navigator.pop(context);
                   final result = await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => Homevisit(visit: visit)),
+                    MaterialPageRoute(
+                      builder: (context) => Homevisit(visit: visit),
+                    ),
                   );
                   if (result == true) {
                     _loadVisits();
@@ -525,7 +549,9 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -545,9 +571,23 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade500,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black87)),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
             ],
           ),
         ),

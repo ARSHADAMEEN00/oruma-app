@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 /// API Configuration for the Oruma app.
-/// 
+///
 /// Contains the base URL and common headers for API requests.
 class ApiConfig {
   // Private constructor to prevent instantiation
@@ -24,9 +24,9 @@ class ApiConfig {
   }
 
   /// Health check endpoint
-  static String get healthUrl => kDebugMode 
-    ? 'https://oruma-app.onrender.com/health'
-    : 'https://oruma-app.onrender.com/health';
+  static String get healthUrl => kDebugMode
+      ? 'https://oruma-app.onrender.com/health'
+      : 'https://oruma-app.onrender.com/health';
 
   /// API Endpoints
   static String get patientsEndpoint => '$baseUrl/patients';
@@ -37,9 +37,9 @@ class ApiConfig {
 
   /// Default headers for API requests
   static Map<String, String> get headers => {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
 
   /// Request timeout duration
   static const Duration timeout = Duration(seconds: 30);

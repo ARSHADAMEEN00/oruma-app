@@ -20,12 +20,12 @@ class _HomevisitState extends State<Homevisit> {
   late TextEditingController notesController;
   DateTime? visitDate;
   bool _isLoading = false;
-  
+
   // Patient selection fields
   List<Patient> _patients = [];
   Patient? _selectedPatient;
   bool _isLoadingPatients = true;
-  
+
   // Visit mode options
   String _selectedVisitMode = 'new';
   final List<Map<String, String>> _visitModeOptions = [
@@ -39,7 +39,9 @@ class _HomevisitState extends State<Homevisit> {
   @override
   void initState() {
     super.initState();
-    addressController = TextEditingController(text: widget.visit?.address ?? '');
+    addressController = TextEditingController(
+      text: widget.visit?.address ?? '',
+    );
     notesController = TextEditingController(text: widget.visit?.notes ?? '');
     if (widget.visit?.visitDate != null) {
       visitDate = DateTime.tryParse(widget.visit!.visitDate);
@@ -54,7 +56,7 @@ class _HomevisitState extends State<Homevisit> {
       setState(() {
         _patients = patients;
         _isLoadingPatients = false;
-        
+
         // If editing, try to find the matching patient and visit mode
         if (isEditing) {
           try {
@@ -74,9 +76,9 @@ class _HomevisitState extends State<Homevisit> {
     } catch (e) {
       setState(() => _isLoadingPatients = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load patients: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load patients: $e')));
       }
     }
   }
@@ -125,7 +127,7 @@ class _HomevisitState extends State<Homevisit> {
     }
 
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (visitDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -137,7 +139,7 @@ class _HomevisitState extends State<Homevisit> {
     }
 
     setState(() => _isLoading = true);
-    
+
     try {
       final homeVisit = HomeVisit(
         id: widget.visit?.id,
@@ -145,7 +147,9 @@ class _HomevisitState extends State<Homevisit> {
         address: addressController.text.trim(),
         visitDate: visitDate!.toIso8601String(),
         visitMode: _selectedVisitMode,
-        notes: notesController.text.trim().isNotEmpty ? notesController.text.trim() : null,
+        notes: notesController.text.trim().isNotEmpty
+            ? notesController.text.trim()
+            : null,
       );
 
       if (isEditing) {
@@ -158,7 +162,9 @@ class _HomevisitState extends State<Homevisit> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              isEditing ? '✅ Visit updated successfully' : '✅ Visit scheduled successfully',
+              isEditing
+                  ? '✅ Visit updated successfully'
+                  : '✅ Visit scheduled successfully',
             ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
@@ -194,8 +200,13 @@ class _HomevisitState extends State<Homevisit> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Add New Patient', style: TextStyle(fontWeight: FontWeight.bold)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            'Add New Patient',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: Form(
             key: formKey,
             child: SingleChildScrollView(
@@ -234,39 +245,49 @@ class _HomevisitState extends State<Homevisit> {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: localLoading ? null : () async {
-                if (!formKey.currentState!.validate()) return;
-                setDialogState(() => localLoading = true);
-                try {
-                  final newPatient = Patient(
-                    name: nameCtrl.text.trim(),
-                    phone: phoneCtrl.text.trim(),
-                    address: addressCtrl.text.trim(),
-                    relation: '',
-                    gender: 'Male',
-                    age: 0,
-                    place: '',
-                    village: '',
-                    disease: '',
-                    plan: '',
-                  );
-                  final created = await PatientService.createPatient(newPatient);
-                  if (context.mounted) Navigator.pop(context, created);
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: $e')),
-                    );
-                  }
-                } finally {
-                  setDialogState(() => localLoading = false);
-                }
-              },
+              onPressed: localLoading
+                  ? null
+                  : () async {
+                      if (!formKey.currentState!.validate()) return;
+                      setDialogState(() => localLoading = true);
+                      try {
+                        final newPatient = Patient(
+                          name: nameCtrl.text.trim(),
+                          phone: phoneCtrl.text.trim(),
+                          address: addressCtrl.text.trim(),
+                          relation: '',
+                          gender: 'Male',
+                          age: 0,
+                          place: '',
+                          village: '',
+                          disease: '',
+                          plan: '',
+                        );
+                        final created = await PatientService.createPatient(
+                          newPatient,
+                        );
+                        if (context.mounted) Navigator.pop(context, created);
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                        }
+                      } finally {
+                        setDialogState(() => localLoading = false);
+                      }
+                    },
               style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: localLoading
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Text('Save Patient'),
             ),
           ],
@@ -303,7 +324,10 @@ class _HomevisitState extends State<Homevisit> {
         labelText: label,
         prefixIcon: Icon(icon, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
       ),
     );
   }
@@ -320,247 +344,297 @@ class _HomevisitState extends State<Homevisit> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
       ),
-      body: _isLoadingPatients 
-        ? const Center(child: CircularProgressIndicator())
-        : SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSectionTitle('Patient Information'),
-              const SizedBox(height: 16),
-              
-              // Patient Dropdown with Add Icon Button
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.02),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField<Patient>(
-                            value: _selectedPatient,
-                            decoration: const InputDecoration(
-                              labelText: 'Select Patient',
-                              prefixIcon: Icon(Icons.person_search, size: 22),
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              errorBorder: InputBorder.none,
-                              disabledBorder: InputBorder.none,
-                              filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                            ),
-                            items: _patients.map((p) => DropdownMenuItem(
-                              value: p,
-                              child: Text(p.name, style: const TextStyle(fontSize: 15)),
-                            )).toList(),
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() {
-                                  _selectedPatient = val;
-                                  // Auto-fill address if not editing or if address is empty
-                                  if (addressController.text.isEmpty) {
-                                    addressController.text = val.address;
-                                  }
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                        // Add Patient Icon Button
-                        Container(
-                          decoration: BoxDecoration(
-                            color: primaryColor.withOpacity(0.1),
-                            border: Border(left: BorderSide(color: Colors.grey.shade300)),
-                          ),
-                          child: IconButton(
-                            onPressed: _showAddPatientDialog,
-                            icon: Icon(
-                              Icons.person_add_alt_1_rounded,
-                              color: primaryColor,
-                              size: 24,
-                            ),
-                            tooltip: 'Add New Patient',
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              
+      body: _isLoadingPatients
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle('Patient Information'),
+                    const SizedBox(height: 16),
 
-              
-              const SizedBox(height: 20),
-              _buildTextField(
-                controller: addressController,
-                label: 'Address',
-                icon: Icons.location_on_outlined,
-                maxLines: 2,
-                validator: (val) => val == null || val.isEmpty ? 'Please enter address' : null,
-              ),
-              const SizedBox(height: 32),
-              _buildSectionTitle('Visit Details'),
-              const SizedBox(height: 16),
-              
-              // Visit Mode Dropdown
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.02),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: DropdownButtonFormField<String>(
-                  value: _selectedVisitMode,
-                  decoration: InputDecoration(
-                    labelText: 'Visit Mode',
-                    prefixIcon: const Icon(Icons.medical_services_outlined, size: 22),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: primaryColor, width: 1.5),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                  items: _visitModeOptions.map((option) => DropdownMenuItem(
-                    value: option['value'],
-                    child: Row(
-                      children: [
-                        Icon(
-                          option['value'] == 'emergency' 
-                              ? Icons.emergency_outlined
-                              : option['value'] == 'monthly' 
-                                  ? Icons.calendar_month_outlined
-                                  : Icons.add_circle_outline,
-                          size: 18,
-                          color: option['value'] == 'emergency' 
-                              ? Colors.red
-                              : option['value'] == 'monthly' 
-                                  ? Colors.blue
-                                  : Colors.green,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(option['label']!, style: const TextStyle(fontSize: 15)),
-                      ],
-                    ),
-                  )).toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() {
-                        _selectedVisitMode = val;
-                      });
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(height: 20),
-              InkWell(
-                onTap: _pickDate,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today_outlined, color: primaryColor, size: 22),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          visitDate == null
-                              ? 'Select Visit Date'
-                              : DateFormat('EEEE, d MMMM yyyy').format(visitDate!),
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: visitDate == null ? Colors.grey.shade600 : Colors.black87,
+                    // Patient Dropdown with Add Icon Button
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.02),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<Patient>(
+                                  value: _selectedPatient,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Select Patient',
+                                    prefixIcon: Icon(
+                                      Icons.person_search,
+                                      size: 22,
+                                    ),
+                                    border: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    errorBorder: InputBorder.none,
+                                    disabledBorder: InputBorder.none,
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 12,
+                                    ),
+                                  ),
+                                  items: _patients
+                                      .map(
+                                        (p) => DropdownMenuItem(
+                                          value: p,
+                                          child: Text(
+                                            p.name,
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      setState(() {
+                                        _selectedPatient = val;
+                                        // Auto-fill address if not editing or if address is empty
+                                        if (addressController.text.isEmpty) {
+                                          addressController.text = val.address;
+                                        }
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                              // Add Patient Icon Button
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withOpacity(0.1),
+                                  border: Border(
+                                    left: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                ),
+                                child: IconButton(
+                                  onPressed: _showAddPatientDialog,
+                                  icon: Icon(
+                                    Icons.person_add_alt_1_rounded,
+                                    color: primaryColor,
+                                    size: 24,
+                                  ),
+                                  tooltip: 'Add New Patient',
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                      Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              _buildTextField(
-                controller: notesController,
-                label: 'Notes / Special Requests',
-                icon: Icons.notes_outlined,
-                maxLines: 3,
-                required: false,
-              ),
-              const SizedBox(height: 40),
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _saveVisit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
                     ),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+
+                    const SizedBox(height: 20),
+                    _buildTextField(
+                      controller: addressController,
+                      label: 'Address',
+                      icon: Icons.location_on_outlined,
+                      maxLines: 2,
+                      validator: (val) => val == null || val.isEmpty
+                          ? 'Please enter address'
+                          : null,
+                    ),
+                    const SizedBox(height: 32),
+                    _buildSectionTitle('Visit Details'),
+                    const SizedBox(height: 16),
+
+                    // Visit Mode Dropdown
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.02),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
-                        )
-                      : Text(
-                          isEditing ? 'UPDATE VISIT' : 'SCHEDULE VISIT',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.1,
+                        ],
+                      ),
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedVisitMode,
+                        decoration: InputDecoration(
+                          labelText: 'Visit Mode',
+                          prefixIcon: const Icon(
+                            Icons.medical_services_outlined,
+                            size: 22,
                           ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: primaryColor,
+                              width: 1.5,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
                         ),
+                        items: _visitModeOptions
+                            .map(
+                              (option) => DropdownMenuItem(
+                                value: option['value'],
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      option['value'] == 'emergency'
+                                          ? Icons.emergency_outlined
+                                          : option['value'] == 'monthly'
+                                          ? Icons.calendar_month_outlined
+                                          : Icons.add_circle_outline,
+                                      size: 18,
+                                      color: option['value'] == 'emergency'
+                                          ? Colors.red
+                                          : option['value'] == 'monthly'
+                                          ? Colors.blue
+                                          : Colors.green,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      option['label']!,
+                                      style: const TextStyle(fontSize: 15),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() {
+                              _selectedVisitMode = val;
+                            });
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    InkWell(
+                      onTap: _pickDate,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              color: primaryColor,
+                              size: 22,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                visitDate == null
+                                    ? 'Select Visit Date'
+                                    : DateFormat(
+                                        'EEEE, d MMMM yyyy',
+                                      ).format(visitDate!),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: visitDate == null
+                                      ? Colors.grey.shade600
+                                      : Colors.black87,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_drop_down,
+                              color: Colors.grey.shade600,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildTextField(
+                      controller: notesController,
+                      label: 'Notes / Special Requests',
+                      icon: Icons.notes_outlined,
+                      maxLines: 3,
+                      required: false,
+                    ),
+                    const SizedBox(height: 40),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _saveVisit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                isEditing ? 'UPDATE VISIT' : 'SCHEDULE VISIT',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
@@ -613,14 +687,19 @@ class _HomevisitState extends State<Homevisit> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
+            borderSide: BorderSide(
+              color: Theme.of(context).colorScheme.primary,
+              width: 1.5,
+            ),
           ),
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
       ),
     );
   }
 }
-
