@@ -578,51 +578,64 @@ class _EqSupplyState extends State<EqSupply> {
                             iconColor: Colors.orange,
                             children: [
                               // Equipment Dropdown
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[50],
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: Colors.grey.shade300,
+                              DropdownButtonFormField<Equipment>(
+                                decoration: InputDecoration(
+                                  labelText: 'Select Equipment',
+                                  hintText: 'Choose from available equipment',
+                                  hintStyle: TextStyle(
+                                    color: Colors.grey[400],
+                                    fontSize: 14,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.inventory_2_outlined,
+                                    color: Colors.grey[500],
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide(
+                                      color: Colors.orange.shade400,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: const BorderSide(
+                                      color: Colors.red,
+                                      width: 1.5,
+                                    ),
                                   ),
                                 ),
-                                child: DropdownButtonFormField<Equipment>(
-                                  decoration: InputDecoration(
-                                    hintText: 'Choose from available equipment',
-                                    hintStyle: TextStyle(
-                                      color: Colors.grey[400],
-                                      fontSize: 14,
+                                value: _selectedEquipment,
+                                isExpanded: true,
+                                dropdownColor: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                items: _availableEquipment.map((eq) {
+                                  return DropdownMenuItem(
+                                    value: eq,
+                                    child: Text(
+                                      '${eq.uniqueId} - ${eq.name}',
+                                      style: const TextStyle(fontSize: 14),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    prefixIcon: Icon(
-                                      Icons.inventory_2_outlined,
-                                      color: Colors.grey[500],
-                                    ),
-                                    border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                  value: _selectedEquipment,
-                                  isExpanded: true,
-                                  dropdownColor: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  items: _availableEquipment.map((eq) {
-                                    return DropdownMenuItem(
-                                      value: eq,
-                                      child: Text(
-                                        '${eq.uniqueId} - ${eq.name}',
-                                        style: const TextStyle(fontSize: 14),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: (val) =>
-                                      setState(() => _selectedEquipment = val),
-                                  validator: (val) => val == null
-                                      ? 'Please select equipment'
-                                      : null,
-                                ),
+                                  );
+                                }).toList(),
+                                onChanged: (val) =>
+                                    setState(() => _selectedEquipment = val),
+                                validator: (val) => val == null
+                                    ? 'Please select equipment'
+                                    : null,
                               ),
 
                               // Selected Equipment Preview
@@ -772,56 +785,75 @@ class _EqSupplyState extends State<EqSupply> {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[50],
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: Colors.grey.shade300,
+                                    child: DropdownButtonFormField<Patient>(
+                                      decoration: InputDecoration(
+                                        labelText: 'Select Patient',
+                                        hintText: 'Search patient...',
+                                        hintStyle: TextStyle(
+                                          color: Colors.grey[400],
+                                          fontSize: 14,
                                         ),
-                                      ),
-                                      child: DropdownButtonFormField<Patient>(
-                                        decoration: InputDecoration(
-                                          hintText: 'Select Patient',
-                                          hintStyle: TextStyle(
-                                            color: Colors.grey[400],
-                                            fontSize: 14,
-                                          ),
-                                          prefixIcon: Icon(
-                                            Icons.person_search,
-                                            color: Colors.grey[500],
-                                          ),
-                                          border: InputBorder.none,
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                                horizontal: 16,
-                                                vertical: 12,
-                                              ),
+                                        prefixIcon: Icon(
+                                          Icons.person_search,
+                                          color: Colors.grey[500],
                                         ),
-                                        value: _selectedPatient,
-                                        isExpanded: true,
-                                        dropdownColor: Colors.white,
-                                        borderRadius: BorderRadius.circular(12),
-                                        items: _patients.map((p) {
-                                          return DropdownMenuItem(
-                                            value: p,
-                                            child: Text(
-                                              '${p.name} (${p.village})',
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 12,
                                             ),
-                                          );
-                                        }).toList(),
-                                        onChanged: (val) {
-                                          if (val != null) {
-                                            setState(
-                                              () => _selectedPatient = val,
-                                            );
-                                          }
-                                        },
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          borderSide: BorderSide(
+                                            color: Colors.grey.shade300,
+                                          ),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          borderSide: BorderSide(
+                                            color: Colors.orange.shade400,
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                        errorBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          borderSide: const BorderSide(
+                                            color: Colors.red,
+                                            width: 1.5,
+                                          ),
+                                        ),
                                       ),
+                                      value: _selectedPatient,
+                                      isExpanded: true,
+                                      dropdownColor: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      items: _patients.map((p) {
+                                        return DropdownMenuItem(
+                                          value: p,
+                                          child: Text(
+                                            '${p.name} (${p.village})',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        );
+                                      }).toList(),
+                                      onChanged: (val) {
+                                        if (val != null) {
+                                          setState(
+                                            () => _selectedPatient = val,
+                                          );
+                                        }
+                                      },
                                     ),
                                   ),
                                   const SizedBox(width: 12),
