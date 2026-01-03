@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/patient_service.dart';
-import 'package:oruma_app/pt_registration.dart';
 import 'package:oruma_app/patient_details_page.dart';
+import 'package:intl/intl.dart';
 
-class PatientListPage extends StatefulWidget {
-  const PatientListPage({super.key});
+class DeceasedPatientListPage extends StatefulWidget {
+  const DeceasedPatientListPage({super.key});
 
   @override
-  State<PatientListPage> createState() => _PatientListPageState();
+  State<DeceasedPatientListPage> createState() =>
+      _DeceasedPatientListPageState();
 }
 
-class _PatientListPageState extends State<PatientListPage> {
+class _DeceasedPatientListPageState extends State<DeceasedPatientListPage> {
   // Data
   List<Patient> _allPatients = [];
   bool _isLoading = true;
@@ -46,7 +47,7 @@ class _PatientListPageState extends State<PatientListPage> {
     });
 
     try {
-      final list = await PatientService.getAllPatients();
+      final list = await PatientService.getAllPatients(isDead: true);
       if (mounted) {
         setState(() {
           _allPatients = list;
@@ -72,13 +73,16 @@ class _PatientListPageState extends State<PatientListPage> {
                 controller: _searchController,
                 autofocus: true,
                 decoration: const InputDecoration(
-                  hintText: 'Search patients...',
+                  hintText: 'Search deceased patients...',
                   border: InputBorder.none,
                   hintStyle: TextStyle(color: Colors.grey),
                 ),
                 style: const TextStyle(color: Colors.black),
               )
-            : const Text("Patients"),
+            : const Text("Deceased Patients"),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
         actions: [
           IconButton(
             icon: Icon(_isSearching ? Icons.close : Icons.search),
@@ -101,6 +105,7 @@ class _PatientListPageState extends State<PatientListPage> {
             ),
         ],
       ),
+      backgroundColor: Colors.grey.shade50,
       body: Builder(
         builder: (context) {
           if (_isLoading) {
@@ -154,7 +159,7 @@ class _PatientListPageState extends State<PatientListPage> {
                 ),
               );
             }
-            return const Center(child: Text("No patients found."));
+            return const Center(child: Text("No deceased patients found."));
           }
 
           return RefreshIndicator(
@@ -171,19 +176,6 @@ class _PatientListPageState extends State<PatientListPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const patientrigister()),
-          );
-          if (result == true) {
-            _loadPatients();
-          }
-        },
-        label: const Text("Add Patient"),
-        icon: const Icon(Icons.person_add),
-      ),
     );
   }
 
@@ -197,76 +189,36 @@ class _PatientListPageState extends State<PatientListPage> {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         leading: CircleAvatar(
-          backgroundColor: patient.isDead
-              ? Colors.grey.shade300
-              : Theme.of(context).colorScheme.primary.withOpacity(0.1),
-          child: patient.isDead
-              ? const Icon(Icons.person_off, color: Colors.grey)
-              : Text(
-                  patient.name.isNotEmpty ? patient.name[0].toUpperCase() : "?",
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+          backgroundColor: Colors.grey.shade200,
+          child: const Icon(Icons.person_off, color: Colors.grey),
         ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                patient.name,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (patient.isDead)
-              Container(
-                margin: const EdgeInsets.only(left: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.black87,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  "DECEASED",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-          ],
+        title: Text(
+          patient.name,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            if (patient.registerId != null) ...[
+            if (patient.dateOfDeath != null)
               Container(
+                margin: const EdgeInsets.only(bottom: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  color: Colors.black.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  "REG ID: ${patient.registerId}",
-                  style: TextStyle(
+                  "Died: ${DateFormat('MMM dd, yyyy').format(patient.dateOfDeath!)}",
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                    fontSize: 10,
+                    color: Colors.black87,
+                    fontSize: 11,
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
-            ],
-            Text("${patient.age} years • ${patient.gender}"),
             Text(
-              patient.village,
+              "${patient.age} years • ${patient.village}",
               style: TextStyle(color: Colors.grey.shade600),
             ),
           ],

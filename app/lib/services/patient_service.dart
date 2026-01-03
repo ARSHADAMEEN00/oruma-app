@@ -7,10 +7,13 @@ class PatientService {
   PatientService._();
 
   /// Get all patients from the API.
-  static Future<List<Patient>> getAllPatients() async {
-    final result = await ApiService.get<List<dynamic>>(
-      '${ApiConfig.patientsEndpoint}?populate=createdBy',
-    );
+  static Future<List<Patient>> getAllPatients({bool? isDead}) async {
+    String query = '${ApiConfig.patientsEndpoint}?populate=createdBy';
+    if (isDead != null) {
+      query += '&isDead=$isDead';
+    }
+
+    final result = await ApiService.get<List<dynamic>>(query);
 
     if (result.isSuccess && result.data != null) {
       return result.data!

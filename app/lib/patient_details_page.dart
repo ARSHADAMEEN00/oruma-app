@@ -69,6 +69,71 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
     }
   }
 
+  Future<void> _markAsDeceased() async {
+    DateTime? selectedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+      helpText: "Select Date of Death",
+    );
+
+    if (selectedDate == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Mark as Deceased"),
+        content: Text(
+          "Are you sure you want to mark ${_currentPatient.name} as deceased on ${DateFormat('MMM dd, yyyy').format(selectedDate)}?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("Confirm"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      setState(() => _isLoading = true);
+      try {
+        final updatedPatient = _currentPatient.copyWith(
+          isDead: true,
+          dateOfDeath: selectedDate,
+        );
+
+        final result = await PatientService.updatePatient(
+          _currentPatient.id!,
+          updatedPatient,
+        );
+
+        if (mounted) {
+          setState(() {
+            _currentPatient = result;
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Patient marked as deceased")),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,6 +173,12 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: _isLoading ? null : _deletePatient,
+            ),
+          if (!_currentPatient.isDead)
+            IconButton(
+              icon: const Icon(Icons.person_off_outlined),
+              tooltip: "Mark as Deceased",
+              onPressed: _isLoading ? null : _markAsDeceased,
             ),
         ],
       ),
@@ -199,25 +270,75 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
     return Center(
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: Theme.of(
-              context,
-            ).colorScheme.primary.withOpacity(0.1),
-            child: Text(
-              _currentPatient.name[0].toUpperCase(),
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
+          Stack(
+            children: [
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: _currentPatient.isDead
+                    ? Colors.grey.shade300
+                    : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                child: _currentPatient.isDead
+                    ? const Icon(Icons.person_off, size: 40, color: Colors.grey)
+                    : Text(
+                        _currentPatient.name[0].toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
               ),
-            ),
+              if (_currentPatient.isDead)
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.black,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.circle,
+                      size: 12,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 16),
+          if (_currentPatient.isDead)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.black87,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                "DECEASED",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
           Text(
             _currentPatient.name,
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
+          if (_currentPatient.isDead && _currentPatient.dateOfDeath != null)
+            Text(
+              "Died on: ${DateFormat('MMM dd, yyyy').format(_currentPatient.dateOfDeath!)}",
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.red,
+              ),
+            ),
+          const SizedBox(height: 4),
           if (_currentPatient.registerId != null)
             Text(
               "ID: ${_currentPatient.registerId}",

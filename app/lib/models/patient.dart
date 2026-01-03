@@ -12,6 +12,8 @@ class Patient {
   final String disease;
   final String plan;
   final String? registerId;
+  final bool isDead;
+  final DateTime? dateOfDeath;
   final String? createdBy;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -29,6 +31,8 @@ class Patient {
     required this.disease,
     required this.plan,
     this.registerId,
+    this.isDead = false,
+    this.dateOfDeath,
     this.createdBy,
     this.createdAt,
     this.updatedAt,
@@ -51,6 +55,10 @@ class Patient {
       disease: json['disease']?.toString() ?? '',
       plan: json['plan']?.toString() ?? '',
       registerId: json['registerId']?.toString(),
+      isDead: json['isDead'] == true,
+      dateOfDeath: json['dateOfDeath'] != null
+          ? DateTime.tryParse(json['dateOfDeath'].toString())
+          : null,
       createdBy: json['createdBy'] is Map
           ? json['createdBy']['name']?.toString()
           : json['createdBy']?.toString(),
@@ -77,6 +85,8 @@ class Patient {
       'disease': disease,
       'plan': plan,
       'registerId': registerId,
+      'isDead': isDead,
+      'dateOfDeath': dateOfDeath?.toIso8601String(),
     };
   }
 
@@ -94,6 +104,8 @@ class Patient {
     String? disease,
     String? plan,
     String? registerId,
+    bool? isDead,
+    DateTime? dateOfDeath,
   }) {
     return Patient(
       id: id ?? this.id,
@@ -108,6 +120,8 @@ class Patient {
       disease: disease ?? this.disease,
       plan: plan ?? this.plan,
       registerId: registerId ?? this.registerId,
+      isDead: isDead ?? this.isDead,
+      dateOfDeath: dateOfDeath ?? this.dateOfDeath,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
