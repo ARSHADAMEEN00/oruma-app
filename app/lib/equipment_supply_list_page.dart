@@ -187,9 +187,12 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                 // Note Field
                 TextField(
                   controller: noteController,
+                  style: const TextStyle(fontSize: 13),
                   decoration: InputDecoration(
                     labelText: 'Return Note (Optional)',
+                    labelStyle: const TextStyle(fontSize: 13),
                     hintText: 'Condition of equipment, etc.',
+                    hintStyle: const TextStyle(fontSize: 13),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
