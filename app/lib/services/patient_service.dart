@@ -9,7 +9,7 @@ class PatientService {
   /// Get all patients from the API.
   static Future<List<Patient>> getAllPatients() async {
     final result = await ApiService.get<List<dynamic>>(
-      ApiConfig.patientsEndpoint,
+      '${ApiConfig.patientsEndpoint}?populate=createdBy',
     );
 
     if (result.isSuccess && result.data != null) {
@@ -24,7 +24,7 @@ class PatientService {
   /// Get a single patient by ID.
   static Future<Patient> getPatientById(String id) async {
     final result = await ApiService.get<Map<String, dynamic>>(
-      '${ApiConfig.patientsEndpoint}/$id',
+      '${ApiConfig.patientsEndpoint}/$id?populate=createdBy',
     );
 
     if (result.isSuccess && result.data != null) {

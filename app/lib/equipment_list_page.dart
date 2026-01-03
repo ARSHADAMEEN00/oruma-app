@@ -837,6 +837,7 @@ class _EquipmentListPageState extends State<EquipmentListPage>
 // (EquipmentDetailPage removed and replaced by _showEquipmentDetails bottom sheet)
 
 // Form Page (Create Bulk) - Same as previous logic
+// Form Page (Create Bulk) - Compact & Modern
 class EquipmentFormPage extends StatefulWidget {
   final Equipment? equipment;
   const EquipmentFormPage({super.key, this.equipment});
@@ -860,7 +861,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.equipment?.name ?? '');
-    _quantityController = TextEditingController(text: _isEditing ? '1' : '1');
+    _quantityController = TextEditingController(text: '1');
     _purchasedFromController = TextEditingController(
       text: widget.equipment?.purchasedFrom ?? '',
     );
@@ -906,10 +907,11 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
         }
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -928,303 +930,242 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: const Color(0xFFF8F9FC), // Light blue-grey background
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0,
         title: Text(
           _isEditing ? 'Edit Equipment' : 'Add Equipment',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
+        elevation: 0,
+        backgroundColor: Colors.white,
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: SizedBox(
+            height: 50,
+            child: ElevatedButton(
+              onPressed: _isSubmitting ? null : _submit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.indigo,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text(
+                      _isEditing ? 'Save Changes' : 'Create Equipment',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+          ),
+        ),
       ),
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Header Section
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.shade200,
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              // Header Card
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 20,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.indigo.shade500, Colors.indigo.shade700],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          _isEditing
-                              ? Colors.orange.shade400
-                              : Colors.indigo.shade400,
-                          _isEditing
-                              ? Colors.orange.shade600
-                              : Colors.indigo.shade600,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: (_isEditing ? Colors.orange : Colors.indigo)
-                              .withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.indigo.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
-                    child: Icon(
-                      _isEditing
-                          ? Icons.edit_note_rounded
-                          : Icons.medical_services_rounded,
-                      color: Colors.white,
-                      size: 36,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _isEditing ? 'Update Detail' : 'New Equipment',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _isEditing
-                        ? 'Modify the information for this item'
-                        : 'Fill in the details to add new equipment',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                  ),
-                ],
-              ),
-            ),
-
-            // Form Section
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  ],
+                ),
+                child: Row(
                   children: [
-                    // Equipment Details Card
-                    _buildSectionCard(
-                      title: 'Equipment Details',
-                      icon: Icons.inventory_2_rounded,
-                      children: [
-                        _buildTextField(
-                          controller: _nameController,
-                          label: 'Equipment Name',
-                          hint: 'e.g., Wheelchair, Oxygen Cylinder',
-                          icon: Icons.medical_services_outlined,
-                          validator: (v) =>
-                              v!.isEmpty ? 'Name is required' : null,
-                        ),
-                        if (!_isEditing) ...[
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            controller: _quantityController,
-                            label: 'Quantity',
-                            hint: 'Number of items',
-                            icon: Icons.numbers_rounded,
-                            keyboardType: TextInputType.number,
-                            validator: (v) {
-                              if (v!.isEmpty) return 'Quantity is required';
-                              final num = int.tryParse(v);
-                              if (num == null || num < 1)
-                                return 'Enter a valid number';
-                              return null;
-                            },
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Purchase Info Card
-                    _buildSectionCard(
-                      title: 'Purchase Information',
-                      icon: Icons.shopping_bag_rounded,
-                      children: [
-                        _buildTextField(
-                          controller: _purchasedFromController,
-                          label: 'Purchased From',
-                          hint: 'Vendor or store name',
-                          icon: Icons.store_outlined,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildTextField(
-                          controller: _phoneController,
-                          label: 'Contact Phone',
-                          hint: 'Vendor phone number',
-                          icon: Icons.phone_outlined,
-                          keyboardType: TextInputType.phone,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Location Card
-                    _buildSectionCard(
-                      title: 'Storage Location',
-                      icon: Icons.location_on_rounded,
-                      children: [
-                        _buildTextField(
-                          controller: _placeController,
-                          label: 'Place',
-                          hint: 'Where the equipment is stored',
-                          icon: Icons.place_outlined,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Submit Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _isSubmitting ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.indigo,
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor: Colors.indigo.shade300,
-                          elevation: 2,
-                          shadowColor: Colors.indigo.withOpacity(0.3),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: _isSubmitting
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    _isEditing
-                                        ? Icons.save_rounded
-                                        : Icons.add_circle_outline,
-                                    size: 22,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    _isEditing
-                                        ? 'Save Changes'
-                                        : 'Create Equipment',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        _isEditing ? Icons.edit : Icons.add_box_rounded,
+                        color: Colors.white,
+                        size: 24,
                       ),
                     ),
-                    const SizedBox(height: 16),
-
-                    // Cancel Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.grey[600],
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _isEditing ? 'Update Details' : 'New Equipment',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(fontSize: 15),
-                        ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _isEditing
+                                ? 'Modify existing record'
+                                : 'Add to inventory',
+                            style: TextStyle(
+                              color: Colors.indigo.shade100,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+
+              // Main Info Card
+              _buildSection(
+                title: 'Basic Information',
+                children: [
+                  _buildCompactField(
+                    controller: _nameController,
+                    label: 'Equipment Name',
+                    icon: Icons.medication_rounded,
+                    validator: (v) => v!.isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      if (!_isEditing) ...[
+                        Expanded(
+                          flex: 1,
+                          child: _buildCompactField(
+                            controller: _quantityController,
+                            label: 'Qty',
+                            icon: Icons.numbers,
+                            keyboardType: TextInputType.number,
+                            validator: (v) {
+                              if (v!.isEmpty) return 'Req';
+                              if (int.tryParse(v) == null) return 'Inv';
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                      Expanded(
+                        flex: 2,
+                        child: _buildCompactField(
+                          controller: _placeController,
+                          label: 'Storage Place',
+                          icon: Icons.place_outlined,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // Purchase Info Card
+              _buildSection(
+                title: 'Purchase & Contact',
+                children: [
+                  _buildCompactField(
+                    controller: _purchasedFromController,
+                    label: 'Purchased From',
+                    icon: Icons.store_outlined,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildCompactField(
+                    controller: _phoneController,
+                    label: 'Contact Phone',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSectionCard({
+  Widget _buildSection({
     required String title,
-    required IconData icon,
     required List<Widget> children,
   }) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: Colors.grey.shade200),
       ),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.indigo.shade50,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: Colors.indigo, size: 20),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12, left: 4),
+            child: Text(
+              title.toUpperCase(),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+                color: Colors.grey[500],
               ),
-              const SizedBox(width: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 20),
           ...children,
         ],
       ),
     );
   }
 
-  Widget _buildTextField({
+  Widget _buildCompactField({
     required TextEditingController controller,
     required String label,
-    required String hint,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
@@ -1233,37 +1174,32 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
       controller: controller,
       keyboardType: keyboardType,
       validator: validator,
-      style: const TextStyle(fontSize: 15),
+      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         labelText: label,
-        hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-        prefixIcon: Icon(icon, color: Colors.grey[500], size: 22),
+        prefixIcon: Icon(icon, size: 20, color: Colors.grey[400]),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: Colors.grey[50], // Very subtle background
+        isDense: true,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
+          horizontal: 12,
+          vertical: 14,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade200),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade200),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: Colors.indigo, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: Colors.red, width: 1),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 1.5),
         ),
       ),
     );
