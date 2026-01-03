@@ -193,104 +193,283 @@ class _HomevisitState extends State<Homevisit> {
     final nameCtrl = TextEditingController();
     final addressCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
+    final ageCtrl = TextEditingController();
+    String selectedGender = 'Male';
+
     final formKey = GlobalKey<FormState>();
     bool localLoading = false;
 
+    // Helper for consistent decoration
+    InputDecoration getModernDecoration(String label, IconData icon) {
+      return InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.grey.shade600),
+        prefixIcon: Icon(icon, size: 20, color: Colors.grey.shade600),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(
+            color: Theme.of(context).primaryColor,
+            width: 1.5,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+      );
+    }
+
     final result = await showDialog<Patient>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+        builder: (context, setDialogState) => Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
           ),
-          title: const Text(
-            'Add New Patient',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          content: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildSimpleTextField(
-                    controller: nameCtrl,
-                    label: 'Name',
-                    icon: Icons.person_outline,
-                    validator: (v) => v!.isEmpty ? 'Name is required' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSimpleTextField(
-                    controller: phoneCtrl,
-                    label: 'Phone',
-                    icon: Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
-                    validator: (v) => v!.isEmpty ? 'Phone is required' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSimpleTextField(
-                    controller: addressCtrl,
-                    label: 'Address',
-                    icon: Icons.location_on_outlined,
-                    maxLines: 2,
-                    validator: (v) => v!.isEmpty ? 'Address is required' : null,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: localLoading
-                  ? null
-                  : () async {
-                      if (!formKey.currentState!.validate()) return;
-                      setDialogState(() => localLoading = true);
-                      try {
-                        final newPatient = Patient(
-                          name: nameCtrl.text.trim(),
-                          phone: phoneCtrl.text.trim(),
-                          address: addressCtrl.text.trim(),
-                          relation: '',
-                          gender: 'Male',
-                          age: 0,
-                          place: '',
-                          village: '',
-                          disease: '',
-                          plan: '',
-                        );
-                        final created = await PatientService.createPatient(
-                          newPatient,
-                        );
-                        if (context.mounted) Navigator.pop(context, created);
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(
-                            context,
-                          ).showSnackBar(SnackBar(content: Text('Error: $e')));
-                        }
-                      } finally {
-                        setDialogState(() => localLoading = false);
-                      }
-                    },
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
-              ),
-              child: localLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Save Patient'),
+              ],
             ),
-          ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 20,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.person_add_rounded, color: Colors.white),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'New Patient',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        style: IconButton.styleFrom(
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Content
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildModernTextField(
+                            controller: nameCtrl,
+                            label: 'Patient Name',
+                            icon: Icons.person_outline_rounded,
+                            validator: (v) =>
+                                v!.trim().isEmpty ? 'Required' : null,
+                            decoration: getModernDecoration(
+                              'Patient Name',
+                              Icons.person_outline_rounded,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: _buildModernTextField(
+                                  controller: phoneCtrl,
+                                  label: 'Phone',
+                                  icon: Icons.phone_outlined,
+                                  keyboardType: TextInputType.phone,
+                                  validator: (v) =>
+                                      v!.trim().isEmpty ? 'Required' : null,
+                                  decoration: getModernDecoration(
+                                    'Phone',
+                                    Icons.phone_outlined,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 1,
+                                child: _buildModernTextField(
+                                  controller: ageCtrl,
+                                  label: 'Age',
+                                  icon: Icons.calendar_today_outlined,
+                                  keyboardType: TextInputType.number,
+                                  validator: (v) =>
+                                      v!.trim().isEmpty ? 'Required' : null,
+                                  decoration: getModernDecoration(
+                                    'Age',
+                                    Icons.calendar_today_outlined,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // Gender Selection
+                          DropdownButtonFormField<String>(
+                            value: selectedGender,
+                            decoration: getModernDecoration(
+                              'Gender',
+                              Icons.people_outline,
+                            ),
+                            items: ['Male', 'Female', 'Other']
+                                .map(
+                                  (g) => DropdownMenuItem(
+                                    value: g,
+                                    child: Text(g),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (v) =>
+                                setDialogState(() => selectedGender = v!),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildModernTextField(
+                            controller: addressCtrl,
+                            label: 'Address',
+                            icon: Icons.location_on_outlined,
+                            maxLines: 2,
+                            validator: (v) =>
+                                v!.trim().isEmpty ? 'Required' : null,
+                            decoration: getModernDecoration(
+                              'Address',
+                              Icons.location_on_outlined,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Footer
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: localLoading
+                          ? null
+                          : () async {
+                              if (!formKey.currentState!.validate()) return;
+                              setDialogState(() => localLoading = true);
+                              try {
+                                final newPatient = Patient(
+                                  name: nameCtrl.text.trim(),
+                                  phone: phoneCtrl.text.trim(),
+                                  address: addressCtrl.text.trim(),
+                                  relation: 'Self',
+                                  gender: selectedGender,
+                                  age: int.tryParse(ageCtrl.text.trim()) ?? 0,
+                                  place: 'Home',
+                                  village: 'Kodur',
+                                  disease: 'Old Age',
+                                  plan: '1/1',
+                                );
+                                final created =
+                                    await PatientService.createPatient(
+                                      newPatient,
+                                    );
+                                if (context.mounted)
+                                  Navigator.pop(context, created);
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              } finally {
+                                setDialogState(() => localLoading = false);
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: localLoading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                valueColor: AlwaysStoppedAnimation(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Text(
+                              'Create Patient',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -307,10 +486,11 @@ class _HomevisitState extends State<Homevisit> {
     }
   }
 
-  Widget _buildSimpleTextField({
+  Widget _buildModernTextField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
+    InputDecoration? decoration,
     int maxLines = 1,
     String? Function(String?)? validator,
     TextInputType keyboardType = TextInputType.text,
@@ -320,15 +500,8 @@ class _HomevisitState extends State<Homevisit> {
       maxLines: maxLines,
       validator: validator,
       keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, size: 20),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 12,
-        ),
-      ),
+      style: const TextStyle(fontSize: 15),
+      decoration: decoration,
     );
   }
 
