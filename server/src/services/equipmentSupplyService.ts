@@ -106,6 +106,8 @@ function toEquipmentSupply(doc: any): EquipmentSupply {
     patientPhone: doc.patientPhone,
     patientAddress: doc.patientAddress,
     careOf: doc.careOf,
+    receiverName: doc.receiverName,
+    receiverPhone: doc.receiverPhone,
     supplyDate: doc.supplyDate,
     returnDate: doc.returnDate,
     actualReturnDate: doc.actualReturnDate,

@@ -21,6 +21,9 @@ class _EqSupplyState extends State<EqSupply> {
   Patient? _selectedPatient;
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _careOfController = TextEditingController();
+  final TextEditingController _receiverNameController = TextEditingController();
+  final TextEditingController _receiverPhoneController =
+      TextEditingController();
 
   // Data
   List<Equipment> _availableEquipment = [];
@@ -113,6 +116,8 @@ class _EqSupplyState extends State<EqSupply> {
         patientPhone: _selectedPatient!.phone,
         patientAddress: _selectedPatient!.address,
         careOf: _careOfController.text.trim(),
+        receiverName: _receiverNameController.text.trim(),
+        receiverPhone: _receiverPhoneController.text.trim(),
         supplyDate: DateTime.now(),
         notes: _notesController.text.trim(),
       );
@@ -886,6 +891,30 @@ class _EqSupplyState extends State<EqSupply> {
                                 label: 'C/O (Care Of)',
                                 hint: 'name of the person',
                                 icon: Icons.supervised_user_circle_outlined,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Received By Card
+                          _buildSectionCard(
+                            title: 'Received By',
+                            icon: Icons.person_pin_circle_rounded,
+                            iconColor: Colors.teal,
+                            children: [
+                              _buildTextField(
+                                controller: _receiverNameController,
+                                label: 'Receiver Name',
+                                hint: 'Name of person receiving',
+                                icon: Icons.person,
+                              ),
+                              const SizedBox(height: 16),
+                              _buildTextField(
+                                controller: _receiverPhoneController,
+                                label: 'Receiver Phone',
+                                hint: 'Phone number of receiver',
+                                icon: Icons.phone,
+                                keyboardType: TextInputType.phone,
                               ),
                             ],
                           ),

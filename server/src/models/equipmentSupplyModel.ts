@@ -12,6 +12,8 @@ const EquipmentSupplySchema = new Schema<EquipmentSupplyDocument>(
     patientPhone: { type: String, required: true, trim: true },
     patientAddress: { type: String, trim: true },
     careOf: { type: String, trim: true },
+    receiverName: { type: String, trim: true },
+    receiverPhone: { type: String, trim: true },
     supplyDate: { type: String, required: true },
     returnDate: { type: String },
     actualReturnDate: { type: String },

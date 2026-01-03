@@ -60,6 +60,8 @@ export interface EquipmentSupply {
   patientPhone: string;
   patientAddress?: string;
   careOf?: string;
+  receiverName?: string;
+  receiverPhone?: string;
   supplyDate: string;         // ISO date string
   returnDate?: string;        // Expected return date (optional)
   actualReturnDate?: string;  // When actually returned

@@ -7,6 +7,8 @@ class EquipmentSupply {
   final String patientPhone;
   final String? patientAddress;
   final String? careOf;
+  final String? receiverName;
+  final String? receiverPhone;
   final DateTime supplyDate;
   final DateTime? returnDate;
   final DateTime? actualReturnDate;
@@ -25,6 +27,8 @@ class EquipmentSupply {
     required this.patientPhone,
     this.patientAddress,
     this.careOf,
+    this.receiverName,
+    this.receiverPhone,
     required this.supplyDate,
     this.returnDate,
     this.actualReturnDate,
@@ -45,6 +49,8 @@ class EquipmentSupply {
       patientPhone: json['patientPhone']?.toString() ?? '',
       patientAddress: json['patientAddress']?.toString(),
       careOf: json['careOf']?.toString(),
+      receiverName: json['receiverName']?.toString(),
+      receiverPhone: json['receiverPhone']?.toString(),
       supplyDate:
           DateTime.tryParse(json['supplyDate']?.toString() ?? '') ??
           DateTime.now(),
@@ -75,6 +81,8 @@ class EquipmentSupply {
       'patientPhone': patientPhone,
       'patientAddress': patientAddress,
       'careOf': careOf,
+      'receiverName': receiverName,
+      'receiverPhone': receiverPhone,
       'supplyDate': supplyDate.toIso8601String(),
       'returnDate': returnDate?.toIso8601String(),
       'actualReturnDate': actualReturnDate?.toIso8601String(),
