@@ -16,6 +16,8 @@ const PatientSchema = new Schema<PatientDocument>(
     disease: { type: String, required: true, trim: true },
     plan: { type: String, required: true, trim: true },
     registerId: { type: String, unique: true, sparse: true },
+    isDead: { type: Boolean, default: false },
+    dateOfDeath: { type: Date },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }

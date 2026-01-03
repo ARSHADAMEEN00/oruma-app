@@ -12,6 +12,8 @@ export interface Patient {
   disease: string;
   plan: string;
   registerId?: string;
+  isDead?: boolean;
+  dateOfDeath?: string; // ISO date string
   createdAt?: Date;
   createdBy?: string;
 }

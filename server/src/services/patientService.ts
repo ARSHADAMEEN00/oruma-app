@@ -42,8 +42,12 @@ export const patientService = {
     return toPatient(created);
   },
 
-  getAll: async (): Promise<Patient[]> => {
-    const list = await PatientModel.find().sort({ createdAt: -1 }).lean();
+  getAll: async (filter: any = {}): Promise<Patient[]> => {
+    const query: any = {};
+    if (filter.isDead !== undefined) {
+      query.isDead = filter.isDead === 'true' || filter.isDead === true;
+    }
+    const list = await PatientModel.find(query).sort({ createdAt: -1 }).lean();
     return list.map(toPatient);
   },
 
@@ -80,6 +84,8 @@ function toPatient(doc: any): Patient {
     disease: doc.disease,
     plan: doc.plan,
     registerId: doc.registerId,
+    isDead: doc.isDead,
+    dateOfDeath: doc.dateOfDeath ? doc.dateOfDeath.toISOString() : undefined,
     createdAt: doc.createdAt,
     createdBy: doc.createdBy ? doc.createdBy.toString() : undefined,
   };
