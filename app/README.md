@@ -1,6 +1,16 @@
-# Oruma App
+# Kodur PCC - Palliative Care Management System
 
-A Flutter application for managing patient care, home visits, and equipment supply tracking.
+**Kodur PCC** is a comprehensive digital solution designed to support palliative care services with compassion and efficiency. This Flutter application empowers healthcare providers to deliver dignified, person-centered care to patients and families facing serious illness.
+
+## About Kodur PCC
+
+Kodur PCC (Palliative Care Center) is a complete management system that streamlines:
+- **Patient Care Management**: Comprehensive patient records and care coordination
+- **Home Visit Scheduling**: Efficient planning and tracking of home-based care visits
+- **Equipment Tracking**: Medical equipment inventory and supply management
+- **Medicine Distribution**: Medication supply tracking and distribution logs
+- **Volunteer Coordination**: Manage volunteers and caregivers supporting patient care
+- **Administrative Tools**: Role-based access control and secure data management
 
 ## Getting Started
 
@@ -109,6 +119,28 @@ Create a `.env` file in the `server` directory:
 PORT=3000
 MONGO_URI=mongodb://localhost:27017/oruma
 ```
+
+### App Icons & Branding
+
+The app uses **Kodur PCC** branding with custom icons generated from `assets/logo/logo.png`.
+
+**App Name**: Kodur PCC  
+**Logo Location**: `assets/logo/logo.png`
+
+Icons are automatically generated for all platforms using `flutter_launcher_icons`. To regenerate icons after updating the logo:
+
+```bash
+flutter pub get
+dart run flutter_launcher_icons
+```
+
+This will create:
+- **Android**: Adaptive icons (mipmap resources) with white background
+- **iOS**: All required icon sizes (20x20 to 1024x1024)
+- **Web**: Favicon and web app icons
+
+The configuration is in `pubspec.yaml` under the `flutter_launcher_icons` section.
+
 
 ## Features
 

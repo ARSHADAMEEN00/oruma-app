@@ -21,134 +21,446 @@ class Homescreen extends StatefulWidget {
 class _HomescreenState extends State<Homescreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  // Helper widget to build the Quick Add Bottom Sheet
+  void _showQuickAddOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Quick Add",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A237E),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildQuickActionItem(
+                  icon: Icons.person_add_rounded,
+                  label: "Patient",
+                  color: Colors.blue,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const patientrigister(),
+                      ),
+                    );
+                  },
+                ),
+                _buildQuickActionItem(
+                  icon: Icons.add_home_work_rounded,
+                  label: "Visit",
+                  color: Colors.green,
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navigate to Home Visit Form if available, or List
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const HomeVisitListPage(),
+                      ),
+                    );
+                  },
+                ),
+                _buildQuickActionItem(
+                  icon: Icons.medical_services_rounded,
+                  label: "Supply",
+                  color: Colors.orange,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const EqSupply()),
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionItem({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: color, size: 30),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showUserProfile(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 50,
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const CircleAvatar(
+              radius: 40,
+              backgroundColor: Color(0xFF1A237E),
+              child: Icon(Icons.person, size: 40, color: Colors.white),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Team Oruma",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A237E),
+              ),
+            ),
+            const Text(
+              "admin@oruma.care",
+              style: TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            const SizedBox(height: 32),
+            _buildProfileMenuItem(
+              icon: Icons.settings_outlined,
+              title: "Settings",
+              onTap: () => Navigator.pop(context),
+            ),
+            _buildProfileMenuItem(
+              icon: Icons.help_outline,
+              title: "Help & Support",
+              onTap: () => Navigator.pop(context),
+            ),
+            const Divider(height: 32),
+            _buildProfileMenuItem(
+              icon: Icons.logout,
+              title: "Logout",
+              color: Colors.red,
+              onTap: () {
+                Navigator.pop(context); // Close sheet
+                context.read<AuthService>().logout();
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const Loginscreen()),
+                  (route) => false,
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileMenuItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: (color ?? const Color(0xFF1A237E)).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, color: color ?? const Color(0xFF1A237E), size: 20),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: color ?? Colors.grey[800],
+        ),
+      ),
+      trailing: const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+      onTap: onTap,
+      contentPadding: EdgeInsets.zero,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
       drawer: _buildProfessionalDrawer(context),
       backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        title: const Text(
-          "Oruma Care",
-          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5),
-        ),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showQuickAddOptions,
+        backgroundColor: const Color(0xFF1A237E),
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+      body: Column(
+        children: [
+          // Header Section
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 50, 20, 30),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF1A237E), // Deep Blue
+                  Color(0xFF0277BD), // Light Blue
+                ],
+              ),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.menu,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.notifications_outlined,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        GestureDetector(
+                          onTap: () => _showUserProfile(context),
+                          child: const CircleAvatar(
+                            radius: 20,
+                            backgroundColor: Colors.white,
+                            child: Icon(Icons.person, color: Color(0xFF1A237E)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 30),
+                const Text(
+                  "Welcome Back,",
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  "Team Oruma",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(width: 8),
+
+          // Body Content
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Dashboard Grid
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1.1,
+                    children: [
+                      _buildModernActionCard(
+                        context,
+                        title: "Patients",
+                        subtitle: "Manage Directory",
+                        icon: Icons.people_outline_rounded,
+                        color: Colors.blue,
+                        page: const PatientListPage(),
+                      ),
+                      _buildModernActionCard(
+                        context,
+                        title: "Home Visits",
+                        subtitle: "Schedule & View",
+                        icon: Icons.home_work_outlined,
+                        color: Colors.teal,
+                        page: const HomeVisitListPage(),
+                      ),
+                      _buildModernActionCard(
+                        context,
+                        title: "Supply List",
+                        subtitle: "Track History",
+                        icon: Icons.inventory_2_outlined,
+                        color: Colors.orange,
+                        page: const EquipmentSupplyListPage(),
+                      ),
+                      _buildModernActionCard(
+                        context,
+                        title: "Equipment",
+                        subtitle: "Inventory Status",
+                        icon: Icons.medical_services_outlined,
+                        color: Colors.purple,
+                        page: const EquipmentListPage(),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // Active Supplies Section
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Active Supplies",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A237E),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const EquipmentSupplyListPage(),
+                            ),
+                          );
+                        },
+                        child: const Text("View All"),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  _buildActiveSuppliesList(context),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
+    );
+  }
+
+  Widget _buildModernActionCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required Widget page,
+  }) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.1),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => page),
+          );
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Welcome Section
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primary,
-                      Theme.of(context).colorScheme.primary.withOpacity(0.8),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Welcome Back! 👋",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Manage patients, equipment & home visits",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onPrimary.withOpacity(0.9),
-                      ),
-                    ),
-                  ],
-                ),
+                child: Icon(icon, color: color, size: 28),
               ),
-              const SizedBox(height: 24),
-
-              // Active Supplies Slider
-              _buildActiveSuppliesSlider(context),
-              const SizedBox(height: 24),
-
-              // Quick Actions Title
-              Text(
-                "Quick Actions",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade800,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Grid Buttons
-              GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildActionCard(
-                    context,
-                    title: "Patients",
-                    icon: Icons.people_rounded,
-                    color: const Color(0xFF6366F1),
-                    page: const PatientListPage(),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
-                  _buildActionCard(
-                    context,
-                    title: "Home Visit",
-                    icon: Icons.home_work_rounded,
-                    color: const Color(0xFF10B981),
-                    page: const HomeVisitListPage(),
-                  ),
-                  _buildActionCard(
-                    context,
-                    title: "Supply List",
-                    icon: Icons.assignment_rounded,
-                    color: const Color(0xFF8B5CF6),
-                    page: const EquipmentSupplyListPage(),
-                  ),
-                  _buildActionCard(
-                    context,
-                    title: "Equipment List",
-                    icon: Icons.list_alt_rounded,
-                    color: const Color(0xFF06B6D4),
-                    page: const EquipmentListPage(),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ],
               ),
@@ -159,140 +471,124 @@ class _HomescreenState extends State<Homescreen> {
     );
   }
 
-  Widget _buildActiveSuppliesSlider(BuildContext context) {
+  Widget _buildActiveSuppliesList(BuildContext context) {
     return FutureBuilder<List<EquipmentSupply>>(
       future: EquipmentSupplyService.getActiveSupplies(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: CircularProgressIndicator(),
+          return const Center(child: CircularProgressIndicator());
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.inventory_2_outlined,
+                  size: 40,
+                  color: Colors.grey.shade400,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "No active supplies",
+                  style: TextStyle(color: Colors.grey.shade500),
+                ),
+              ],
             ),
           );
-        } else if (snapshot.hasError) {
-          return const SizedBox.shrink(); // Hide if error
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const SizedBox.shrink(); // Hide if no active supplies
         }
 
         final supplies = snapshot.data!;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Active Supplies (Not Returned)",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey.shade800,
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 140, // Height for the card
-              child: PageView.builder(
-                itemCount: supplies.length,
-                controller: PageController(viewportFraction: 0.92),
-                padEnds: false, // Align first item to start
-                itemBuilder: (context, index) {
-                  final supply = supplies[index];
-                  return Container(
-                    margin: const EdgeInsets.only(right: 12),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade200),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+        return SizedBox(
+          height: 160,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: supplies.length,
+            itemBuilder: (context, index) {
+              final supply = supplies[index];
+              return Container(
+                width: 280,
+                margin: const EdgeInsets.only(right: 16, bottom: 8, top: 2),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEF4444).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.medical_services_rounded,
-                                color: Color(0xFFEF4444),
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                supply.equipmentName,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.medical_services_outlined,
+                            color: Colors.red,
+                            size: 20,
+                          ),
                         ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.person_outline_rounded,
-                              size: 16,
-                              color: Colors.grey.shade600,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            supply.equipmentName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
                             ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                supply.patientName,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade700,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.calendar_today_rounded,
-                              size: 16,
-                              color: Colors.grey.shade600,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              "Supplied: ${supply.supplyDate}",
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey.shade500,
-                              ),
-                            ),
-                          ],
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),
-                  );
-                },
-              ),
-            ),
-          ],
+                    const Divider(height: 24),
+                    _buildInfoRow(Icons.person_outline, supply.patientName),
+                    const SizedBox(height: 8),
+                    _buildInfoRow(
+                      Icons.calendar_today_outlined,
+                      "Since: ${supply.supplyDate}",
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey.shade500),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 
@@ -301,21 +597,17 @@ class _HomescreenState extends State<Homescreen> {
       backgroundColor: Colors.white,
       child: Column(
         children: [
-          // Drawer Header
           Container(
             width: double.infinity,
             padding: EdgeInsets.only(
               top: MediaQuery.of(context).padding.top + 24,
               bottom: 24,
-              left: 20,
-              right: 20,
+              left: 24,
+              right: 24,
             ),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.primary.withOpacity(0.85),
-                ],
+                colors: [Color(0xFF1A237E), Color(0xFF0277BD)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -323,25 +615,20 @@ class _HomescreenState extends State<Homescreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Logo/Avatar
                 Container(
                   width: 70,
                   height: 70,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.local_hospital_rounded,
-                    size: 40,
-                    color: Theme.of(context).colorScheme.primary,
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/logo/logo.png',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.local_hospital, size: 40),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -351,37 +638,29 @@ class _HomescreenState extends State<Homescreen> {
                     color: Colors.white,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
+                const Text(
                   "Healthcare Management",
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
               ],
             ),
           ),
-
-          // Menu Items
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: 10),
               children: [
-                _buildDrawerSection("MAIN MENU"),
                 _buildDrawerItem(
                   context,
-                  icon: Icons.dashboard_rounded,
+                  icon: Icons.dashboard_outlined,
                   title: "Dashboard",
-                  isSelected: true,
                   onTap: () => Navigator.pop(context),
+                  isSelected: true,
                 ),
                 _buildDrawerItem(
                   context,
-                  icon: Icons.people_rounded,
+                  icon: Icons.people_outline,
                   title: "Patients",
                   onTap: () {
                     Navigator.pop(context);
@@ -395,7 +674,7 @@ class _HomescreenState extends State<Homescreen> {
                 ),
                 _buildDrawerItem(
                   context,
-                  icon: Icons.home_work_rounded,
+                  icon: Icons.home_work_outlined,
                   title: "Home Visits",
                   onTap: () {
                     Navigator.pop(context);
@@ -407,12 +686,11 @@ class _HomescreenState extends State<Homescreen> {
                     );
                   },
                 ),
-
-                _buildDrawerSection("INVENTORY"),
+                const Divider(indent: 20, endIndent: 20),
                 _buildDrawerItem(
                   context,
-                  icon: Icons.inventory_2_rounded,
-                  title: "Equipment",
+                  icon: Icons.inventory_2_outlined,
+                  title: "Equipment Inventory",
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
@@ -425,34 +703,8 @@ class _HomescreenState extends State<Homescreen> {
                 ),
                 _buildDrawerItem(
                   context,
-                  icon: Icons.add_box_rounded,
-                  title: "Add Equipment",
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const EquipmentFormPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.local_shipping_rounded,
-                  title: "New Supply",
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const EqSupply()),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.assignment_rounded,
-                  title: "Supply List",
+                  icon: Icons.medical_services_outlined,
+                  title: "Supply Record",
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
@@ -463,101 +715,34 @@ class _HomescreenState extends State<Homescreen> {
                     );
                   },
                 ),
-
-                // _buildDrawerSection("SETTINGS"),
-
-                // _buildDrawerItem(
-                //   context,
-                //   icon: Icons.info_rounded,
-                //   title: "About Us",
-                //   onTap: () => Navigator.pop(context),
-                // ),
-                // _buildDrawerItem(
-                //   context,
-                //   icon: Icons.photo_library_rounded,
-                //   title: "Gallery",
-                //   onTap: () => Navigator.pop(context),
-                // ),
               ],
             ),
           ),
-
-          // Footer
-          Container(
+          Padding(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              border: Border(top: BorderSide(color: Colors.grey.shade200)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.person_rounded,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+            child: ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Admin User",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                      Text(
-                        "admin@oruma.care",
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.logout_rounded, color: Colors.grey.shade600),
-                  onPressed: () {
-                    context.read<AuthService>().logout();
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) => const Loginscreen(),
-                      ),
-                      (route) => false,
-                    );
-                  },
-                ),
-              ],
+                child: const Icon(Icons.logout, color: Colors.red),
+              ),
+              title: const Text(
+                "Logout",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              onTap: () {
+                context.read<AuthService>().logout();
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const Loginscreen()),
+                  (route) => false,
+                );
+              },
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildDrawerSection(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: Colors.grey.shade500,
-          letterSpacing: 1.2,
-        ),
       ),
     );
   }
@@ -569,88 +754,21 @@ class _HomescreenState extends State<Homescreen> {
     required VoidCallback onTap,
     bool isSelected = false,
   }) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      decoration: BoxDecoration(
-        color: isSelected ? primaryColor.withOpacity(0.1) : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isSelected ? const Color(0xFF1A237E) : Colors.grey.shade600,
       ),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          color: isSelected ? primaryColor : Colors.grey.shade600,
-          size: 22,
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: isSelected ? primaryColor : Colors.grey.shade800,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            fontSize: 14,
-          ),
-        ),
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        dense: true,
-        visualDensity: const VisualDensity(vertical: -1),
-      ),
-    );
-  }
-
-  Widget _buildActionCard(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-    required Color color,
-    required Widget page,
-  }) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      elevation: 0,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => page),
-          );
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(icon, size: 28, color: color),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800,
-                  height: 1.2,
-                ),
-              ),
-            ],
-          ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: isSelected ? const Color(0xFF1A237E) : Colors.grey.shade800,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
         ),
       ),
+      selected: isSelected,
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
     );
   }
 }
