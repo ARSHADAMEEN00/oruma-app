@@ -58,6 +58,8 @@ class _EqSupplyState extends State<EqSupply> {
   void dispose() {
     _notesController.dispose();
     _careOfController.dispose();
+    _receiverNameController.dispose();
+    _receiverPhoneController.dispose();
     super.dispose();
   }
 
