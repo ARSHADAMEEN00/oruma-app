@@ -478,10 +478,8 @@ class _HomevisitState extends State<Homevisit> {
       await _loadInitialData();
       setState(() {
         _selectedPatient = _patients.firstWhere((p) => p.name == result.name);
-        // Auto-fill address if it was empty
-        if (addressController.text.isEmpty) {
-          addressController.text = _selectedPatient!.address;
-        }
+        // Update address to the new patient's address
+        addressController.text = _selectedPatient!.address;
       });
     }
   }
@@ -587,10 +585,8 @@ class _HomevisitState extends State<Homevisit> {
                                     if (val != null) {
                                       setState(() {
                                         _selectedPatient = val;
-                                        // Auto-fill address if not editing or if address is empty
-                                        if (addressController.text.isEmpty) {
-                                          addressController.text = val.address;
-                                        }
+                                        // Update address to the selected patient's address
+                                        addressController.text = val.address;
                                       });
                                     }
                                   },
