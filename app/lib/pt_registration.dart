@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/patient_service.dart';
 
+// ignore: camel_case_types
 class patientrigister extends StatefulWidget {
   final Patient? patient;
   const patientrigister({super.key, this.patient});
@@ -10,6 +11,7 @@ class patientrigister extends StatefulWidget {
   State<patientrigister> createState() => _patientrigisterState();
 }
 
+// ignore: camel_case_types
 class _patientrigisterState extends State<patientrigister> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
@@ -61,274 +63,406 @@ class _patientrigisterState extends State<patientrigister> {
     super.dispose();
   }
 
+  InputDecoration _buildInputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, size: 22, color: const Color(0xFF1A237E)),
+      floatingLabelBehavior: FloatingLabelBehavior.auto,
+      filled: true,
+      fillColor: Colors.grey.shade50,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF1A237E), width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.patient != null;
     return Scaffold(
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: Text(isEditing ? "Edit Patient" : "Patient Registration"),
+        title: Text(
+          isEditing ? "Edit Patient" : "New Patient Registration",
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: const Color(0xFF1A237E),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Patient Name
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: "Patient Name"),
-                validator: (val) =>
-                    val == null || val.isEmpty ? "Enter name" : null,
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: relationController,
-                decoration: const InputDecoration(
-                  labelText: "Relation of patient with Name",
-                ),
-                validator: (val) =>
-                    val == null || val.isEmpty ? "Enter relation" : null,
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: phoneController,
-                decoration: const InputDecoration(
-                  labelText: "Phone Number",
-                  prefixIcon: Icon(Icons.phone),
-                ),
-                keyboardType: TextInputType.phone,
-                validator: (val) =>
-                    val == null || val.isEmpty ? "Enter phone" : null,
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                "Select Gender:",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              _buildSectionCard(
+                title: "Basic Information",
+                icon: Icons.person_outline,
                 children: [
-                  Radio<String>(
-                    value: 'Male',
-                    groupValue: _gender,
-                    onChanged: (value) {
-                      setState(() {
-                        _gender = value;
-                      });
-                    },
+                  TextFormField(
+                    controller: nameController,
+                    decoration: _buildInputDecoration(
+                      "Patient Name",
+                      Icons.person,
+                    ),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? "Required" : null,
                   ),
-                  const Text("Male"),
-                  Radio<String>(
-                    value: 'Female',
-                    groupValue: _gender,
-                    onChanged: (value) {
-                      setState(() {
-                        _gender = value;
-                      });
-                    },
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: ageController,
+                          keyboardType: TextInputType.number,
+                          decoration: _buildInputDecoration(
+                            "Age",
+                            Icons.calendar_today,
+                          ),
+                          validator: (val) {
+                            if (val == null || val.isEmpty) return "Required";
+                            if (int.tryParse(val) == null) return "Invalid";
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          decoration: _buildInputDecoration(
+                            "Disease",
+                            Icons.medical_services_outlined,
+                          ),
+                          value: _selectedDisease,
+                          items: diseases
+                              .map(
+                                (d) =>
+                                    DropdownMenuItem(value: d, child: Text(d)),
+                              )
+                              .toList(),
+                          onChanged: (v) =>
+                              setState(() => _selectedDisease = v),
+                          validator: (val) => val == null ? "Required" : null,
+                        ),
+                      ),
+                    ],
                   ),
-                  const Text("Female"),
-                  Radio<String>(
-                    value: 'Other',
-                    groupValue: _gender,
-                    onChanged: (value) {
-                      setState(() {
-                        _gender = value;
-                      });
-                    },
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Gender",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
                   ),
-                  const Text("Other"),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: ["Male", "Female", "Other"].map((g) {
+                      final isSelected = _gender == g;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: ChoiceChip(
+                          label: Text(g),
+                          selected: isSelected,
+                          selectedColor: const Color(0xFF1A237E),
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black,
+                          ),
+                          onSelected: (selected) {
+                            setState(() {
+                              _gender = selected ? g : null;
+                            });
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  if (_gender == null)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        "Please select a gender",
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
                 ],
               ),
-              if (_gender == null)
-                const Padding(
-                  padding: EdgeInsets.only(top: 4),
-                  child: Text(
-                    "Select a gender",
-                    style: TextStyle(color: Colors.red, fontSize: 12),
+              const SizedBox(height: 20),
+              _buildSectionCard(
+                title: "Contact Details",
+                icon: Icons.contact_phone_outlined,
+                children: [
+                  TextFormField(
+                    controller: phoneController,
+                    keyboardType: TextInputType.phone,
+                    decoration: _buildInputDecoration(
+                      "Phone Number",
+                      Icons.phone,
+                    ),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? "Required" : null,
                   ),
-                ),
-              const SizedBox(height: 20),
-              // Full Address
-              TextFormField(
-                controller: addressController,
-                maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: "Full Address",
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) =>
-                    val == null || val.isEmpty ? "Enter address" : null,
-              ),
-              const SizedBox(height: 15),
-
-              // Age
-              TextFormField(
-                controller: ageController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: "Age",
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) {
-                  if (val == null || val.isEmpty) return "Enter age";
-                  final parsed = int.tryParse(val);
-                  if (parsed == null || parsed <= 0) return "Enter valid age";
-                  return null;
-                },
-              ),
-              const SizedBox(height: 15),
-
-              // Place
-              TextFormField(
-                controller: placeController,
-                decoration: const InputDecoration(
-                  labelText: "Place",
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) =>
-                    val == null || val.isEmpty ? "Enter place" : null,
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: relationController,
+                    decoration: _buildInputDecoration(
+                      "Caregiver/Relation",
+                      Icons.people_outline,
+                    ),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? "Required" : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: addressController,
+                    maxLines: 2,
+                    decoration: _buildInputDecoration(
+                      "Full Address",
+                      Icons.home_outlined,
+                    ),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? "Required" : null,
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
-
-              // Village (Dropdown)
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: "Village",
-                  border: OutlineInputBorder(),
-                ),
-                value: _selectedVillage,
-                items: villages.map((v) {
-                  return DropdownMenuItem(value: v, child: Text(v));
-                }).toList(),
-                onChanged: (value) {
-                  setState(() => _selectedVillage = value);
-                },
-                validator: (val) => val == null ? "Select village" : null,
-              ),
-              const SizedBox(height: 20),
-
-              // Disease (Dropdown)
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: "Disease",
-                  border: OutlineInputBorder(),
-                ),
-                value: _selectedDisease,
-                items: diseases.map((d) {
-                  return DropdownMenuItem(value: d, child: Text(d));
-                }).toList(),
-                onChanged: (value) {
-                  setState(() => _selectedDisease = value);
-                },
-                validator: (val) => val == null ? "Select disease" : null,
-              ),
-              const SizedBox(height: 20),
-
-              // Plan (Dropdown)
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: "Plan",
-                  border: OutlineInputBorder(),
-                ),
-                value: _selectedPlan,
-                items: plans.map((p) {
-                  return DropdownMenuItem(value: p, child: Text(p));
-                }).toList(),
-                onChanged: (value) {
-                  setState(() => _selectedPlan = value);
-                },
-                validator: (val) => val == null ? "Select plan" : null,
-              ),
-              const SizedBox(height: 25),
-
-              // Submit Button
-              ElevatedButton(
-                onPressed: _isLoading
-                    ? null
-                    : () async {
-                        final isValid = _formKey.currentState!.validate();
-                        final genderSelected = _gender != null;
-                        setState(() {}); // refresh gender helper text if needed
-                        if (isValid && genderSelected) {
-                          setState(() => _isLoading = true);
-
-                          try {
-                            final patientData = Patient(
-                              id: widget.patient?.id,
-                              name: nameController.text,
-                              relation: relationController.text,
-                              gender: _gender!,
-                              address: addressController.text,
-                              phone: phoneController.text,
-                              age: int.parse(ageController.text),
-                              place: placeController.text,
-                              village: _selectedVillage!,
-                              disease: _selectedDisease!,
-                              plan: _selectedPlan!,
-                              registerId: widget.patient?.registerId,
-                            );
-
-                            if (isEditing) {
-                              final updated =
-                                  await PatientService.updatePatient(
-                                    widget.patient!.id!,
-                                    patientData,
-                                  );
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "✅ Patient Updated Successfully",
-                                    ),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                                Navigator.pop(context, updated);
-                              }
-                            } else {
-                              await PatientService.createPatient(patientData);
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "✅ Patient Registered Successfully",
-                                    ),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                                Navigator.pop(context, true);
-                              }
-                            }
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("❌ Failed: ${e.toString()}"),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          } finally {
-                            if (mounted) {
-                              setState(() => _isLoading = false);
-                            }
-                          }
-                        }
-                      },
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(isEditing ? "Update" : "Register"),
+              _buildSectionCard(
+                title: "Location & Care Plan",
+                icon: Icons.map_outlined,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          decoration: _buildInputDecoration(
+                            "Village",
+                            Icons.location_city,
+                          ),
+                          value: _selectedVillage,
+                          items: villages
+                              .map(
+                                (v) =>
+                                    DropdownMenuItem(value: v, child: Text(v)),
+                              )
+                              .toList(),
+                          onChanged: (v) =>
+                              setState(() => _selectedVillage = v),
+                          validator: (val) => val == null ? "Required" : null,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: TextFormField(
+                          controller: placeController,
+                          decoration: _buildInputDecoration(
+                            "Place",
+                            Icons.place,
+                          ),
+                          validator: (val) =>
+                              val == null || val.isEmpty ? "Required" : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    decoration: _buildInputDecoration(
+                      "Care Plan",
+                      Icons.assignment_outlined,
+                    ),
+                    value: _selectedPlan,
+                    items: plans
+                        .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedPlan = v),
+                    validator: (val) => val == null ? "Required" : null,
+                  ),
+                ],
               ),
             ],
           ),
         ),
       ),
+      bottomSheet: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _handleSubmit,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1A237E),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 2,
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : Text(
+                    isEditing ? "UPDATE PATIENT" : "REGISTER PATIENT",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+          ),
+        ),
+      ),
     );
+  }
+
+  Widget _buildSectionCard({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A237E).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: const Color(0xFF1A237E), size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF333333),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleSubmit() async {
+    final isValid = _formKey.currentState!.validate();
+    final genderSelected = _gender != null;
+
+    // Trigger rebuild to show gender error if needed
+    if (!genderSelected) setState(() {});
+
+    if (isValid && genderSelected) {
+      setState(() => _isLoading = true);
+
+      try {
+        final patientData = Patient(
+          id: widget.patient?.id,
+          name: nameController.text,
+          relation: relationController.text,
+          gender: _gender!,
+          address: addressController.text,
+          phone: phoneController.text,
+          age: int.parse(ageController.text),
+          place: placeController.text,
+          village: _selectedVillage!,
+          disease: _selectedDisease!,
+          plan: _selectedPlan!,
+          registerId: widget.patient?.registerId,
+        );
+
+        if (widget.patient != null) {
+          final updated = await PatientService.updatePatient(
+            widget.patient!.id!,
+            patientData,
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("✅ Patient Updated Successfully"),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            Navigator.pop(context, updated);
+          }
+        } else {
+          await PatientService.createPatient(patientData);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("✅ Patient Registered Successfully"),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            Navigator.pop(context, true);
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("❌ Failed: ${e.toString()}"),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    }
   }
 }
