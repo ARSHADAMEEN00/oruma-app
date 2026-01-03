@@ -483,9 +483,13 @@ class _EqSupplyState extends State<EqSupply> {
         elevation: 0,
         title: const Text(
           'Distribute Equipment',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.close_rounded),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: _loading
           ? Center(
@@ -495,132 +499,31 @@ class _EqSupplyState extends State<EqSupply> {
                   const CircularProgressIndicator(color: Colors.orange),
                   const SizedBox(height: 16),
                   Text(
-                    'Loading equipment...',
+                    'Loading data...',
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ],
               ),
             )
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  // Header Section
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.shade200,
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 72,
-                          height: 72,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.orange.shade400,
-                                Colors.deepOrange.shade500,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.orange.withOpacity(0.3),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.local_shipping_rounded,
-                            color: Colors.white,
-                            size: 36,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Supply to Patient',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[800],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Assign equipment to a patient',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Form Section
-                  Padding(
-                    padding: const EdgeInsets.all(20),
+          : Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
                     child: Form(
                       key: _formKey,
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Equipment Selection Card
                           _buildSectionCard(
-                            title: 'Select Equipment',
-                            icon: Icons.medical_services_rounded,
-                            iconColor: Colors.orange,
+                            title: 'Distribution Details',
+                            icon: Icons.assignment_outlined,
+                            iconColor: Colors.blue,
                             children: [
-                              // Equipment Dropdown
+                              // Equipment
                               DropdownButtonFormField<Equipment>(
-                                decoration: InputDecoration(
-                                  labelText: 'Select Equipment',
-                                  hintText: 'Choose from available equipment',
-                                  hintStyle: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontSize: 14,
-                                  ),
-                                  prefixIcon: Icon(
-                                    Icons.inventory_2_outlined,
-                                    color: Colors.grey[500],
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    borderSide: BorderSide(
-                                      color: Colors.grey.shade300,
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    borderSide: BorderSide(
-                                      color: Colors.orange.shade400,
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  errorBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                    borderSide: const BorderSide(
-                                      color: Colors.red,
-                                      width: 1.5,
-                                    ),
-                                  ),
+                                decoration: _inputDecoration(
+                                  'Select Equipment',
+                                  Icons.inventory_2_outlined,
                                 ),
                                 value: _selectedEquipment,
                                 isExpanded: true,
@@ -638,203 +541,52 @@ class _EqSupplyState extends State<EqSupply> {
                                 }).toList(),
                                 onChanged: (val) =>
                                     setState(() => _selectedEquipment = val),
-                                validator: (val) => val == null
-                                    ? 'Please select equipment'
-                                    : null,
+                                validator: (val) =>
+                                    val == null ? 'Required' : null,
                               ),
-
-                              // Selected Equipment Preview
                               if (_selectedEquipment != null) ...[
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 12),
                                 Container(
-                                  padding: const EdgeInsets.all(16),
+                                  padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.orange.shade50,
-                                        Colors.deepOrange.shade50,
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
+                                    color: Colors.orange.shade50,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: Colors.orange.shade200,
+                                      color: Colors.orange.shade100,
                                     ),
                                   ),
                                   child: Row(
                                     children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.orange.withOpacity(
-                                                0.2,
-                                              ),
-                                              blurRadius: 8,
-                                            ),
-                                          ],
-                                        ),
-                                        child: Icon(
-                                          Icons.medical_services,
-                                          color: Colors.orange.shade600,
-                                          size: 24,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 14),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              _selectedEquipment!.name,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 15,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Row(
-                                              children: [
-                                                Icon(
-                                                  Icons.tag,
-                                                  size: 14,
-                                                  color: Colors.grey[600],
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  _selectedEquipment!.uniqueId,
-                                                  style: TextStyle(
-                                                    color: Colors.grey[600],
-                                                    fontSize: 13,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Icon(
-                                                  Icons.place,
-                                                  size: 14,
-                                                  color: Colors.grey[600],
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Expanded(
-                                                  child: Text(
-                                                    _selectedEquipment!.place,
-                                                    style: TextStyle(
-                                                      color: Colors.grey[600],
-                                                      fontSize: 13,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
                                       Icon(
                                         Icons.check_circle,
-                                        color: Colors.green.shade600,
-                                        size: 24,
+                                        color: Colors.orange.shade700,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          '${_selectedEquipment!.name} (${_selectedEquipment!.place})',
+                                          style: TextStyle(
+                                            color: Colors.orange.shade900,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 13,
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
                               ],
+                              const SizedBox(height: 16),
 
-                              // No equipment message
-                              if (_availableEquipment.isEmpty)
-                                Container(
-                                  margin: const EdgeInsets.only(top: 12),
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red.shade50,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: Colors.red.shade200,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.warning_rounded,
-                                        color: Colors.red.shade600,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          'No equipment available for distribution',
-                                          style: TextStyle(
-                                            color: Colors.red.shade700,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-
-                          _buildSectionCard(
-                            title: 'Patient Information',
-                            icon: Icons.person_rounded,
-                            iconColor: Colors.blue,
-                            children: [
+                              // Patient
                               Row(
                                 children: [
                                   Expanded(
                                     child: DropdownButtonFormField<Patient>(
-                                      decoration: InputDecoration(
-                                        labelText: 'Select Patient',
-                                        hintText: 'Search patient...',
-                                        hintStyle: TextStyle(
-                                          color: Colors.grey[400],
-                                          fontSize: 14,
-                                        ),
-                                        prefixIcon: Icon(
-                                          Icons.person_search,
-                                          color: Colors.grey[500],
-                                        ),
-                                        filled: true,
-                                        fillColor: Colors.white,
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                              horizontal: 16,
-                                              vertical: 12,
-                                            ),
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            16,
-                                          ),
-                                          borderSide: BorderSide(
-                                            color: Colors.grey.shade300,
-                                          ),
-                                        ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            16,
-                                          ),
-                                          borderSide: BorderSide(
-                                            color: Colors.orange.shade400,
-                                            width: 1.5,
-                                          ),
-                                        ),
-                                        errorBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            16,
-                                          ),
-                                          borderSide: const BorderSide(
-                                            color: Colors.red,
-                                            width: 1.5,
-                                          ),
-                                        ),
+                                      decoration: _inputDecoration(
+                                        'Select Patient',
+                                        Icons.person_outline,
                                       ),
                                       value: _selectedPatient,
                                       isExpanded: true,
@@ -853,242 +605,199 @@ class _EqSupplyState extends State<EqSupply> {
                                         );
                                       }).toList(),
                                       onChanged: (val) {
-                                        if (val != null) {
+                                        if (val != null)
                                           setState(
                                             () => _selectedPatient = val,
                                           );
-                                        }
                                       },
+                                      validator: (val) =>
+                                          val == null ? 'Required' : null,
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
-                                  GestureDetector(
-                                    onTap: _showAddPatientDialog,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue.shade50,
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: Colors.blue.shade200,
-                                        ),
+                                  const SizedBox(width: 8),
+                                  SizedBox(
+                                    height: 48,
+                                    width: 48,
+                                    child: IconButton.filled(
+                                      onPressed: _showAddPatientDialog,
+                                      icon: const Icon(
+                                        Icons.person_add_rounded,
+                                        size: 20,
                                       ),
-                                      child: Icon(
-                                        Icons.person_add_alt_1_rounded,
-                                        color: Colors.blue.shade700,
+                                      style: IconButton.styleFrom(
+                                        backgroundColor: Colors.blue.shade50,
+                                        foregroundColor: Colors.blue.shade700,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
                               if (_selectedPatient != null) ...[
-                                const SizedBox(height: 16),
-                                _buildPatientPreview(_selectedPatient!),
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.blue.shade100,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.person,
+                                        color: Colors.blue.shade700,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          '${_selectedPatient!.name}, ${_selectedPatient!.address}',
+                                          style: TextStyle(
+                                            color: Colors.blue.shade900,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ],
                               const SizedBox(height: 16),
+
+                              // Care Of
                               _buildTextField(
                                 controller: _careOfController,
                                 label: 'C/O (Care Of)',
-                                hint: 'name of the person',
+                                hint: 'Guardian Name',
                                 icon: Icons.supervised_user_circle_outlined,
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
 
-                          // Received By Card
                           _buildSectionCard(
-                            title: 'Received By',
-                            icon: Icons.person_pin_circle_rounded,
+                            title: 'Handover & Notes',
+                            icon: Icons.handshake_outlined,
                             iconColor: Colors.teal,
                             children: [
-                              _buildTextField(
-                                controller: _receiverNameController,
-                                label: 'Receiver Name',
-                                hint: 'Name of person receiving',
-                                icon: Icons.person,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: _receiverNameController,
+                                      label: 'Receiver Name',
+                                      hint: 'Name',
+                                      icon: Icons.person_pin_circle_outlined,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: _receiverPhoneController,
+                                      label: 'Receiver Phone',
+                                      hint: 'Phone',
+                                      icon: Icons.phone_outlined,
+                                      keyboardType: TextInputType.phone,
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 16),
                               _buildTextField(
-                                controller: _receiverPhoneController,
-                                label: 'Receiver Phone',
-                                hint: 'Phone number of receiver',
-                                icon: Icons.phone,
-                                keyboardType: TextInputType.phone,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Notes Card
-                          _buildSectionCard(
-                            title: 'Additional Notes',
-                            icon: Icons.note_alt_rounded,
-                            iconColor: Colors.purple,
-                            children: [
-                              _buildTextField(
                                 controller: _notesController,
-                                label: 'Notes (Optional)',
-                                hint: 'Any special instructions or notes',
-                                icon: Icons.edit_note,
-                                maxLines: 3,
+                                label: 'Notes',
+                                hint: 'Any additional instructions...',
+                                icon: Icons.notes_rounded,
+                                maxLines: 2,
                               ),
                             ],
                           ),
-                          const SizedBox(height: 32),
-
-                          // Submit Button
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed:
-                                  _submitting || _availableEquipment.isEmpty
-                                  ? null
-                                  : _submit,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange,
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor: Colors.orange.shade200,
-                                elevation: 2,
-                                shadowColor: Colors.orange.withOpacity(0.3),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: _submitting
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.5,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              Colors.white,
-                                            ),
-                                      ),
-                                    )
-                                  : const Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.local_shipping_rounded,
-                                          size: 22,
-                                        ),
-                                        SizedBox(width: 10),
-                                        Text(
-                                          'Confirm Distribution',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Cancel Button
-                          SizedBox(
-                            width: double.infinity,
-                            height: 48,
-                            child: TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.grey[600],
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text(
-                                'Cancel',
-                                style: TextStyle(fontSize: 15),
-                              ),
-                            ),
-                          ),
+                          const SizedBox(height: 100), // Space for bottom bar
                         ],
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
-    );
-  }
+                ),
 
-  Widget _buildPatientPreview(Patient patient) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.shade100),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: Colors.blue.shade100,
-                child: Text(
-                  patient.name[0].toUpperCase(),
-                  style: TextStyle(
-                    color: Colors.blue.shade700,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      patient.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
+                // Bottom Action Bar
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -4),
                       ),
+                    ],
+                  ),
+                  child: SafeArea(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              side: BorderSide(color: Colors.grey.shade300),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              foregroundColor: Colors.grey.shade700,
+                            ),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed:
+                                _submitting || _availableEquipment.isEmpty
+                                ? null
+                                : _submit,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              disabledBackgroundColor: Colors.orange.shade200,
+                            ),
+                            child: _submitting
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Confirm Distribution',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      patient.phone,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
-            ],
-          ),
-          if (patient.address.isNotEmpty) ...[
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.0),
-              child: Divider(height: 1),
-            ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.location_on_outlined,
-                  size: 14,
-                  color: Colors.grey[600],
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    patient.address,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
                   ),
                 ),
               ],
             ),
-          ],
-        ],
-      ),
     );
   }
 
@@ -1099,16 +808,15 @@ class _EqSupplyState extends State<EqSupply> {
     required List<Widget> children,
   }) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.grey.shade100,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -1123,21 +831,45 @@ class _EqSupplyState extends State<EqSupply> {
                   color: iconColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: iconColor, size: 20),
+                child: Icon(icon, color: iconColor, size: 18),
               ),
               const SizedBox(width: 12),
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           ...children,
         ],
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+      prefixIcon: Icon(icon, size: 20, color: Colors.grey.shade400),
+      filled: true,
+      fillColor: Colors.white,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.grey.shade200),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Colors.orange, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: Colors.red, width: 1),
       ),
     );
   }
@@ -1156,36 +888,33 @@ class _EqSupplyState extends State<EqSupply> {
       keyboardType: keyboardType,
       maxLines: maxLines,
       validator: validator,
-      style: const TextStyle(fontSize: 15),
+      style: const TextStyle(fontSize: 14),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-        prefixIcon: Icon(icon, color: Colors.grey[500], size: 22),
+        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+        prefixIcon: Icon(icon, color: Colors.grey[400], size: 20),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: Colors.white,
+        isDense: true,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 16,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          vertical: 12,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: Colors.grey.shade300),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: Colors.orange, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: Colors.red, width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: Colors.red, width: 1.5),
         ),
       ),
