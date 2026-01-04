@@ -190,6 +190,7 @@ class _PatientListPageState extends State<PatientListPage> {
   Widget _buildPatientCard(BuildContext context, Patient patient) {
     return Card(
       elevation: 0,
+      color: patient.isDead ? Colors.grey.shade100 : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Colors.grey.shade200),
