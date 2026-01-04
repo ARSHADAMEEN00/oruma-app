@@ -244,7 +244,7 @@ class _HomescreenState extends State<Homescreen> {
         children: [
           // Header Section
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 50, 20, 30),
+            padding: const EdgeInsets.fromLTRB(20, 40, 20, 20),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -255,8 +255,8 @@ class _HomescreenState extends State<Homescreen> {
                 ],
               ),
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
               ),
             ),
             child: Column(
@@ -269,7 +269,7 @@ class _HomescreenState extends State<Homescreen> {
                       icon: const Icon(
                         Icons.menu,
                         color: Colors.white,
-                        size: 28,
+                        size: 26,
                       ),
                       onPressed: () => _scaffoldKey.currentState?.openDrawer(),
                       padding: EdgeInsets.zero,
@@ -278,7 +278,7 @@ class _HomescreenState extends State<Homescreen> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(7),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
                             shape: BoxShape.circle,
@@ -286,40 +286,53 @@ class _HomescreenState extends State<Homescreen> {
                           child: const Icon(
                             Icons.notifications_outlined,
                             color: Colors.white,
-                            size: 24,
+                            size: 22,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         GestureDetector(
                           onTap: () => _showUserProfile(context),
                           child: const CircleAvatar(
-                            radius: 20,
+                            radius: 18,
                             backgroundColor: Colors.white,
-                            child: Icon(Icons.person, color: Color(0xFF1A237E)),
+                            child: Icon(
+                              Icons.person,
+                              color: Color(0xFF1A237E),
+                              size: 20,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 16),
                 const Text(
                   "Welcome Back,",
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 const Text(
                   "Team Oruma",
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 28,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
+                ),
+                const SizedBox(height: 3),
+                const Text(
+                  "Kodur, Malappuram",
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                const SizedBox(height: 1),
+                const Text(
+                  "Support: 999 55 66 067",
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
                 ),
               ],
             ),
           ),
-
           // Body Content
           Expanded(
             child: SingleChildScrollView(
