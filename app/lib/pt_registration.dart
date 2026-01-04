@@ -18,7 +18,7 @@ class _patientrigisterState extends State<patientrigister> {
 
   // Dropdown values
   String? _selectedVillage;
-  String? _selectedDisease;
+  List<String> _selectedDiseases = [];
   String? _selectedPlan;
   String? _gender;
 
@@ -33,7 +33,23 @@ class _patientrigisterState extends State<patientrigister> {
 
   // Dropdown options
   final List<String> villages = ["Kodur", "Ponmala", "Kuruva", "Malappuram"];
-  final List<String> diseases = ["CA", "Old Age", "CVA", "CKD", "Dybetic"];
+  final List<String> diseases = [
+    "CAD",
+    "HTN DM",
+    "CKD",
+    "CLD",
+    "OLD AGE",
+    "PARAPLEGIA",
+    "PARAPARESIS",
+    "CVA",
+    "CA",
+    "COPD",
+    "IVDP",
+    "PRESSURE SORE",
+    "MR",
+    "MND",
+    "TB",
+  ];
   final List<String> plans = ["1/4", "1/8", "1/2", "1/1"];
 
   @override
@@ -49,7 +65,7 @@ class _patientrigisterState extends State<patientrigister> {
       phone2Controller.text = widget.patient!.phone2 ?? '';
       _gender = widget.patient!.gender;
       _selectedVillage = widget.patient!.village;
-      _selectedDisease = widget.patient!.disease;
+      _selectedDiseases = widget.patient!.disease;
       _selectedPlan = widget.patient!.plan;
     }
   }
@@ -125,44 +141,66 @@ class _patientrigisterState extends State<patientrigister> {
                         val == null || val.isEmpty ? "Required" : null,
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: ageController,
-                          keyboardType: TextInputType.number,
-                          decoration: _buildInputDecoration(
-                            "Age",
-                            Icons.calendar_today,
-                          ),
-                          validator: (val) {
-                            if (val == null || val.isEmpty) return "Required";
-                            if (int.tryParse(val) == null) return "Invalid";
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          decoration: _buildInputDecoration(
-                            "Disease",
-                            Icons.medical_services_outlined,
-                          ),
-                          value: _selectedDisease,
-                          items: diseases
-                              .map(
-                                (d) =>
-                                    DropdownMenuItem(value: d, child: Text(d)),
-                              )
-                              .toList(),
-                          onChanged: (v) =>
-                              setState(() => _selectedDisease = v),
-                          validator: (val) => val == null ? "Required" : null,
-                        ),
-                      ),
-                    ],
+                  TextFormField(
+                    controller: ageController,
+                    keyboardType: TextInputType.number,
+                    decoration: _buildInputDecoration(
+                      "Age",
+                      Icons.calendar_today,
+                    ),
+                    validator: (val) {
+                      if (val == null || val.isEmpty) return "Required";
+                      if (int.tryParse(val) == null) return "Invalid";
+                      return null;
+                    },
                   ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Diseases",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: diseases.map((disease) {
+                      final isSelected = _selectedDiseases.contains(disease);
+                      return FilterChip(
+                        label: Text(disease),
+                        selected: isSelected,
+                        selectedColor: const Color(0xFF1A237E).withOpacity(0.8),
+                        backgroundColor: Colors.grey.shade100,
+                        checkmarkColor: Colors.white,
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.white : Colors.black87,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                        ),
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              _selectedDiseases.add(disease);
+                            } else {
+                              _selectedDiseases.remove(disease);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  if (_selectedDiseases.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        "Please select at least one disease",
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
                   const SizedBox(height: 20),
                   const Text(
                     "Gender",
@@ -413,7 +451,7 @@ class _patientrigisterState extends State<patientrigister> {
     // Trigger rebuild to show gender error if needed
     if (!genderSelected) setState(() {});
 
-    if (isValid && genderSelected) {
+    if (isValid && genderSelected && _selectedDiseases.isNotEmpty) {
       setState(() => _isLoading = true);
 
       try {
@@ -430,7 +468,7 @@ class _patientrigisterState extends State<patientrigister> {
           age: int.parse(ageController.text),
           place: placeController.text,
           village: _selectedVillage!,
-          disease: _selectedDisease!,
+          disease: _selectedDiseases,
           plan: _selectedPlan!,
           registerId: widget.patient?.registerId,
         );

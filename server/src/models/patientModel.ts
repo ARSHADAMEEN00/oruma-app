@@ -14,7 +14,7 @@ const PatientSchema = new Schema<PatientDocument>(
     age: { type: Number, required: true, min: 0 },
     place: { type: String, required: true, trim: true },
     village: { type: String, required: true, trim: true },
-    disease: { type: String, required: true, trim: true },
+    disease: { type: [String], required: true },
     plan: { type: String, required: true, trim: true },
     registerId: { type: String, unique: true, sparse: true },
     isDead: { type: Boolean, default: false },

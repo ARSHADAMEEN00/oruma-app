@@ -416,7 +416,7 @@ class _HomevisitState extends State<Homevisit> {
                                   age: int.tryParse(ageCtrl.text.trim()) ?? 0,
                                   place: 'Home',
                                   village: 'Kodur',
-                                  disease: 'Old Age',
+                                  disease: const ['OLD AGE'],
                                   plan: '1/1',
                                 );
                                 final created =

@@ -235,7 +235,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
                     _buildInfoTile(
                       Icons.medical_services,
                       "Disease",
-                      _currentPatient.disease,
+                      _currentPatient.disease.join(', '),
                     ),
                     _buildInfoTile(
                       Icons.assignment,
@@ -349,7 +349,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
               ),
             ),
           Text(
-            _currentPatient.disease,
+            _currentPatient.disease.join(', '),
             style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
           ),
         ],

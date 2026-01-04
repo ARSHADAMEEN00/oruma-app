@@ -10,7 +10,7 @@ export interface Patient {
   age: number;
   place: string;
   village: string;
-  disease: string;
+  disease: string[];
   plan: string;
   registerId?: string;
   isDead?: boolean;
