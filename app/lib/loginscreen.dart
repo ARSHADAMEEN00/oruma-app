@@ -44,7 +44,6 @@ class _LoginscreenState extends State<Loginscreen> {
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
-    // double screenHeight = MediaQuery.of(context).size.height; // Unused
 
     return Scaffold(
       body: Container(
@@ -60,13 +59,13 @@ class _LoginscreenState extends State<Loginscreen> {
         ),
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Logo Section
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
@@ -74,42 +73,33 @@ class _LoginscreenState extends State<Loginscreen> {
                   child: ClipOval(
                     child: Image.asset(
                       'assets/logo/logo.png',
-                      width: 100,
-                      height: 100,
+                      width: 70,
+                      height: 70,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return const Icon(
                           Icons.local_hospital,
-                          size: 60,
+                          size: 40,
                           color: Colors.white,
                         );
                       },
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Text(
                   "Team Oruma",
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: screenWidth < 600 ? 28 : 36,
+                    fontSize: screenWidth < 600 ? 24 : 32,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 const Text(
                   "Kodur, Malappuram",
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  "Office 9495006193",
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 14,
@@ -117,28 +107,42 @@ class _LoginscreenState extends State<Loginscreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  "Home care 94950 06192",
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                    letterSpacing: 0.5,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Text(
+                      "Office: 9495006193",
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      "Home care: 94950 06192",
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 50),
+                const SizedBox(height: 24),
 
                 // Login Form Card
                 Container(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  padding: const EdgeInsets.all(32),
+                  constraints: const BoxConstraints(maxWidth: 360),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
@@ -147,24 +151,24 @@ class _LoginscreenState extends State<Loginscreen> {
                       Text(
                         "Welcome Back",
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Colors.grey[800],
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                       Text(
                         "Please sign in to continue",
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 20),
                       if (_errorMessage != null)
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 8,
                           ),
-                          margin: const EdgeInsets.only(bottom: 20),
+                          margin: const EdgeInsets.only(bottom: 16),
                           decoration: BoxDecoration(
                             color: Colors.red.shade50,
                             borderRadius: BorderRadius.circular(8),
@@ -175,13 +179,16 @@ class _LoginscreenState extends State<Loginscreen> {
                               Icon(
                                 Icons.error_outline,
                                 color: Colors.red[700],
-                                size: 20,
+                                size: 18,
                               ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   _errorMessage!,
-                                  style: TextStyle(color: Colors.red[700]),
+                                  style: TextStyle(
+                                    color: Colors.red[700],
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
                             ],
@@ -189,21 +196,25 @@ class _LoginscreenState extends State<Loginscreen> {
                         ),
                       TextField(
                         controller: _emailController,
-                        style: const TextStyle(fontSize: 16),
+                        style: const TextStyle(fontSize: 14),
                         decoration: InputDecoration(
                           labelText: 'Email Address',
                           floatingLabelBehavior: FloatingLabelBehavior.auto,
-                          prefixIcon: const Icon(Icons.email_outlined),
+                          prefixIcon: const Icon(
+                            Icons.email_outlined,
+                            size: 20,
+                          ),
+                          isDense: true,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide(color: Colors.grey[300]!),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide(color: Colors.grey[300]!),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                             borderSide: const BorderSide(
                               color: Color(0xFF1A237E),
                               width: 2,
@@ -212,25 +223,27 @@ class _LoginscreenState extends State<Loginscreen> {
                           filled: true,
                           fillColor: Colors.grey[50],
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
+                            horizontal: 12,
+                            vertical: 14,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       TextField(
                         controller: _passwordController,
                         obscureText: !_isPasswordVisible,
-                        style: const TextStyle(fontSize: 16),
+                        style: const TextStyle(fontSize: 14),
                         decoration: InputDecoration(
                           labelText: 'Password',
                           floatingLabelBehavior: FloatingLabelBehavior.auto,
-                          prefixIcon: const Icon(Icons.lock_outline),
+                          prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                          isDense: true,
                           suffixIcon: IconButton(
                             icon: Icon(
                               _isPasswordVisible
                                   ? Icons.visibility_outlined
                                   : Icons.visibility_off_outlined,
+                              size: 20,
                             ),
                             onPressed: () {
                               setState(() {
@@ -239,15 +252,15 @@ class _LoginscreenState extends State<Loginscreen> {
                             },
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide(color: Colors.grey[300]!),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide(color: Colors.grey[300]!),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                             borderSide: const BorderSide(
                               color: Color(0xFF1A237E),
                               width: 2,
@@ -256,15 +269,15 @@ class _LoginscreenState extends State<Loginscreen> {
                           filled: true,
                           fillColor: Colors.grey[50],
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
+                            horizontal: 12,
+                            vertical: 14,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
-                        height: 56,
+                        height: 48,
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _handleLogin,
                           style: ElevatedButton.styleFrom(
@@ -272,14 +285,14 @@ class _LoginscreenState extends State<Loginscreen> {
                             foregroundColor: Colors.white,
                             elevation: 2,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                           child: _isLoading
                               ? const SizedBox(
-                                  height: 24,
-                                  width: 24,
+                                  height: 20,
+                                  width: 20,
                                   child: CircularProgressIndicator(
                                     color: Colors.white,
                                     strokeWidth: 2,
@@ -288,7 +301,7 @@ class _LoginscreenState extends State<Loginscreen> {
                               : const Text(
                                   "Login",
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 1,
                                   ),
