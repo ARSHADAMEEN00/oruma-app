@@ -1238,27 +1238,39 @@ class _HomescreenState extends State<Homescreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(20),
-            child: ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.logout, color: Colors.red),
+                  ),
+                  title: const Text(
+                    "Logout",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  onTap: () {
+                    context.read<AuthService>().logout();
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => const Loginscreen(),
+                      ),
+                      (route) => false,
+                    );
+                  },
                 ),
-                child: const Icon(Icons.logout, color: Colors.red),
-              ),
-              title: const Text(
-                "Logout",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              onTap: () {
-                context.read<AuthService>().logout();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const Loginscreen()),
-                  (route) => false,
-                );
-              },
+                const SizedBox(height: 12),
+                const Text(
+                  "All rights reserved by Arshad Nediya from Osperb",
+                  style: TextStyle(fontSize: 10, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
         ],
