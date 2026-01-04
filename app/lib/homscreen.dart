@@ -1180,7 +1180,7 @@ class _HomescreenState extends State<Homescreen> {
                 _buildDrawerItem(
                   context,
                   icon: Icons.person_off_outlined,
-                  title: "Deceased Patients",
+                  title: "Passed Away Patients",
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(

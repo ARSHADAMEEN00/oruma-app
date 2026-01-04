@@ -73,13 +73,13 @@ class _DeceasedPatientListPageState extends State<DeceasedPatientListPage> {
                 controller: _searchController,
                 autofocus: true,
                 decoration: const InputDecoration(
-                  hintText: 'Search deceased patients...',
+                  hintText: 'Search passed away patients...',
                   border: InputBorder.none,
                   hintStyle: TextStyle(color: Colors.grey),
                 ),
                 style: const TextStyle(color: Colors.black),
               )
-            : const Text("Deceased Patients"),
+            : const Text("Passed Away Patients"),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
@@ -159,7 +159,7 @@ class _DeceasedPatientListPageState extends State<DeceasedPatientListPage> {
                 ),
               );
             }
-            return const Center(child: Text("No deceased patients found."));
+            return const Center(child: Text("No passed away patients found."));
           }
 
           return RefreshIndicator(

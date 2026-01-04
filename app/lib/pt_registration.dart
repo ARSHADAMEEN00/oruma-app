@@ -40,7 +40,7 @@ class _patientrigisterState extends State<patientrigister> {
     "CLD",
     "OLD AGE",
     "PARAPLEGIA",
-    "PARAPARESIS",
+    "DIABETIC FOOT",
     "CVA",
     "CA",
     "COPD",

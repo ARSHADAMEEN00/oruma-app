@@ -228,11 +228,11 @@ class _PatientListPageState extends State<PatientListPage> {
                 margin: const EdgeInsets.only(left: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.black87,
+                  color: Colors.red,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Text(
-                  "DECEASED",
+                  "PASSED AWAY",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 10,

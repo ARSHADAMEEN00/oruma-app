@@ -83,9 +83,9 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Mark as Deceased"),
+        title: const Text("Mark as Passed Away"),
         content: Text(
-          "Are you sure you want to mark ${_currentPatient.name} as deceased on ${DateFormat('MMM dd, yyyy').format(selectedDate)}?",
+          "Are you sure you want to mark ${_currentPatient.name} as passed away on ${DateFormat('MMM dd, yyyy').format(selectedDate)}?",
         ),
         actions: [
           TextButton(
@@ -120,7 +120,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
             _isLoading = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Patient marked as deceased")),
+            const SnackBar(content: Text("Patient marked as passed away")),
           );
         }
       } catch (e) {
@@ -177,7 +177,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
           if (!_currentPatient.isDead)
             IconButton(
               icon: const Icon(Icons.person_off_outlined),
-              tooltip: "Mark as Deceased",
+              tooltip: "Mark as Passed Away",
               onPressed: _isLoading ? null : _markAsDeceased,
             ),
         ],
@@ -313,11 +313,11 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               margin: const EdgeInsets.only(bottom: 8),
               decoration: BoxDecoration(
-                color: Colors.black87,
+                color: Colors.red,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Text(
-                "DECEASED",
+                "PASSED AWAY",
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
