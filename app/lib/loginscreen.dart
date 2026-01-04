@@ -107,6 +107,24 @@ class _LoginscreenState extends State<Loginscreen> {
                     letterSpacing: 0.5,
                   ),
                 ),
+                const SizedBox(height: 8),
+                const Text(
+                  "Office 9495006193",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  "Home care 94950 06192",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    letterSpacing: 0.5,
+                  ),
+                ),
                 const SizedBox(height: 50),
 
                 // Login Form Card
@@ -279,23 +297,6 @@ class _LoginscreenState extends State<Loginscreen> {
                       ),
                     ],
                   ),
-                ),
-
-                const SizedBox(height: 48),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.phone, color: Colors.white70, size: 16),
-                    SizedBox(width: 8),
-                    Text(
-                      "949 500 61 93",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
