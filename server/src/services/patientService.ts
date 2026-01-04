@@ -78,6 +78,7 @@ function toPatient(doc: any): Patient {
     gender: doc.gender,
     address: doc.address,
     phone: doc.phone,
+    phone2: doc.phone2,
     age: doc.age,
     place: doc.place,
     village: doc.village,

@@ -167,6 +167,7 @@ class _EqSupplyState extends State<EqSupply> {
     final nameCtrl = TextEditingController();
     final addressCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
+    final phone2Ctrl = TextEditingController();
     final ageCtrl = TextEditingController();
     String selectedGender = 'Male';
 
@@ -293,41 +294,41 @@ class _EqSupplyState extends State<EqSupply> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: _buildModernTextField(
-                                  controller: phoneCtrl,
-                                  label: 'Phone',
-                                  icon: Icons.phone_outlined,
-                                  keyboardType: TextInputType.phone,
-                                  validator: (v) =>
-                                      v!.trim().isEmpty ? 'Required' : null,
-                                  decoration: getModernDecoration(
-                                    'Phone',
-                                    Icons.phone_outlined,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                flex: 1,
-                                child: _buildModernTextField(
-                                  controller: ageCtrl,
-                                  label: 'Age',
-                                  icon: Icons.calendar_today_outlined,
-                                  keyboardType: TextInputType.number,
-                                  validator: (v) =>
-                                      v!.trim().isEmpty ? 'Required' : null,
-                                  decoration: getModernDecoration(
-                                    'Age',
-                                    Icons.calendar_today_outlined,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          _buildModernTextField(
+                            controller: phoneCtrl,
+                            label: 'Phone',
+                            icon: Icons.phone_outlined,
+                            keyboardType: TextInputType.phone,
+                            validator: (v) =>
+                                v!.trim().isEmpty ? 'Required' : null,
+                            decoration: getModernDecoration(
+                              'Phone',
+                              Icons.phone_outlined,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildModernTextField(
+                            controller: phone2Ctrl,
+                            label: 'Phone 2',
+                            icon: Icons.phone_android_outlined,
+                            keyboardType: TextInputType.phone,
+                            decoration: getModernDecoration(
+                              'Phone 2',
+                              Icons.phone_android_outlined,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildModernTextField(
+                            controller: ageCtrl,
+                            label: 'Age',
+                            icon: Icons.calendar_today_outlined,
+                            keyboardType: TextInputType.number,
+                            validator: (v) =>
+                                v!.trim().isEmpty ? 'Required' : null,
+                            decoration: getModernDecoration(
+                              'Age',
+                              Icons.calendar_today_outlined,
+                            ),
                           ),
                           const SizedBox(height: 16),
                           // Gender Selection
@@ -384,6 +385,9 @@ class _EqSupplyState extends State<EqSupply> {
                                 final newPatient = Patient(
                                   name: nameCtrl.text.trim(),
                                   phone: phoneCtrl.text.trim(),
+                                  phone2: phone2Ctrl.text.trim().isEmpty
+                                      ? null
+                                      : phone2Ctrl.text.trim(),
                                   address: addressCtrl.text.trim(),
                                   relation: 'Self',
                                   gender: selectedGender,

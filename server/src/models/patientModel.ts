@@ -10,6 +10,7 @@ const PatientSchema = new Schema<PatientDocument>(
     gender: { type: String, enum: ['Male', 'Female', 'Other'], required: true },
     address: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
+    phone2: { type: String, trim: true },
     age: { type: Number, required: true, min: 0 },
     place: { type: String, required: true, trim: true },
     village: { type: String, required: true, trim: true },

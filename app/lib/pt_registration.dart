@@ -29,6 +29,7 @@ class _patientrigisterState extends State<patientrigister> {
   final TextEditingController ageController = TextEditingController();
   final TextEditingController placeController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
+  final TextEditingController phone2Controller = TextEditingController();
 
   // Dropdown options
   final List<String> villages = ["Kodur", "Ponmala", "Kuruva", "Malappuram"];
@@ -45,6 +46,7 @@ class _patientrigisterState extends State<patientrigister> {
       ageController.text = widget.patient!.age.toString();
       placeController.text = widget.patient!.place;
       phoneController.text = widget.patient!.phone;
+      phone2Controller.text = widget.patient!.phone2 ?? '';
       _gender = widget.patient!.gender;
       _selectedVillage = widget.patient!.village;
       _selectedDisease = widget.patient!.disease;
@@ -60,6 +62,7 @@ class _patientrigisterState extends State<patientrigister> {
     ageController.dispose();
     placeController.dispose();
     phoneController.dispose();
+    phone2Controller.dispose();
     super.dispose();
   }
 
@@ -215,6 +218,15 @@ class _patientrigisterState extends State<patientrigister> {
                     ),
                     validator: (val) =>
                         val == null || val.isEmpty ? "Required" : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: phone2Controller,
+                    keyboardType: TextInputType.phone,
+                    decoration: _buildInputDecoration(
+                      "Phone Number 2",
+                      Icons.phone_android,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -412,6 +424,9 @@ class _patientrigisterState extends State<patientrigister> {
           gender: _gender!,
           address: addressController.text,
           phone: phoneController.text,
+          phone2: phone2Controller.text.trim().isEmpty
+              ? null
+              : phone2Controller.text.trim(),
           age: int.parse(ageController.text),
           place: placeController.text,
           village: _selectedVillage!,
