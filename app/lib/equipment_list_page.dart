@@ -211,10 +211,12 @@ class _EquipmentListPageState extends State<EquipmentListPage>
 
   // --- Available List Tab ---
   Widget _buildAvailableList() {
-    if (_loadingAvailable)
+    if (_loadingAvailable) {
       return const Center(child: CircularProgressIndicator());
-    if (_errorAvailable != null)
+    }
+    if (_errorAvailable != null) {
       return Center(child: Text('Error: $_errorAvailable'));
+    }
     if (_availableItems.isEmpty) {
       return Center(
         child: Column(
@@ -338,10 +340,12 @@ class _EquipmentListPageState extends State<EquipmentListPage>
 
   // --- Distributed List Tab ---
   Widget _buildDistributedList() {
-    if (_loadingDistributed)
+    if (_loadingDistributed) {
       return const Center(child: CircularProgressIndicator());
-    if (_errorDistributed != null)
+    }
+    if (_errorDistributed != null) {
       return Center(child: Text('Error: $_errorDistributed'));
+    }
     if (_distributedItems.isEmpty) {
       return Center(
         child: Column(

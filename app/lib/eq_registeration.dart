@@ -3,7 +3,7 @@ import 'package:oruma_app/models/equipment.dart';
 import 'package:oruma_app/services/equipment_service.dart';
 
 class EquipmentRegistration extends StatefulWidget {
-  const EquipmentRegistration({Key? key}) : super(key: key);
+  const EquipmentRegistration({super.key});
 
   @override
   State<EquipmentRegistration> createState() => _EquipmentRegistrationState();
@@ -224,7 +224,7 @@ class _EquipmentRegistrationState extends State<EquipmentRegistration> {
 
               // Dropdown
               DropdownButtonFormField<String>(
-                value: selectedValue,
+                initialValue: selectedValue,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   labelText: 'Select Equipment',

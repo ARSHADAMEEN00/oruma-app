@@ -302,7 +302,7 @@ class _patientrigisterState extends State<patientrigister> {
                             "Village",
                             Icons.location_city,
                           ),
-                          value: _selectedVillage,
+                          initialValue: _selectedVillage,
                           items: villages
                               .map(
                                 (v) =>
@@ -334,7 +334,7 @@ class _patientrigisterState extends State<patientrigister> {
                       "Care Plan",
                       Icons.assignment_outlined,
                     ),
-                    value: _selectedPlan,
+                    initialValue: _selectedPlan,
                     items: plans
                         .map((p) => DropdownMenuItem(value: p, child: Text(p)))
                         .toList(),

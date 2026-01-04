@@ -358,7 +358,7 @@ class _HomevisitState extends State<Homevisit> {
                           const SizedBox(height: 16),
                           // Gender Selection
                           DropdownButtonFormField<String>(
-                            value: selectedGender,
+                            initialValue: selectedGender,
                             decoration: getModernDecoration(
                               'Gender',
                               Icons.people_outline,
@@ -423,8 +423,9 @@ class _HomevisitState extends State<Homevisit> {
                                     await PatientService.createPatient(
                                       newPatient,
                                     );
-                                if (context.mounted)
+                                if (context.mounted) {
                                   Navigator.pop(context, created);
+                                }
                               } catch (e) {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -549,7 +550,7 @@ class _HomevisitState extends State<Homevisit> {
                             children: [
                               Expanded(
                                 child: DropdownButtonFormField<Patient>(
-                                  value: _selectedPatient,
+                                  initialValue: _selectedPatient,
                                   decoration: const InputDecoration(
                                     labelText: 'Select Patient',
                                     prefixIcon: Icon(
@@ -649,7 +650,7 @@ class _HomevisitState extends State<Homevisit> {
                         ],
                       ),
                       child: DropdownButtonFormField<String>(
-                        value: _selectedVisitMode,
+                        initialValue: _selectedVisitMode,
                         decoration: InputDecoration(
                           labelText: 'Visit Mode',
                           prefixIcon: const Icon(

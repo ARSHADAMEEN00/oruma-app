@@ -333,7 +333,7 @@ class _EqSupplyState extends State<EqSupply> {
                           const SizedBox(height: 16),
                           // Gender Selection
                           DropdownButtonFormField<String>(
-                            value: selectedGender,
+                            initialValue: selectedGender,
                             decoration: getModernDecoration(
                               'Gender',
                               Icons.people_outline,
@@ -401,8 +401,9 @@ class _EqSupplyState extends State<EqSupply> {
                                     await PatientService.createPatient(
                                       newPatient,
                                     );
-                                if (context.mounted)
+                                if (context.mounted) {
                                   Navigator.pop(context, created);
+                                }
                               } catch (e) {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -531,7 +532,7 @@ class _EqSupplyState extends State<EqSupply> {
                                   'Select Equipment',
                                   Icons.inventory_2_outlined,
                                 ),
-                                value: _selectedEquipment,
+                                initialValue: _selectedEquipment,
                                 isExpanded: true,
                                 dropdownColor: Colors.white,
                                 borderRadius: BorderRadius.circular(16),
@@ -594,7 +595,7 @@ class _EqSupplyState extends State<EqSupply> {
                                         'Select Patient',
                                         Icons.person_outline,
                                       ),
-                                      value: _selectedPatient,
+                                      initialValue: _selectedPatient,
                                       isExpanded: true,
                                       dropdownColor: Colors.white,
                                       borderRadius: BorderRadius.circular(16),
@@ -611,10 +612,11 @@ class _EqSupplyState extends State<EqSupply> {
                                         );
                                       }).toList(),
                                       onChanged: (val) {
-                                        if (val != null)
+                                        if (val != null) {
                                           setState(
                                             () => _selectedPatient = val,
                                           );
+                                        }
                                       },
                                       validator: (val) =>
                                           val == null ? 'Required' : null,
