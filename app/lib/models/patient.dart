@@ -13,6 +13,7 @@ class Patient {
   final List<String> disease;
   final String plan;
   final String? registerId;
+  final DateTime? registrationDate; // User-controlled registration date
   final bool isDead;
   final DateTime? dateOfDeath;
   final String? createdBy;
@@ -33,6 +34,7 @@ class Patient {
     this.disease = const [],
     required this.plan,
     this.registerId,
+    this.registrationDate,
     this.isDead = false,
     this.dateOfDeath,
     this.createdBy,
@@ -62,6 +64,9 @@ class Patient {
           : [],
       plan: json['plan']?.toString() ?? '',
       registerId: json['registerId']?.toString(),
+      registrationDate: json['registrationDate'] != null
+          ? DateTime.tryParse(json['registrationDate'].toString())
+          : null,
       isDead: json['isDead'] == true,
       dateOfDeath: json['dateOfDeath'] != null
           ? DateTime.tryParse(json['dateOfDeath'].toString())
@@ -93,9 +98,9 @@ class Patient {
       'disease': disease,
       'plan': plan,
       'registerId': registerId,
+      'registrationDate': registrationDate?.toIso8601String(),
       'isDead': isDead,
       'dateOfDeath': dateOfDeath?.toIso8601String(),
-      'createdAt': createdAt?.toIso8601String(),
     };
   }
 
@@ -114,9 +119,9 @@ class Patient {
     List<String>? disease,
     String? plan,
     String? registerId,
+    DateTime? registrationDate,
     bool? isDead,
     DateTime? dateOfDeath,
-    DateTime? createdAt,
   }) {
     return Patient(
       id: id ?? this.id,
@@ -132,9 +137,10 @@ class Patient {
       disease: disease ?? this.disease,
       plan: plan ?? this.plan,
       registerId: registerId ?? this.registerId,
+      registrationDate: registrationDate ?? this.registrationDate,
       isDead: isDead ?? this.isDead,
       dateOfDeath: dateOfDeath ?? this.dateOfDeath,
-      createdAt: createdAt ?? this.createdAt,
+      createdAt: createdAt,
       updatedAt: updatedAt,
     );
   }

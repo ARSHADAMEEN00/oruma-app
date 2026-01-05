@@ -13,6 +13,7 @@ export interface Patient {
   disease: string[];
   plan: string;
   registerId?: string;
+  registrationDate?: string; // ISO date string - User-controlled registration date
   isDead?: boolean;
   dateOfDeath?: string; // ISO date string
   createdAt?: Date;

@@ -72,7 +72,7 @@ class _patientrigisterState extends State<patientrigister> {
       _selectedVillage = widget.patient!.village;
       _selectedDiseases = widget.patient!.disease;
       _selectedPlan = widget.patient!.plan;
-      _registrationDate = widget.patient!.createdAt ?? DateTime.now();
+      _registrationDate = widget.patient!.registrationDate ?? DateTime.now();
     }
   }
 
@@ -543,7 +543,7 @@ class _patientrigisterState extends State<patientrigister> {
           disease: _selectedDiseases,
           plan: _selectedPlan!,
           registerId: widget.patient?.registerId,
-          createdAt: _registrationDate,
+          registrationDate: _registrationDate,
         );
 
         if (widget.patient != null) {

@@ -244,9 +244,9 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
                     ),
                   ]),
                   const SizedBox(height: 24),
-                  if (_currentPatient.createdAt != null)
+                  if (_currentPatient.registrationDate != null)
                     Text(
-                      "Registered on: ${DateFormat('dd MMM yyyy, hh:mm a').format(_currentPatient.createdAt!)}",
+                      "Registered on: ${DateFormat('dd MMM yyyy, hh:mm a').format(_currentPatient.registrationDate!)}",
                       style: TextStyle(
                         color: Colors.grey.shade500,
                         fontSize: 12,

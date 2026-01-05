@@ -38,11 +38,12 @@ export const patientService = {
 
     patient.registerId = `${nextNumber.toString().padStart(2, '0')}/${currentYear}`;
 
-    // If createdAt is provided, use it; otherwise Mongoose will auto-generate
+    // Handle registrationDate - use provided date or default to today
     const patientData: any = { ...patient };
-    if (patient.createdAt) {
-      // Ensure createdAt is a valid Date object
-      patientData.createdAt = new Date(patient.createdAt);
+    if (patient.registrationDate) {
+      patientData.registrationDate = new Date(patient.registrationDate);
+    } else {
+      patientData.registrationDate = new Date(); // Default to today
     }
 
     const created = await PatientModel.create(patientData);
@@ -64,18 +65,15 @@ export const patientService = {
   },
 
   update: async (id: string, updates: Partial<Patient>): Promise<Patient | null> => {
-    // If createdAt is provided in updates, convert it to a Date object
+    // Handle registrationDate if provided in updates
     const updateData: any = { ...updates };
-    if (updates.createdAt) {
-      updateData.createdAt = new Date(updates.createdAt);
+    if (updates.registrationDate) {
+      updateData.registrationDate = new Date(updates.registrationDate);
     }
 
-    // Set timestamps: false to allow manual createdAt updates
-    // Mongoose's timestamps option normally prevents modifying createdAt
     const updated = await PatientModel.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true,
-      timestamps: false, // Allow manual createdAt updates
     }).lean();
     return updated ? toPatient(updated) : null;
   },
@@ -101,6 +99,7 @@ function toPatient(doc: any): Patient {
     disease: doc.disease,
     plan: doc.plan,
     registerId: doc.registerId,
+    registrationDate: doc.registrationDate ? doc.registrationDate.toISOString() : undefined,
     isDead: doc.isDead,
     dateOfDeath: doc.dateOfDeath ? doc.dateOfDeath.toISOString() : undefined,
     createdAt: doc.createdAt,
