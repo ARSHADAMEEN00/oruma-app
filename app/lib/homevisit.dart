@@ -677,19 +677,24 @@ class _HomevisitState extends State<Homevisit> {
                                           ? Icons.emergency_outlined
                                           : option['value'] == 'monthly'
                                           ? Icons.calendar_month_outlined
+                                          : option['value'] == 'dhc_visit'
+                                          ? Icons.home_work_outlined
+                                          : option['value'] == 'vhc_visit'
+                                          ? Icons.local_hospital_outlined
                                           : Icons.add_circle_outline,
                                       size: 18,
                                       color: option['value'] == 'emergency'
                                           ? Colors.red
                                           : option['value'] == 'monthly'
                                           ? Colors.blue
+                                          : option['value'] == 'dhc_visit'
+                                          ? Colors.orange
+                                          : option['value'] == 'vhc_visit'
+                                          ? Colors.purple
                                           : Colors.green,
                                     ),
                                     const SizedBox(width: 8),
-                                    Text(
-                                      option['label']!,
-                                      style: const TextStyle(fontSize: 15),
-                                    ),
+                                    Text(option['label']!),
                                   ],
                                 ),
                               ),
