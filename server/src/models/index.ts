@@ -25,6 +25,8 @@ export enum VisitMode {
   MONTHLY = 'monthly',
   EMERGENCY = 'emergency',
   NEW = 'new',
+  DHC_VISIT = 'dhc_visit',
+  VHC_VISIT = 'vhc_visit',
 }
 
 // Home Visit Model

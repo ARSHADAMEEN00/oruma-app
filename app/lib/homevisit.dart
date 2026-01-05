@@ -32,6 +32,8 @@ class _HomevisitState extends State<Homevisit> {
     {'value': 'new', 'label': 'New Visit'},
     {'value': 'monthly', 'label': 'Monthly Visit'},
     {'value': 'emergency', 'label': 'Emergency Visit'},
+    {'value': 'dhc_visit', 'label': 'DHC Visit'},
+    {'value': 'vhc_visit', 'label': 'VHC Visit'},
   ];
 
   bool get isEditing => widget.visit != null;
