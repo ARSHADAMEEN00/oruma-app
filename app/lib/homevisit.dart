@@ -319,41 +319,30 @@ class _HomevisitState extends State<Homevisit> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: _buildModernTextField(
-                                  controller: phoneCtrl,
-                                  label: 'Phone',
-                                  icon: Icons.phone_outlined,
-                                  keyboardType: TextInputType.phone,
-                                  validator: (v) =>
-                                      v!.trim().isEmpty ? 'Required' : null,
-                                  decoration: getModernDecoration(
-                                    'Phone',
-                                    Icons.phone_outlined,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                flex: 1,
-                                child: _buildModernTextField(
-                                  controller: ageCtrl,
-                                  label: 'Age',
-                                  icon: Icons.calendar_today_outlined,
-                                  keyboardType: TextInputType.number,
-                                  validator: (v) =>
-                                      v!.trim().isEmpty ? 'Required' : null,
-                                  decoration: getModernDecoration(
-                                    'Age',
-                                    Icons.calendar_today_outlined,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          _buildModernTextField(
+                            controller: phoneCtrl,
+                            label: 'Phone',
+                            icon: Icons.phone_outlined,
+                            keyboardType: TextInputType.phone,
+                            validator: (v) =>
+                                v!.trim().isEmpty ? 'Required' : null,
+                            decoration: getModernDecoration(
+                              'Phone',
+                              Icons.phone_outlined,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildModernTextField(
+                            controller: ageCtrl,
+                            label: 'Age',
+                            icon: Icons.calendar_today_outlined,
+                            keyboardType: TextInputType.number,
+                            validator: (v) =>
+                                v!.trim().isEmpty ? 'Required' : null,
+                            decoration: getModernDecoration(
+                              'Age',
+                              Icons.calendar_today_outlined,
+                            ),
                           ),
                           const SizedBox(height: 16),
                           // Gender Selection

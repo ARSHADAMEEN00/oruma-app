@@ -95,6 +95,7 @@ class Patient {
       'registerId': registerId,
       'isDead': isDead,
       'dateOfDeath': dateOfDeath?.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String(),
     };
   }
 
@@ -115,6 +116,7 @@ class Patient {
     String? registerId,
     bool? isDead,
     DateTime? dateOfDeath,
+    DateTime? createdAt,
   }) {
     return Patient(
       id: id ?? this.id,
@@ -132,7 +134,7 @@ class Patient {
       registerId: registerId ?? this.registerId,
       isDead: isDead ?? this.isDead,
       dateOfDeath: dateOfDeath ?? this.dateOfDeath,
-      createdAt: createdAt,
+      createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt,
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/patient_service.dart';
+import 'package:intl/intl.dart';
 
 // ignore: camel_case_types
 class patientrigister extends StatefulWidget {
@@ -21,6 +22,7 @@ class _patientrigisterState extends State<patientrigister> {
   List<String> _selectedDiseases = [];
   String? _selectedPlan;
   String? _gender;
+  DateTime? _registrationDate;
 
   // Controllers
   final TextEditingController nameController = TextEditingController();
@@ -55,6 +57,9 @@ class _patientrigisterState extends State<patientrigister> {
   @override
   void initState() {
     super.initState();
+    // Set default registration date to today
+    _registrationDate = DateTime.now();
+
     if (widget.patient != null) {
       nameController.text = widget.patient!.name;
       relationController.text = widget.patient!.relation;
@@ -67,6 +72,7 @@ class _patientrigisterState extends State<patientrigister> {
       _selectedVillage = widget.patient!.village;
       _selectedDiseases = widget.patient!.disease;
       _selectedPlan = widget.patient!.plan;
+      _registrationDate = widget.patient!.createdAt ?? DateTime.now();
     }
   }
 
@@ -103,6 +109,31 @@ class _patientrigisterState extends State<patientrigister> {
       ),
       contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
     );
+  }
+
+  Future<void> _pickRegistrationDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _registrationDate ?? now,
+      firstDate: DateTime(2020), // Allow backdating to 2020
+      lastDate: now, // Can't select future dates
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF1A237E),
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() => _registrationDate = picked);
+    }
   }
 
   @override
@@ -294,39 +325,24 @@ class _patientrigisterState extends State<patientrigister> {
                 title: "Location & Care Plan",
                 icon: Icons.map_outlined,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          decoration: _buildInputDecoration(
-                            "Village",
-                            Icons.location_city,
-                          ),
-                          initialValue: _selectedVillage,
-                          items: villages
-                              .map(
-                                (v) =>
-                                    DropdownMenuItem(value: v, child: Text(v)),
-                              )
-                              .toList(),
-                          onChanged: (v) =>
-                              setState(() => _selectedVillage = v),
-                          validator: (val) => val == null ? "Required" : null,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextFormField(
-                          controller: placeController,
-                          decoration: _buildInputDecoration(
-                            "Place",
-                            Icons.place,
-                          ),
-                          validator: (val) =>
-                              val == null || val.isEmpty ? "Required" : null,
-                        ),
-                      ),
-                    ],
+                  DropdownButtonFormField<String>(
+                    decoration: _buildInputDecoration(
+                      "Village",
+                      Icons.location_city,
+                    ),
+                    initialValue: _selectedVillage,
+                    items: villages
+                        .map((v) => DropdownMenuItem(value: v, child: Text(v)))
+                        .toList(),
+                    onChanged: (v) => setState(() => _selectedVillage = v),
+                    validator: (val) => val == null ? "Required" : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: placeController,
+                    decoration: _buildInputDecoration("Place", Icons.place),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? "Required" : null,
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
@@ -340,6 +356,62 @@ class _patientrigisterState extends State<patientrigister> {
                         .toList(),
                     onChanged: (v) => setState(() => _selectedPlan = v),
                     validator: (val) => val == null ? "Required" : null,
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: _pickRegistrationDate,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today,
+                            color: Color(0xFF1A237E),
+                            size: 22,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Registration Date',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _registrationDate == null
+                                      ? 'Select Date'
+                                      : DateFormat(
+                                          'EEEE, d MMMM yyyy',
+                                        ).format(_registrationDate!),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_drop_down,
+                            color: Colors.grey.shade600,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -471,6 +543,7 @@ class _patientrigisterState extends State<patientrigister> {
           disease: _selectedDiseases,
           plan: _selectedPlan!,
           registerId: widget.patient?.registerId,
+          createdAt: _registrationDate,
         );
 
         if (widget.patient != null) {

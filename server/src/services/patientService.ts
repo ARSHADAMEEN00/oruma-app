@@ -38,7 +38,14 @@ export const patientService = {
 
     patient.registerId = `${nextNumber.toString().padStart(2, '0')}/${currentYear}`;
 
-    const created = await PatientModel.create(patient);
+    // If createdAt is provided, use it; otherwise Mongoose will auto-generate
+    const patientData: any = { ...patient };
+    if (patient.createdAt) {
+      // Ensure createdAt is a valid Date object
+      patientData.createdAt = new Date(patient.createdAt);
+    }
+
+    const created = await PatientModel.create(patientData);
     return toPatient(created);
   },
 
@@ -57,7 +64,13 @@ export const patientService = {
   },
 
   update: async (id: string, updates: Partial<Patient>): Promise<Patient | null> => {
-    const updated = await PatientModel.findByIdAndUpdate(id, updates, {
+    // If createdAt is provided in updates, convert it to a Date object
+    const updateData: any = { ...updates };
+    if (updates.createdAt) {
+      updateData.createdAt = new Date(updates.createdAt);
+    }
+
+    const updated = await PatientModel.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true,
     }).lean();
