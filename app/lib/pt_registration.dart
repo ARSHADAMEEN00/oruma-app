@@ -57,8 +57,9 @@ class _patientrigisterState extends State<patientrigister> {
   @override
   void initState() {
     super.initState();
-    // Set default registration date to today
-    _registrationDate = DateTime.now();
+    // Set default registration date to today at noon
+    final now = DateTime.now();
+    _registrationDate = DateTime(now.year, now.month, now.day, 12, 0, 0);
 
     if (widget.patient != null) {
       nameController.text = widget.patient!.name;
@@ -72,7 +73,19 @@ class _patientrigisterState extends State<patientrigister> {
       _selectedVillage = widget.patient!.village;
       _selectedDiseases = widget.patient!.disease;
       _selectedPlan = widget.patient!.plan;
-      _registrationDate = widget.patient!.registrationDate ?? DateTime.now();
+
+      // Normalize existing registration date to noon if it exists
+      if (widget.patient!.registrationDate != null) {
+        final regDate = widget.patient!.registrationDate!;
+        _registrationDate = DateTime(
+          regDate.year,
+          regDate.month,
+          regDate.day,
+          12,
+          0,
+          0,
+        );
+      }
     }
   }
 
@@ -132,7 +145,17 @@ class _patientrigisterState extends State<patientrigister> {
       },
     );
     if (picked != null) {
-      setState(() => _registrationDate = picked);
+      // Normalize to noon to avoid timezone conversion issues
+      // This ensures the date doesn't shift when converting to UTC
+      final normalizedDate = DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        12, // Set to noon
+        0,
+        0,
+      );
+      setState(() => _registrationDate = normalizedDate);
     }
   }
 
