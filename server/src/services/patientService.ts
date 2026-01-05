@@ -70,9 +70,12 @@ export const patientService = {
       updateData.createdAt = new Date(updates.createdAt);
     }
 
+    // Set timestamps: false to allow manual createdAt updates
+    // Mongoose's timestamps option normally prevents modifying createdAt
     const updated = await PatientModel.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true,
+      timestamps: false, // Allow manual createdAt updates
     }).lean();
     return updated ? toPatient(updated) : null;
   },
