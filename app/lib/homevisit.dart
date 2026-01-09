@@ -17,6 +17,7 @@ class Homevisit extends StatefulWidget {
 class _HomevisitState extends State<Homevisit> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController addressController;
+  late TextEditingController teamController;
   late TextEditingController notesController;
   DateTime? visitDate;
   bool _isLoading = false;
@@ -44,6 +45,7 @@ class _HomevisitState extends State<Homevisit> {
     addressController = TextEditingController(
       text: widget.visit?.address ?? '',
     );
+    teamController = TextEditingController(text: widget.visit?.team ?? '');
     notesController = TextEditingController(text: widget.visit?.notes ?? '');
     if (widget.visit?.visitDate != null) {
       visitDate = DateTime.tryParse(widget.visit!.visitDate);
@@ -54,7 +56,7 @@ class _HomevisitState extends State<Homevisit> {
   Future<void> _loadInitialData() async {
     setState(() => _isLoadingPatients = true);
     try {
-      final patients = await PatientService.getAllPatients();
+      final patients = await PatientService.getAllPatients(isDead: false);
       setState(() {
         _patients = patients;
         _isLoadingPatients = false;
@@ -88,6 +90,7 @@ class _HomevisitState extends State<Homevisit> {
   @override
   void dispose() {
     addressController.dispose();
+    teamController.dispose();
     notesController.dispose();
     super.dispose();
   }
@@ -149,6 +152,9 @@ class _HomevisitState extends State<Homevisit> {
         address: addressController.text.trim(),
         visitDate: visitDate!.toIso8601String(),
         visitMode: _selectedVisitMode,
+        team: teamController.text.trim().isNotEmpty
+            ? teamController.text.trim()
+            : null,
         notes: notesController.text.trim().isNotEmpty
             ? notesController.text.trim()
             : null,
@@ -753,6 +759,13 @@ class _HomevisitState extends State<Homevisit> {
                           ],
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildTextField(
+                      controller: teamController,
+                      label: 'Team',
+                      icon: Icons.group_outlined,
+                      required: false,
                     ),
                     const SizedBox(height: 20),
                     _buildTextField(

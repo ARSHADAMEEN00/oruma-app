@@ -36,6 +36,7 @@ export interface HomeVisit {
   address: string;
   visitDate: string; // ISO date string
   visitMode?: VisitMode;
+  team?: string;
   notes?: string;
   createdAt?: Date;
   createdBy?: string;

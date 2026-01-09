@@ -5,6 +5,7 @@ import 'package:oruma_app/pt_registration.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
+import 'package:oruma_app/widgets/deceased_icon.dart';
 
 class PatientDetailsPage extends StatefulWidget {
   final Patient patient;
@@ -76,6 +77,16 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
       helpText: "Select Date of Death",
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            datePickerTheme: DatePickerThemeData(
+              headerForegroundColor: Colors.red,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (selectedDate == null) return;
@@ -176,7 +187,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
             ),
           if (!_currentPatient.isDead)
             IconButton(
-              icon: const Icon(Icons.person_off_outlined),
+              icon: const DeceasedIcon(size: 24, color: Colors.red),
               tooltip: "Mark as Passed Away",
               onPressed: _isLoading ? null : _markAsDeceased,
             ),

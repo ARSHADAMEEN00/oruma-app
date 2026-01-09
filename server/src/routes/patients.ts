@@ -7,6 +7,7 @@ const router = Router();
 // GET all patients
 router.get('/', async (req: Request, res: Response) => {
   try {
+    console.log('req.query received:', req.query);
     const patients = await patientService.getAll(req.query);
     res.json(patients);
   } catch (error) {

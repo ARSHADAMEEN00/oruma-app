@@ -14,6 +14,7 @@ const HomeVisitSchema = new Schema<HomeVisitDocument>(
       default: 'new',
       required: true,
     },
+    team: { type: String, trim: true },
     notes: { type: String, trim: true },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },

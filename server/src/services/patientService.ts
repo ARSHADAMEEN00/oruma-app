@@ -52,9 +52,12 @@ export const patientService = {
 
   getAll: async (filter: any = {}): Promise<Patient[]> => {
     const query: any = {};
+
     if (filter.isDead !== undefined) {
-      query.isDead = filter.isDead === 'true' || filter.isDead === true;
+      const isDeadValue = filter.isDead === 'true' || filter.isDead === true;
+      query.isDead = isDeadValue;
     }
+
     const list = await PatientModel.find(query).sort({ createdAt: -1 }).lean();
     return list.map(toPatient);
   },

@@ -45,7 +45,7 @@ class _EqSupplyState extends State<EqSupply> {
 
   Future<void> _fetchPatients() async {
     try {
-      final list = await PatientService.getAllPatients();
+      final list = await PatientService.getAllPatients(isDead: false);
       setState(() {
         _patients = list;
       });
