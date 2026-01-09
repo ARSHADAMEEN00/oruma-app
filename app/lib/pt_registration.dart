@@ -181,6 +181,59 @@ class _patientrigisterState extends State<patientrigister> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              InkWell(
+                onTap: _pickRegistrationDate,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today,
+                        color: Color(0xFF1A237E),
+                        size: 22,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Registration Date',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _registrationDate == null
+                                  ? 'Select Date'
+                                  : DateFormat(
+                                      'EEEE, d MMMM yyyy',
+                                    ).format(_registrationDate!),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.arrow_drop_down, color: Colors.grey.shade600),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
               _buildSectionCard(
                 title: "Basic Information",
                 icon: Icons.person_outline,
@@ -379,62 +432,6 @@ class _patientrigisterState extends State<patientrigister> {
                         .toList(),
                     onChanged: (v) => setState(() => _selectedPlan = v),
                     validator: (val) => val == null ? "Required" : null,
-                  ),
-                  const SizedBox(height: 16),
-                  InkWell(
-                    onTap: _pickRegistrationDate,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.calendar_today,
-                            color: Color(0xFF1A237E),
-                            size: 22,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Registration Date',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _registrationDate == null
-                                      ? 'Select Date'
-                                      : DateFormat(
-                                          'EEEE, d MMMM yyyy',
-                                        ).format(_registrationDate!),
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Icon(
-                            Icons.arrow_drop_down,
-                            color: Colors.grey.shade600,
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
                 ],
               ),
