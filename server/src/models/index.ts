@@ -52,6 +52,7 @@ export interface Equipment {
   purchasedFrom: string;
   place: string;
   phone: string;
+  storagePlace?: string;
   status?: 'available' | 'supplied' | 'maintenance';  // Track equipment status
   createdAt?: Date;
   createdBy?: string;

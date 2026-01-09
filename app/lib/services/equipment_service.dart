@@ -77,6 +77,7 @@ class EquipmentService {
     required String place,
     required String phone,
     String? serialNo,
+    String? storagePlace,
   }) async {
     final result = await ApiService.post<Map<String, dynamic>>(
       ApiConfig.equipmentEndpoint,
@@ -87,6 +88,7 @@ class EquipmentService {
         'place': place,
         'phone': phone,
         if (serialNo != null) 'serialNo': serialNo,
+        if (storagePlace != null) 'storagePlace': storagePlace,
       },
     );
 
@@ -105,6 +107,7 @@ class EquipmentService {
     String? purchasedFrom,
     String? place,
     String? phone,
+    String? storagePlace,
     String? status,
   }) async {
     final body = <String, dynamic>{};
@@ -113,6 +116,7 @@ class EquipmentService {
     if (purchasedFrom != null) body['purchasedFrom'] = purchasedFrom;
     if (place != null) body['place'] = place;
     if (phone != null) body['phone'] = phone;
+    if (storagePlace != null) body['storagePlace'] = storagePlace;
     if (status != null) body['status'] = status;
 
     final result = await ApiService.put<Map<String, dynamic>>(

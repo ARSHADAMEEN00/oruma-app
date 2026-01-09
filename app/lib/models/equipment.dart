@@ -9,6 +9,7 @@ class Equipment {
   final String purchasedFrom;
   final String place;
   final String phone;
+  final String? storagePlace; // Storage location (e.g., "Store")
   final String status; // 'available', 'supplied', 'maintenance'
   final String? createdBy;
   final DateTime? createdAt;
@@ -22,6 +23,7 @@ class Equipment {
     required this.purchasedFrom,
     required this.place,
     required this.phone,
+    this.storagePlace,
     this.status = 'available',
     this.createdBy,
     this.createdAt,
@@ -40,6 +42,7 @@ class Equipment {
       purchasedFrom: json['purchasedFrom']?.toString() ?? '',
       place: json['place']?.toString() ?? '',
       phone: json['phone']?.toString() ?? '',
+      storagePlace: json['storagePlace']?.toString(),
       status: json['status']?.toString() ?? 'available',
       createdBy: json['createdBy'] is Map
           ? json['createdBy']['name']?.toString()
@@ -60,6 +63,7 @@ class Equipment {
       'purchasedFrom': purchasedFrom,
       'place': place,
       'phone': phone,
+      if (storagePlace != null) 'storagePlace': storagePlace,
     };
   }
 
@@ -73,6 +77,7 @@ class Equipment {
     String? purchasedFrom,
     String? place,
     String? phone,
+    String? storagePlace,
     String? status,
   }) {
     return Equipment(
@@ -84,6 +89,7 @@ class Equipment {
       purchasedFrom: purchasedFrom ?? this.purchasedFrom,
       place: place ?? this.place,
       phone: phone ?? this.phone,
+      storagePlace: storagePlace ?? this.storagePlace,
       status: status ?? this.status,
       createdAt: createdAt,
     );

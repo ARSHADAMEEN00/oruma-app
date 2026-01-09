@@ -12,6 +12,7 @@ const EquipmentSchema = new Schema<EquipmentDocument>(
     purchasedFrom: { type: String, required: true, trim: true },
     place: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
+    storagePlace: { type: String, trim: true },
     status: {
       type: String,
       enum: ['available', 'supplied', 'maintenance'],

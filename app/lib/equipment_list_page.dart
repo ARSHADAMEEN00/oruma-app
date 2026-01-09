@@ -279,7 +279,9 @@ class _EquipmentListPageState extends State<EquipmentListPage>
               eq.uniqueId,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            subtitle: Text('${eq.name}\n${eq.place}'),
+            subtitle: Text(
+              '${eq.name}\n${eq.place.isNotEmpty ? ' ${eq.place}' : ''}',
+            ),
             isThreeLine: true,
             trailing: PopupMenuButton<String>(
               onSelected: (value) async {
@@ -628,12 +630,23 @@ class _EquipmentListPageState extends State<EquipmentListPage>
             const SizedBox(height: 24),
             const Divider(),
             const SizedBox(height: 16),
-            _buildDetailRow(Icons.place_outlined, 'Location', eq.place),
+            if (eq.storagePlace != null && eq.storagePlace!.isNotEmpty)
+              _buildDetailRow(
+                Icons.warehouse_outlined,
+                'Storage Place',
+                eq.storagePlace!,
+              ),
             _buildDetailRow(
               Icons.store_outlined,
               'Purchased From',
               eq.purchasedFrom ?? 'N/A',
             ),
+            if (eq.place.isNotEmpty)
+              _buildDetailRow(
+                Icons.location_on_outlined,
+                'Vendor Location',
+                eq.place,
+              ),
             _buildDetailRow(Icons.phone_outlined, 'Contact', eq.phone ?? 'N/A'),
             if (eq.createdBy != null)
               Padding(
@@ -855,8 +868,9 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
   late TextEditingController _nameController;
   late TextEditingController _quantityController;
   late TextEditingController _purchasedFromController;
-  late TextEditingController _placeController;
+  late TextEditingController _purchasePlaceController;
   late TextEditingController _phoneController;
+  String? _selectedStoragePlace;
   bool _isSubmitting = false;
 
   bool get _isEditing => widget.equipment != null;
@@ -869,12 +883,13 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
     _purchasedFromController = TextEditingController(
       text: widget.equipment?.purchasedFrom ?? '',
     );
-    _placeController = TextEditingController(
+    _purchasePlaceController = TextEditingController(
       text: widget.equipment?.place ?? '',
     );
     _phoneController = TextEditingController(
       text: widget.equipment?.phone ?? '',
     );
+    _selectedStoragePlace = widget.equipment?.storagePlace ?? 'Store';
   }
 
   Future<void> _submit() async {
@@ -886,8 +901,9 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
           widget.equipment!.id!,
           name: _nameController.text.trim(),
           purchasedFrom: _purchasedFromController.text.trim(),
-          place: _placeController.text.trim(),
+          place: _purchasePlaceController.text.trim(),
           phone: _phoneController.text.trim(),
+          storagePlace: _selectedStoragePlace,
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -900,8 +916,9 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
           name: _nameController.text.trim(),
           quantity: int.parse(_quantityController.text.trim()),
           purchasedFrom: _purchasedFromController.text.trim(),
-          place: _placeController.text.trim(),
+          place: _purchasePlaceController.text.trim(),
           phone: _phoneController.text.trim(),
+          storagePlace: _selectedStoragePlace,
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -926,7 +943,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
     _nameController.dispose();
     _quantityController.dispose();
     _purchasedFromController.dispose();
-    _placeController.dispose();
+    _purchasePlaceController.dispose();
     _phoneController.dispose();
     super.dispose();
   }
@@ -1095,14 +1112,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
                         ),
                         const SizedBox(width: 12),
                       ],
-                      Expanded(
-                        flex: 2,
-                        child: _buildCompactField(
-                          controller: _placeController,
-                          label: 'Storage Place',
-                          icon: Icons.place_outlined,
-                        ),
-                      ),
+                      Expanded(flex: 2, child: _buildStoragePlaceDropdown()),
                     ],
                   ),
                 ],
@@ -1118,6 +1128,12 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
                     controller: _purchasedFromController,
                     label: 'Purchased From',
                     icon: Icons.store_outlined,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildCompactField(
+                    controller: _purchasePlaceController,
+                    label: 'Place',
+                    icon: Icons.location_on_outlined,
                   ),
                   const SizedBox(height: 12),
                   _buildCompactField(
@@ -1206,6 +1222,46 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
           borderSide: const BorderSide(color: Colors.red, width: 1),
         ),
       ),
+    );
+  }
+
+  Widget _buildStoragePlaceDropdown() {
+    return DropdownButtonFormField<String>(
+      value: _selectedStoragePlace,
+      decoration: InputDecoration(
+        labelText: 'Storage Place',
+        prefixIcon: Icon(
+          Icons.warehouse_outlined,
+          size: 20,
+          color: Colors.grey[400],
+        ),
+        filled: true,
+        fillColor: Colors.grey[50],
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.indigo, width: 1.5),
+        ),
+      ),
+      items: const [DropdownMenuItem(value: 'Store', child: Text('Store'))],
+      onChanged: (value) {
+        setState(() {
+          _selectedStoragePlace = value;
+        });
+      },
+      validator: (v) => v == null ? 'Required' : null,
     );
   }
 }
