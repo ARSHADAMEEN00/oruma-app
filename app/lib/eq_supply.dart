@@ -710,7 +710,7 @@ class _EqSupplyState extends State<EqSupply> {
                                   Expanded(
                                     child: _buildTextField(
                                       controller: _receiverNameController,
-                                      label: 'Receiver Name',
+                                      label: 'Name',
                                       hint: 'Name',
                                       icon: Icons.person_pin_circle_outlined,
                                     ),
@@ -719,7 +719,7 @@ class _EqSupplyState extends State<EqSupply> {
                                   Expanded(
                                     child: _buildTextField(
                                       controller: _receiverPhoneController,
-                                      label: 'Receiver Phone',
+                                      label: 'Phone',
                                       hint: 'Phone',
                                       icon: Icons.phone_outlined,
                                       keyboardType: TextInputType.phone,
@@ -733,7 +733,7 @@ class _EqSupplyState extends State<EqSupply> {
                                   Expanded(
                                     child: _buildTextField(
                                       controller: _receiverAddressController,
-                                      label: 'Receiver Address',
+                                      label: 'Address',
                                       hint: 'Address',
                                       icon: Icons.location_on_outlined,
                                     ),
@@ -742,7 +742,7 @@ class _EqSupplyState extends State<EqSupply> {
                                   Expanded(
                                     child: _buildTextField(
                                       controller: _receiverPlaceController,
-                                      label: 'Receiver Place',
+                                      label: 'Place',
                                       hint: 'Place',
                                       icon: Icons.map_outlined,
                                     ),

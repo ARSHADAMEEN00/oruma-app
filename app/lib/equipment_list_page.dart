@@ -1231,7 +1231,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
 
   Widget _buildStoragePlaceDropdown() {
     return DropdownButtonFormField<String>(
-      value: _selectedStoragePlace,
+      initialValue: _selectedStoragePlace,
       decoration: InputDecoration(
         labelText: 'Storage Place',
         prefixIcon: Icon(
