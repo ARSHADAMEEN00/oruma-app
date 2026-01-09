@@ -525,7 +525,7 @@ class _HomevisitState extends State<Homevisit> {
                     _buildSectionTitle('Patient Information'),
                     const SizedBox(height: 16),
 
-                    // Patient Dropdown with Add Icon Button
+                    // Patient Autocomplete Search with Add Icon Button
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -546,48 +546,228 @@ class _HomevisitState extends State<Homevisit> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Expanded(
-                                child: DropdownButtonFormField<Patient>(
-                                  initialValue: _selectedPatient,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Select Patient',
-                                    prefixIcon: Icon(
-                                      Icons.person_search,
-                                      size: 22,
-                                    ),
-                                    border: InputBorder.none,
-                                    enabledBorder: InputBorder.none,
-                                    focusedBorder: InputBorder.none,
-                                    errorBorder: InputBorder.none,
-                                    disabledBorder: InputBorder.none,
-                                    filled: true,
-                                    fillColor: Colors.white,
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                  items: _patients
-                                      .map(
-                                        (p) => DropdownMenuItem(
-                                          value: p,
-                                          child: Text(
-                                            p.name,
-                                            style: const TextStyle(
-                                              fontSize: 15,
+                                child: Autocomplete<Patient>(
+                                  initialValue: _selectedPatient != null
+                                      ? TextEditingValue(
+                                          text: _selectedPatient!.name,
+                                        )
+                                      : null,
+                                  optionsBuilder:
+                                      (
+                                        TextEditingValue textEditingValue,
+                                      ) async {
+                                        if (textEditingValue.text.isEmpty) {
+                                          // Return initial patients if nothing typed
+                                          return _patients;
+                                        }
+                                        try {
+                                          // Search from backend
+                                          final searchResults =
+                                              await PatientService.searchPatients(
+                                                textEditingValue.text,
+                                                isDead: false,
+                                              );
+                                          return searchResults;
+                                        } catch (e) {
+                                          return _patients.where((patient) {
+                                            return patient.name
+                                                .toLowerCase()
+                                                .contains(
+                                                  textEditingValue.text
+                                                      .toLowerCase(),
+                                                );
+                                          });
+                                        }
+                                      },
+                                  displayStringForOption: (Patient patient) =>
+                                      patient.name,
+                                  onSelected: (Patient patient) {
+                                    setState(() {
+                                      _selectedPatient = patient;
+                                      addressController.text = patient.address;
+                                    });
+                                  },
+                                  fieldViewBuilder:
+                                      (
+                                        BuildContext context,
+                                        TextEditingController
+                                        textEditingController,
+                                        FocusNode focusNode,
+                                        VoidCallback onFieldSubmitted,
+                                      ) {
+                                        return TextFormField(
+                                          controller: textEditingController,
+                                          focusNode: focusNode,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Search Patient',
+                                            hintText: 'Type to search...',
+                                            prefixIcon: Icon(
+                                              Icons.person_search,
+                                              size: 22,
+                                            ),
+                                            border: InputBorder.none,
+                                            enabledBorder: InputBorder.none,
+                                            focusedBorder: InputBorder.none,
+                                            errorBorder: InputBorder.none,
+                                            disabledBorder: InputBorder.none,
+                                            filled: true,
+                                            fillColor: Colors.white,
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                  vertical: 12,
+                                                ),
+                                          ),
+                                          onFieldSubmitted: (String value) {
+                                            onFieldSubmitted();
+                                          },
+                                        );
+                                      },
+                                  optionsViewBuilder:
+                                      (
+                                        BuildContext context,
+                                        AutocompleteOnSelected<Patient>
+                                        onSelected,
+                                        Iterable<Patient> options,
+                                      ) {
+                                        return Align(
+                                          alignment: Alignment.topLeft,
+                                          child: Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 8.0,
+                                            ),
+                                            child: Material(
+                                              elevation: 4.0,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              child: ConstrainedBox(
+                                                constraints:
+                                                    const BoxConstraints(
+                                                      maxHeight: 200,
+                                                      maxWidth: 400,
+                                                    ),
+                                                child: ListView.builder(
+                                                  padding: EdgeInsets.zero,
+                                                  shrinkWrap: true,
+                                                  itemCount: options.length,
+                                                  itemBuilder: (BuildContext context, int index) {
+                                                    final Patient patient =
+                                                        options.elementAt(
+                                                          index,
+                                                        );
+                                                    return InkWell(
+                                                      onTap: () {
+                                                        onSelected(patient);
+                                                      },
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 16,
+                                                              vertical: 12,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          border: Border(
+                                                            bottom: BorderSide(
+                                                              color: Colors
+                                                                  .grey
+                                                                  .shade200,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        child: Row(
+                                                          children: [
+                                                            Icon(
+                                                              Icons.person,
+                                                              size: 18,
+                                                              color: Colors
+                                                                  .grey
+                                                                  .shade600,
+                                                            ),
+                                                            const SizedBox(
+                                                              width: 12,
+                                                            ),
+                                                            Expanded(
+                                                              child: Column(
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .start,
+                                                                children: [
+                                                                  Row(
+                                                                    children: [
+                                                                      Expanded(
+                                                                        child: Text(
+                                                                          patient
+                                                                              .name,
+                                                                          style: const TextStyle(
+                                                                            fontSize:
+                                                                                15,
+                                                                            fontWeight:
+                                                                                FontWeight.w500,
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                      if (patient
+                                                                              .registerId !=
+                                                                          null)
+                                                                        Container(
+                                                                          padding: const EdgeInsets.symmetric(
+                                                                            horizontal:
+                                                                                8,
+                                                                            vertical:
+                                                                                2,
+                                                                          ),
+                                                                          decoration: BoxDecoration(
+                                                                            color:
+                                                                                Theme.of(
+                                                                                  context,
+                                                                                ).primaryColor.withOpacity(
+                                                                                  0.15,
+                                                                                ),
+                                                                            borderRadius: BorderRadius.circular(
+                                                                              6,
+                                                                            ),
+                                                                          ),
+                                                                          child: Text(
+                                                                            '#${patient.registerId}',
+                                                                            style: TextStyle(
+                                                                              fontSize: 11,
+                                                                              fontWeight: FontWeight.w600,
+                                                                              color: Theme.of(
+                                                                                context,
+                                                                              ).primaryColor,
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                    ],
+                                                                  ),
+                                                                  if (patient
+                                                                      .phone
+                                                                      .isNotEmpty)
+                                                                    Text(
+                                                                      patient
+                                                                          .phone,
+                                                                      style: TextStyle(
+                                                                        fontSize:
+                                                                            12,
+                                                                        color: Colors
+                                                                            .grey
+                                                                            .shade600,
+                                                                      ),
+                                                                    ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      )
-                                      .toList(),
-                                  onChanged: (val) {
-                                    if (val != null) {
-                                      setState(() {
-                                        _selectedPatient = val;
-                                        // Update address to the selected patient's address
-                                        addressController.text = val.address;
-                                      });
-                                    }
-                                  },
+                                        );
+                                      },
                                 ),
                               ),
                               // Add Patient Icon Button

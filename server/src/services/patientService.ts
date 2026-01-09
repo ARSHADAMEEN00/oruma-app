@@ -58,6 +58,14 @@ export const patientService = {
       query.isDead = isDeadValue;
     }
 
+    // Add search functionality for patient name and register number
+    if (filter.search) {
+      query.$or = [
+        { name: { $regex: filter.search, $options: 'i' } }, // Case-insensitive search on name
+        { registerId: { $regex: filter.search, $options: 'i' } } // Case-insensitive search on registerId
+      ];
+    }
+
     const list = await PatientModel.find(query).sort({ createdAt: -1 }).lean();
     return list.map(toPatient);
   },

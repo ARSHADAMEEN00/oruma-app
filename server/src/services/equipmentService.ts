@@ -93,8 +93,18 @@ export const equipmentService = {
     return toEquipment(created);
   },
 
-  getAll: async (): Promise<Equipment[]> => {
-    const list = await EquipmentModel.find()
+  getAll: async (filter: any = {}): Promise<Equipment[]> => {
+    const query: any = {};
+
+    // Add search functionality for equipment name and uniqueId
+    if (filter.search) {
+      query.$or = [
+        { name: { $regex: filter.search, $options: 'i' } },
+        { uniqueId: { $regex: filter.search, $options: 'i' } }
+      ];
+    }
+
+    const list = await EquipmentModel.find(query)
       .populate('createdBy', 'name')
       .sort({ createdAt: -1 })
       .lean();
@@ -102,8 +112,18 @@ export const equipmentService = {
   },
 
   // Get equipment filtered by status
-  getByStatus: async (status: string): Promise<Equipment[]> => {
-    const list = await EquipmentModel.find({ status })
+  getByStatus: async (status: string, search?: string): Promise<Equipment[]> => {
+    const query: any = { status };
+
+    // Add search functionality
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { uniqueId: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const list = await EquipmentModel.find(query)
       .populate('createdBy', 'name')
       .sort({ createdAt: -1 })
       .lean();

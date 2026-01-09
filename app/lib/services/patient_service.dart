@@ -75,4 +75,26 @@ class PatientService {
 
     throw Exception(result.error ?? 'Failed to delete patient');
   }
+
+  /// Search patients by name.
+  static Future<List<Patient>> searchPatients(
+    String query, {
+    bool? isDead,
+  }) async {
+    String searchQuery =
+        '${ApiConfig.patientsEndpoint}?search=$query&populate=createdBy';
+    if (isDead != null) {
+      searchQuery += '&isDead=$isDead';
+    }
+
+    final result = await ApiService.get<List<dynamic>>(searchQuery);
+
+    if (result.isSuccess && result.data != null) {
+      return result.data!
+          .map((json) => Patient.fromJson(json as Map<String, dynamic>))
+          .toList();
+    }
+
+    throw Exception(result.error ?? 'Failed to search patients');
+  }
 }

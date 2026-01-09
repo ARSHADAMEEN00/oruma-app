@@ -153,4 +153,25 @@ class EquipmentService {
 
     throw Exception(result.error ?? 'Failed to delete equipment');
   }
+
+  /// Search equipment by name or uniqueId.
+  static Future<List<Equipment>> searchEquipment(
+    String query, {
+    String? status,
+  }) async {
+    String searchQuery = '${ApiConfig.equipmentEndpoint}?search=$query';
+    if (status != null) {
+      searchQuery += '&status=$status';
+    }
+
+    final result = await ApiService.get<List<dynamic>>(searchQuery);
+
+    if (result.isSuccess && result.data != null) {
+      return result.data!
+          .map((json) => Equipment.fromJson(json as Map<String, dynamic>))
+          .toList();
+    }
+
+    throw Exception(result.error ?? 'Failed to search equipment');
+  }
 }

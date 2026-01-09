@@ -7,13 +7,13 @@ const router = Router();
 // GET all equipment
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { status } = req.query;
+    const { status, search } = req.query;
     let equipment;
 
     if (status && typeof status === 'string') {
-      equipment = await equipmentService.getByStatus(status);
+      equipment = await equipmentService.getByStatus(status, search as string);
     } else {
-      equipment = await equipmentService.getAll();
+      equipment = await equipmentService.getAll(req.query);
     }
 
     res.json(equipment);

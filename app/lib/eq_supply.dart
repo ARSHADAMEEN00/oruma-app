@@ -526,30 +526,196 @@ class _EqSupplyState extends State<EqSupply> {
                             icon: Icons.assignment_outlined,
                             iconColor: Colors.blue,
                             children: [
-                              // Equipment
-                              DropdownButtonFormField<Equipment>(
-                                decoration: _inputDecoration(
-                                  'Select Equipment',
-                                  Icons.inventory_2_outlined,
-                                ),
-                                initialValue: _selectedEquipment,
-                                isExpanded: true,
-                                dropdownColor: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                items: _availableEquipment.map((eq) {
-                                  return DropdownMenuItem(
-                                    value: eq,
-                                    child: Text(
-                                      '${eq.uniqueId} - ${eq.name}',
-                                      style: const TextStyle(fontSize: 14),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (val) =>
-                                    setState(() => _selectedEquipment = val),
-                                validator: (val) =>
-                                    val == null ? 'Required' : null,
+                              // Equipment Autocomplete Search
+                              Autocomplete<Equipment>(
+                                initialValue: _selectedEquipment != null
+                                    ? TextEditingValue(
+                                        text:
+                                            '${_selectedEquipment!.uniqueId} - ${_selectedEquipment!.name}',
+                                      )
+                                    : null,
+                                optionsBuilder:
+                                    (TextEditingValue textEditingValue) async {
+                                      if (textEditingValue.text.isEmpty) {
+                                        return _availableEquipment;
+                                      }
+                                      try {
+                                        final searchResults =
+                                            await EquipmentService.searchEquipment(
+                                              textEditingValue.text,
+                                              status: 'available',
+                                            );
+                                        return searchResults;
+                                      } catch (e) {
+                                        return _availableEquipment.where((
+                                          equipment,
+                                        ) {
+                                          final searchText =
+                                              '${equipment.uniqueId} ${equipment.name}'
+                                                  .toLowerCase();
+                                          return searchText.contains(
+                                            textEditingValue.text.toLowerCase(),
+                                          );
+                                        });
+                                      }
+                                    },
+                                displayStringForOption: (Equipment equipment) =>
+                                    '${equipment.uniqueId} - ${equipment.name}',
+                                onSelected: (Equipment equipment) {
+                                  setState(() {
+                                    _selectedEquipment = equipment;
+                                  });
+                                },
+                                fieldViewBuilder:
+                                    (
+                                      BuildContext context,
+                                      TextEditingController
+                                      textEditingController,
+                                      FocusNode focusNode,
+                                      VoidCallback onFieldSubmitted,
+                                    ) {
+                                      return TextFormField(
+                                        controller: textEditingController,
+                                        focusNode: focusNode,
+                                        decoration:
+                                            _inputDecoration(
+                                              'Search Equipment',
+                                              Icons.inventory_2_outlined,
+                                            ).copyWith(
+                                              hintText: 'Type to search...',
+                                            ),
+                                        onFieldSubmitted: (String value) {
+                                          onFieldSubmitted();
+                                        },
+                                      );
+                                    },
+                                optionsViewBuilder:
+                                    (
+                                      BuildContext context,
+                                      AutocompleteOnSelected<Equipment>
+                                      onSelected,
+                                      Iterable<Equipment> options,
+                                    ) {
+                                      return Align(
+                                        alignment: Alignment.topLeft,
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 8.0,
+                                          ),
+                                          child: Material(
+                                            elevation: 4.0,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            child: ConstrainedBox(
+                                              constraints: const BoxConstraints(
+                                                maxHeight: 200,
+                                                maxWidth: 400,
+                                              ),
+                                              child: ListView.builder(
+                                                padding: EdgeInsets.zero,
+                                                shrinkWrap: true,
+                                                itemCount: options.length,
+                                                itemBuilder: (BuildContext context, int index) {
+                                                  final Equipment equipment =
+                                                      options.elementAt(index);
+                                                  return InkWell(
+                                                    onTap: () {
+                                                      onSelected(equipment);
+                                                    },
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 16,
+                                                            vertical: 12,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        border: Border(
+                                                          bottom: BorderSide(
+                                                            color: Colors
+                                                                .grey
+                                                                .shade200,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      child: Row(
+                                                        children: [
+                                                          Icon(
+                                                            Icons.inventory_2,
+                                                            size: 18,
+                                                            color: Colors
+                                                                .grey
+                                                                .shade600,
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 12,
+                                                          ),
+                                                          Expanded(
+                                                            child: Row(
+                                                              children: [
+                                                                Container(
+                                                                  padding:
+                                                                      const EdgeInsets.symmetric(
+                                                                        horizontal:
+                                                                            8,
+                                                                        vertical:
+                                                                            2,
+                                                                      ),
+                                                                  decoration: BoxDecoration(
+                                                                    color: Colors
+                                                                        .orange
+                                                                        .withOpacity(
+                                                                          0.15,
+                                                                        ),
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          6,
+                                                                        ),
+                                                                  ),
+                                                                  child: Text(
+                                                                    equipment
+                                                                        .uniqueId,
+                                                                    style: const TextStyle(
+                                                                      fontSize:
+                                                                          11,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w600,
+                                                                      color: Colors
+                                                                          .orange,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                const SizedBox(
+                                                                  width: 8,
+                                                                ),
+                                                                Expanded(
+                                                                  child: Text(
+                                                                    equipment
+                                                                        .name,
+                                                                    style: const TextStyle(
+                                                                      fontSize:
+                                                                          14,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
                               ),
                               if (_selectedEquipment != null) ...[
                                 const SizedBox(height: 12),
@@ -586,40 +752,217 @@ class _EqSupplyState extends State<EqSupply> {
                               ],
                               const SizedBox(height: 16),
 
-                              // Patient
+                              // Patient Autocomplete Search
                               Row(
                                 children: [
                                   Expanded(
-                                    child: DropdownButtonFormField<Patient>(
-                                      decoration: _inputDecoration(
-                                        'Select Patient',
-                                        Icons.person_outline,
-                                      ),
-                                      initialValue: _selectedPatient,
-                                      isExpanded: true,
-                                      dropdownColor: Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
-                                      items: _patients.map((p) {
-                                        return DropdownMenuItem(
-                                          value: p,
-                                          child: Text(
-                                            '${p.name} (${p.village})',
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                            ),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        );
-                                      }).toList(),
-                                      onChanged: (val) {
-                                        if (val != null) {
-                                          setState(
-                                            () => _selectedPatient = val,
-                                          );
-                                        }
+                                    child: Autocomplete<Patient>(
+                                      initialValue: _selectedPatient != null
+                                          ? TextEditingValue(
+                                              text: _selectedPatient!.name,
+                                            )
+                                          : null,
+                                      optionsBuilder:
+                                          (
+                                            TextEditingValue textEditingValue,
+                                          ) async {
+                                            if (textEditingValue.text.isEmpty) {
+                                              return _patients;
+                                            }
+                                            try {
+                                              final searchResults =
+                                                  await PatientService.searchPatients(
+                                                    textEditingValue.text,
+                                                    isDead: false,
+                                                  );
+                                              return searchResults;
+                                            } catch (e) {
+                                              return _patients.where((patient) {
+                                                return patient.name
+                                                    .toLowerCase()
+                                                    .contains(
+                                                      textEditingValue.text
+                                                          .toLowerCase(),
+                                                    );
+                                              });
+                                            }
+                                          },
+                                      displayStringForOption:
+                                          (Patient patient) => patient.name,
+                                      onSelected: (Patient patient) {
+                                        setState(() {
+                                          _selectedPatient = patient;
+                                        });
                                       },
-                                      validator: (val) =>
-                                          val == null ? 'Required' : null,
+                                      fieldViewBuilder:
+                                          (
+                                            BuildContext context,
+                                            TextEditingController
+                                            textEditingController,
+                                            FocusNode focusNode,
+                                            VoidCallback onFieldSubmitted,
+                                          ) {
+                                            return TextFormField(
+                                              controller: textEditingController,
+                                              focusNode: focusNode,
+                                              decoration:
+                                                  _inputDecoration(
+                                                    'Search Patient',
+                                                    Icons.person_outline,
+                                                  ).copyWith(
+                                                    hintText:
+                                                        'Type to search...',
+                                                  ),
+                                              onFieldSubmitted: (String value) {
+                                                onFieldSubmitted();
+                                              },
+                                            );
+                                          },
+                                      optionsViewBuilder:
+                                          (
+                                            BuildContext context,
+                                            AutocompleteOnSelected<Patient>
+                                            onSelected,
+                                            Iterable<Patient> options,
+                                          ) {
+                                            return Align(
+                                              alignment: Alignment.topLeft,
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: 8.0,
+                                                ),
+                                                child: Material(
+                                                  elevation: 4.0,
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  child: ConstrainedBox(
+                                                    constraints:
+                                                        const BoxConstraints(
+                                                          maxHeight: 200,
+                                                          maxWidth: 400,
+                                                        ),
+                                                    child: ListView.builder(
+                                                      padding: EdgeInsets.zero,
+                                                      shrinkWrap: true,
+                                                      itemCount: options.length,
+                                                      itemBuilder:
+                                                          (
+                                                            BuildContext
+                                                            context,
+                                                            int index,
+                                                          ) {
+                                                            final Patient
+                                                            patient = options
+                                                                .elementAt(
+                                                                  index,
+                                                                );
+                                                            return InkWell(
+                                                              onTap: () {
+                                                                onSelected(
+                                                                  patient,
+                                                                );
+                                                              },
+                                                              child: Container(
+                                                                padding:
+                                                                    const EdgeInsets.symmetric(
+                                                                      horizontal:
+                                                                          16,
+                                                                      vertical:
+                                                                          12,
+                                                                    ),
+                                                                decoration: BoxDecoration(
+                                                                  border: Border(
+                                                                    bottom: BorderSide(
+                                                                      color: Colors
+                                                                          .grey
+                                                                          .shade200,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                child: Row(
+                                                                  children: [
+                                                                    Icon(
+                                                                      Icons
+                                                                          .person,
+                                                                      size: 18,
+                                                                      color: Colors
+                                                                          .grey
+                                                                          .shade600,
+                                                                    ),
+                                                                    const SizedBox(
+                                                                      width: 12,
+                                                                    ),
+                                                                    Expanded(
+                                                                      child: Column(
+                                                                        crossAxisAlignment:
+                                                                            CrossAxisAlignment.start,
+                                                                        children: [
+                                                                          Row(
+                                                                            children: [
+                                                                              Expanded(
+                                                                                child: Text(
+                                                                                  patient.name,
+                                                                                  style: const TextStyle(
+                                                                                    fontSize: 15,
+                                                                                    fontWeight: FontWeight.w500,
+                                                                                  ),
+                                                                                ),
+                                                                              ),
+                                                                              if (patient.registerId !=
+                                                                                  null)
+                                                                                Container(
+                                                                                  padding: const EdgeInsets.symmetric(
+                                                                                    horizontal: 8,
+                                                                                    vertical: 2,
+                                                                                  ),
+                                                                                  decoration: BoxDecoration(
+                                                                                    color:
+                                                                                        Theme.of(
+                                                                                          context,
+                                                                                        ).primaryColor.withOpacity(
+                                                                                          0.15,
+                                                                                        ),
+                                                                                    borderRadius: BorderRadius.circular(
+                                                                                      6,
+                                                                                    ),
+                                                                                  ),
+                                                                                  child: Text(
+                                                                                    '#${patient.registerId}',
+                                                                                    style: TextStyle(
+                                                                                      fontSize: 11,
+                                                                                      fontWeight: FontWeight.w600,
+                                                                                      color: Theme.of(
+                                                                                        context,
+                                                                                      ).primaryColor,
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                            ],
+                                                                          ),
+                                                                          if (patient
+                                                                              .phone
+                                                                              .isNotEmpty)
+                                                                            Text(
+                                                                              patient.phone,
+                                                                              style: TextStyle(
+                                                                                fontSize: 12,
+                                                                                color: Colors.grey.shade600,
+                                                                              ),
+                                                                            ),
+                                                                        ],
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            );
+                                                          },
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
                                     ),
                                   ),
                                   const SizedBox(width: 8),
