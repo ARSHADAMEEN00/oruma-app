@@ -190,7 +190,7 @@ class _HomescreenState extends State<Homescreen> {
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
-                                        supply.patientName,
+                                        supply.patientName ?? 'Unknown',
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: Colors.grey[600],
@@ -1064,7 +1064,10 @@ class _HomescreenState extends State<Homescreen> {
                       ],
                     ),
                     const Divider(height: 24),
-                    _buildInfoRow(Icons.person_outline, supply.patientName),
+                    _buildInfoRow(
+                      Icons.person_outline,
+                      supply.patientName ?? 'Unknown',
+                    ),
                     const SizedBox(height: 8),
                     _buildInfoRow(
                       Icons.calendar_today_outlined,

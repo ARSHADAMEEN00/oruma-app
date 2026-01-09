@@ -386,10 +386,12 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
     final filteredList = _activeSupplies.where((s) {
       if (_searchQuery.isEmpty) return true;
       final q = _searchQuery.toLowerCase();
-      return s.patientName.toLowerCase().contains(q) ||
+      return (s.patientName?.toLowerCase().contains(q) ?? false) ||
+          (s.receiverName?.toLowerCase().contains(q) ?? false) ||
           s.equipmentName.toLowerCase().contains(q) ||
           s.equipmentUniqueId.toLowerCase().contains(q) ||
-          s.patientPhone.toLowerCase().contains(q);
+          (s.patientPhone?.toLowerCase().contains(q) ?? false) ||
+          (s.receiverPhone?.toLowerCase().contains(q) ?? false);
     }).toList();
 
     if (filteredList.isEmpty) {
@@ -432,10 +434,12 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
     final filteredList = _allSupplies.where((s) {
       if (_searchQuery.isEmpty) return true;
       final q = _searchQuery.toLowerCase();
-      return s.patientName.toLowerCase().contains(q) ||
+      return (s.patientName?.toLowerCase().contains(q) ?? false) ||
+          (s.receiverName?.toLowerCase().contains(q) ?? false) ||
           s.equipmentName.toLowerCase().contains(q) ||
           s.equipmentUniqueId.toLowerCase().contains(q) ||
-          s.patientPhone.toLowerCase().contains(q);
+          (s.patientPhone?.toLowerCase().contains(q) ?? false) ||
+          (s.receiverPhone?.toLowerCase().contains(q) ?? false);
     }).toList();
 
     if (filteredList.isEmpty) {
@@ -497,7 +501,9 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          supply.patientName,
+                          (supply.patientName?.isNotEmpty == true)
+                              ? supply.patientName!
+                              : (supply.receiverName ?? 'Unknown'),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -544,7 +550,9 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                 children: [
                   _buildDetailItem(
                     icon: Icons.phone,
-                    label: supply.patientPhone,
+                    label: (supply.patientName?.isNotEmpty == true)
+                        ? (supply.patientPhone ?? 'N/A')
+                        : (supply.receiverPhone ?? 'N/A'),
                   ),
                   const SizedBox(width: 16),
                   _buildDetailItem(
@@ -712,16 +720,41 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
             const SizedBox(height: 24),
             const Divider(),
             const SizedBox(height: 16),
-            // Patient Details
-            _buildDetailRow(Icons.person, 'Patient', supply.patientName),
-            _buildDetailRow(Icons.phone, 'Phone', supply.patientPhone),
-            if (supply.patientAddress != null &&
-                supply.patientAddress!.isNotEmpty)
+            // Patient / Receiver Details
+            if (supply.patientName != null &&
+                supply.patientName!.isNotEmpty) ...[
+              _buildDetailRow(Icons.person, 'Patient', supply.patientName!),
               _buildDetailRow(
-                Icons.location_on,
-                'Address',
-                supply.patientAddress!,
+                Icons.phone,
+                'Phone',
+                supply.patientPhone ?? 'N/A',
               ),
+              if (supply.patientAddress != null &&
+                  supply.patientAddress!.isNotEmpty)
+                _buildDetailRow(
+                  Icons.location_on,
+                  'Address',
+                  supply.patientAddress!,
+                ),
+            ] else ...[
+              _buildDetailRow(
+                Icons.person,
+                'Receiver',
+                supply.receiverName ?? 'Unknown',
+              ),
+              _buildDetailRow(
+                Icons.phone,
+                'Phone',
+                supply.receiverPhone ?? 'N/A',
+              ),
+              if (supply.receiverAddress != null &&
+                  supply.receiverAddress!.isNotEmpty)
+                _buildDetailRow(
+                  Icons.location_on,
+                  'Address',
+                  supply.receiverAddress!,
+                ),
+            ],
             _buildDetailRow(
               Icons.calendar_today,
               'Supply Date',

@@ -24,6 +24,10 @@ class _EqSupplyState extends State<EqSupply> {
   final TextEditingController _receiverNameController = TextEditingController();
   final TextEditingController _receiverPhoneController =
       TextEditingController();
+  final TextEditingController _receiverAddressController =
+      TextEditingController();
+  final TextEditingController _receiverPlaceController =
+      TextEditingController();
 
   // Data
   List<Equipment> _availableEquipment = [];
@@ -60,6 +64,8 @@ class _EqSupplyState extends State<EqSupply> {
     _careOfController.dispose();
     _receiverNameController.dispose();
     _receiverPhoneController.dispose();
+    _receiverAddressController.dispose();
+    _receiverPlaceController.dispose();
     super.dispose();
   }
 
@@ -83,18 +89,14 @@ class _EqSupplyState extends State<EqSupply> {
   }
 
   Future<void> _submit() async {
-    if (_selectedEquipment == null || _selectedPatient == null) {
+    if (_selectedEquipment == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: [
               const Icon(Icons.warning_amber_rounded, color: Colors.white),
               const SizedBox(width: 8),
-              Text(
-                _selectedEquipment == null
-                    ? 'Please select a equipment'
-                    : 'Please select a patient',
-              ),
+              const Text('Please select a equipment'),
             ],
           ),
           backgroundColor: Colors.orange,
@@ -114,12 +116,14 @@ class _EqSupplyState extends State<EqSupply> {
         equipmentId: _selectedEquipment!.id!,
         equipmentUniqueId: _selectedEquipment!.uniqueId,
         equipmentName: _selectedEquipment!.name,
-        patientName: _selectedPatient!.name,
-        patientPhone: _selectedPatient!.phone,
-        patientAddress: _selectedPatient!.address,
+        patientName: _selectedPatient?.name,
+        patientPhone: _selectedPatient?.phone,
+        patientAddress: _selectedPatient?.address,
         careOf: _careOfController.text.trim(),
         receiverName: _receiverNameController.text.trim(),
         receiverPhone: _receiverPhoneController.text.trim(),
+        receiverAddress: _receiverAddressController.text.trim(),
+        receiverPlace: _receiverPlaceController.text.trim(),
         supplyDate: DateTime.now(),
         notes: _notesController.text.trim(),
       );
@@ -161,323 +165,6 @@ class _EqSupplyState extends State<EqSupply> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
-  }
-
-  Future<void> _showAddPatientDialog() async {
-    final nameCtrl = TextEditingController();
-    final addressCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
-    final phone2Ctrl = TextEditingController();
-    final ageCtrl = TextEditingController();
-    String selectedGender = 'Male';
-
-    final formKey = GlobalKey<FormState>();
-    bool localLoading = false;
-
-    // Helper for consistent decoration
-    InputDecoration getModernDecoration(String label, IconData icon) {
-      return InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.grey.shade600),
-        prefixIcon: Icon(icon, size: 20, color: Colors.grey.shade600),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: Theme.of(context).primaryColor,
-            width: 1.5,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Colors.red, width: 1.5),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Colors.red, width: 1.5),
-        ),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
-        ),
-      );
-    }
-
-    final result = await showDialog<Patient>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 400),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 20,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(24),
-                      topRight: Radius.circular(24),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.person_add_rounded, color: Colors.white),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'New Patient',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close, color: Colors.white),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        style: IconButton.styleFrom(
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Content
-                Flexible(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                    child: Form(
-                      key: formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildModernTextField(
-                            controller: nameCtrl,
-                            label: 'Patient Name',
-                            icon: Icons.person_outline_rounded,
-                            validator: (v) =>
-                                v!.trim().isEmpty ? 'Required' : null,
-                            decoration: getModernDecoration(
-                              'Patient Name',
-                              Icons.person_outline_rounded,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildModernTextField(
-                            controller: phoneCtrl,
-                            label: 'Phone',
-                            icon: Icons.phone_outlined,
-                            keyboardType: TextInputType.phone,
-                            validator: (v) =>
-                                v!.trim().isEmpty ? 'Required' : null,
-                            decoration: getModernDecoration(
-                              'Phone',
-                              Icons.phone_outlined,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildModernTextField(
-                            controller: phone2Ctrl,
-                            label: 'Phone 2',
-                            icon: Icons.phone_android_outlined,
-                            keyboardType: TextInputType.phone,
-                            decoration: getModernDecoration(
-                              'Phone 2',
-                              Icons.phone_android_outlined,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildModernTextField(
-                            controller: ageCtrl,
-                            label: 'Age',
-                            icon: Icons.calendar_today_outlined,
-                            keyboardType: TextInputType.number,
-                            validator: (v) =>
-                                v!.trim().isEmpty ? 'Required' : null,
-                            decoration: getModernDecoration(
-                              'Age',
-                              Icons.calendar_today_outlined,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          // Gender Selection
-                          DropdownButtonFormField<String>(
-                            initialValue: selectedGender,
-                            decoration: getModernDecoration(
-                              'Gender',
-                              Icons.people_outline,
-                            ),
-                            items: ['Male', 'Female', 'Other']
-                                .map(
-                                  (g) => DropdownMenuItem(
-                                    value: g,
-                                    child: Text(g),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (v) =>
-                                setDialogState(() => selectedGender = v!),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildModernTextField(
-                            controller: addressCtrl,
-                            label: 'Address',
-                            icon: Icons.location_on_outlined,
-                            maxLines: 2,
-                            validator: (v) =>
-                                v!.trim().isEmpty ? 'Required' : null,
-                            decoration: getModernDecoration(
-                              'Address',
-                              Icons.location_on_outlined,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Footer
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: localLoading
-                          ? null
-                          : () async {
-                              if (!formKey.currentState!.validate()) return;
-                              setDialogState(() => localLoading = true);
-                              try {
-                                final newPatient = Patient(
-                                  name: nameCtrl.text.trim(),
-                                  phone: phoneCtrl.text.trim(),
-                                  phone2: phone2Ctrl.text.trim().isEmpty
-                                      ? null
-                                      : phone2Ctrl.text.trim(),
-                                  address: addressCtrl.text.trim(),
-                                  relation: 'Self',
-                                  gender: selectedGender,
-                                  age: int.tryParse(ageCtrl.text.trim()) ?? 0,
-                                  place: 'Home',
-                                  village: 'Kodur',
-                                  disease: const ['OLD AGE'],
-                                  plan: '1/1',
-                                );
-                                final created =
-                                    await PatientService.createPatient(
-                                      newPatient,
-                                    );
-                                if (context.mounted) {
-                                  Navigator.pop(context, created);
-                                }
-                              } catch (e) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Error: $e'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              } finally {
-                                setDialogState(() => localLoading = false);
-                              }
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: localLoading
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                valueColor: AlwaysStoppedAnimation(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                          : const Text(
-                              'Create Patient',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-
-    if (result != null) {
-      await _fetchPatients();
-      setState(() {
-        _selectedPatient = _patients.firstWhere((p) => p.name == result.name);
-      });
-    }
-  }
-
-  Widget _buildModernTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    InputDecoration? decoration,
-    int maxLines = 1,
-    String? Function(String?)? validator,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      validator: validator,
-      keyboardType: keyboardType,
-      style: const TextStyle(fontSize: 15),
-      decoration: decoration,
-    );
   }
 
   @override
@@ -965,27 +652,6 @@ class _EqSupplyState extends State<EqSupply> {
                                           },
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  SizedBox(
-                                    height: 48,
-                                    width: 48,
-                                    child: IconButton.filled(
-                                      onPressed: _showAddPatientDialog,
-                                      icon: const Icon(
-                                        Icons.person_add_rounded,
-                                        size: 20,
-                                      ),
-                                      style: IconButton.styleFrom(
-                                        backgroundColor: Colors.blue.shade50,
-                                        foregroundColor: Colors.blue.shade700,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
                                 ],
                               ),
                               if (_selectedPatient != null) ...[
@@ -1057,6 +723,28 @@ class _EqSupplyState extends State<EqSupply> {
                                       hint: 'Phone',
                                       icon: Icons.phone_outlined,
                                       keyboardType: TextInputType.phone,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: _receiverAddressController,
+                                      label: 'Receiver Address',
+                                      hint: 'Address',
+                                      icon: Icons.location_on_outlined,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildTextField(
+                                      controller: _receiverPlaceController,
+                                      label: 'Receiver Place',
+                                      hint: 'Place',
+                                      icon: Icons.map_outlined,
                                     ),
                                   ),
                                 ],

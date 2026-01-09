@@ -3,12 +3,14 @@ class EquipmentSupply {
   final String equipmentId;
   final String equipmentUniqueId;
   final String equipmentName;
-  final String patientName;
-  final String patientPhone;
+  final String? patientName;
+  final String? patientPhone;
   final String? patientAddress;
   final String? careOf;
   final String? receiverName;
   final String? receiverPhone;
+  final String? receiverAddress;
+  final String? receiverPlace;
   final DateTime supplyDate;
   final DateTime? returnDate;
   final DateTime? actualReturnDate;
@@ -23,12 +25,14 @@ class EquipmentSupply {
     required this.equipmentId,
     required this.equipmentUniqueId,
     required this.equipmentName,
-    required this.patientName,
-    required this.patientPhone,
+    this.patientName,
+    this.patientPhone,
     this.patientAddress,
     this.careOf,
     this.receiverName,
     this.receiverPhone,
+    this.receiverAddress,
+    this.receiverPlace,
     required this.supplyDate,
     this.returnDate,
     this.actualReturnDate,
@@ -51,6 +55,8 @@ class EquipmentSupply {
       careOf: json['careOf']?.toString(),
       receiverName: json['receiverName']?.toString(),
       receiverPhone: json['receiverPhone']?.toString(),
+      receiverAddress: json['receiverAddress']?.toString(),
+      receiverPlace: json['receiverPlace']?.toString(),
       supplyDate:
           DateTime.tryParse(json['supplyDate']?.toString() ?? '') ??
           DateTime.now(),
@@ -83,6 +89,8 @@ class EquipmentSupply {
       'careOf': careOf,
       'receiverName': receiverName,
       'receiverPhone': receiverPhone,
+      'receiverAddress': receiverAddress,
+      'receiverPlace': receiverPlace,
       'supplyDate': supplyDate.toIso8601String(),
       'returnDate': returnDate?.toIso8601String(),
       'actualReturnDate': actualReturnDate?.toIso8601String(),

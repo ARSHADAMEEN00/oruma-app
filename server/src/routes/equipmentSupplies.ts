@@ -42,8 +42,9 @@ router.post('/', async (req: Request, res: Response) => {
     const supplyData = req.body;
 
     // Basic validation
-    if (!supplyData.equipmentId || !supplyData.patientName || !supplyData.patientPhone) {
-      return res.status(400).json({ error: 'Missing required fields: equipmentId, patientName, patientPhone' });
+    // Basic validation
+    if (!supplyData.equipmentId) {
+      return res.status(400).json({ error: 'Missing required fields: equipmentId' });
     }
 
     if ((req as any).user) {

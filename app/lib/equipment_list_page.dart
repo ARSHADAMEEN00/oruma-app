@@ -371,7 +371,7 @@ class _EquipmentListPageState extends State<EquipmentListPage>
     final filteredItems = _distributedItems.where((supply) {
       if (_searchQuery.isEmpty) return true;
       final query = _searchQuery.toLowerCase();
-      return supply.patientName.toLowerCase().contains(query) ||
+      return (supply.patientName?.toLowerCase().contains(query) ?? false) ||
           supply.equipmentUniqueId.toLowerCase().contains(query) ||
           supply.equipmentName.toLowerCase().contains(query);
     }).toList();
@@ -408,7 +408,7 @@ class _EquipmentListPageState extends State<EquipmentListPage>
               child: Icon(Icons.person, color: Colors.orange.shade400),
             ),
             title: Text(
-              supply.patientName,
+              supply.patientName ?? 'Unknown',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Column(
@@ -508,9 +508,13 @@ class _EquipmentListPageState extends State<EquipmentListPage>
             _buildDetailRow(
               Icons.person_outline,
               'Patient',
-              supply.patientName,
+              supply.patientName ?? 'N/A',
             ),
-            _buildDetailRow(Icons.phone_outlined, 'Phone', supply.patientPhone),
+            _buildDetailRow(
+              Icons.phone_outlined,
+              'Phone',
+              supply.patientPhone ?? 'N/A',
+            ),
             _buildDetailRow(
               Icons.calendar_today_outlined,
               'Supply Date',

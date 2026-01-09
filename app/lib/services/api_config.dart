@@ -15,12 +15,12 @@ class ApiConfig {
   static String get baseUrl {
     if (kDebugMode) {
       if (kIsWeb) {
-        return 'http://localhost:3000/api';
+        return 'https://oruma-app.onrender.com/api';
       }
       // For Android emulator use 10.0.2.2, for iOS/Desktop use localhost
-      return 'http://localhost:3000/api';
+      return 'https://oruma-app.onrender.com/api';
     }
-    return 'http://localhost:3000/api';
+    return 'https://oruma-app.onrender.com/api';
   }
 
   /// Health check endpoint

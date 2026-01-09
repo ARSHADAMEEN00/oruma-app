@@ -64,12 +64,14 @@ export interface EquipmentSupply {
   equipmentId: string;        // Reference to Equipment._id
   equipmentUniqueId: string;  // Equipment unique ID (e.g., "WH-001")
   equipmentName: string;      // Equipment name for display
-  patientName: string;
-  patientPhone: string;
+  patientName?: string;
+  patientPhone?: string;
   patientAddress?: string;
   careOf?: string;
   receiverName?: string;
   receiverPhone?: string;
+  receiverAddress?: string;
+  receiverPlace?: string;
   supplyDate: string;         // ISO date string
   returnDate?: string;        // Expected return date (optional)
   actualReturnDate?: string;  // When actually returned
