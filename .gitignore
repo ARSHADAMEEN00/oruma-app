@@ -1,0 +1,112 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# ============================================
+# Flutter App (app/ directory)
+# ============================================
+
+# Flutter/Dart/Pub related
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/.pub-cache/
+app/.pub/
+app/build/
+app/coverage/
+app/.metadata
+
+# Flutter generated files
+app/**/doc/api/
+app/**/ios/Flutter/.last_build_id
+app/ios/Flutter/Generated.xcconfig
+app/ios/Flutter/flutter_export_environment.sh
+app/ios/Runner/GeneratedPluginRegistrant.*
+
+# Symbolication related
+app/app.*.symbols
+
+# Obfuscation related
+app/app.*.map.json
+
+# Android Studio will place build artifacts here
+app/android/app/debug
+app/android/app/profile
+app/android/app/release
+app/android/.gradle/
+app/android/captures/
+app/android/local.properties
+app/android/gradle/wrapper/gradle-wrapper.jar
+
+# iOS/macOS
+app/ios/Pods/
+app/ios/.symlinks/
+app/ios/Flutter/Flutter.framework
+app/ios/Flutter/Flutter.podspec
+app/macos/Pods/
+app/macos/.symlinks/
+
+# Web
+app/web/flutter_service_worker.js
+app/web/version.json
+
+# Windows, Linux, macOS
+app/windows/flutter/ephemeral/
+app/linux/flutter/ephemeral/
+app/macos/Flutter/ephemeral/
+
+# ============================================
+# Node.js Server (server/ directory)
+# ============================================
+
+# Dependencies
+server/node_modules/
+server/package-lock.json
+
+# Build output
+server/dist/
+server/build/
+
+# Environment variables
+server/.env
+server/.env.local
+server/.env.*.local
+
+# Logs
+server/logs/
+server/*.log
+server/npm-debug.log*
+server/yarn-debug.log*
+server/yarn-error.log*
+
+# Testing
+server/coverage/
+
+# IDE
+server/.vscode/
+server/.idea/
+
+# OS
+server/.DS_Store
