@@ -408,7 +408,7 @@ class _EquipmentListPageState extends State<EquipmentListPage>
               child: Icon(Icons.person, color: Colors.orange.shade400),
             ),
             title: Text(
-              supply.patientName ?? 'Unknown',
+              supply.patientName ?? supply.receiverName ?? 'Unknown',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Column(
@@ -505,28 +505,76 @@ class _EquipmentListPageState extends State<EquipmentListPage>
             const SizedBox(height: 24),
             const Divider(),
             const SizedBox(height: 16),
+            // Receiver Details
+            const Text(
+              'Receiver Details',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.indigo,
+              ),
+            ),
+            const SizedBox(height: 8),
             _buildDetailRow(
               Icons.person_outline,
-              'Patient',
-              supply.patientName ?? 'N/A',
+              'Name',
+              supply.receiverName ?? 'N/A',
             ),
             _buildDetailRow(
               Icons.phone_outlined,
               'Phone',
-              supply.patientPhone ?? 'N/A',
+              supply.receiverPhone ?? 'N/A',
             ),
-            _buildDetailRow(
-              Icons.calendar_today_outlined,
-              'Supply Date',
-              _formatDate(supply.supplyDate),
-            ),
-            if (supply.patientAddress != null &&
-                supply.patientAddress!.isNotEmpty)
+            if (supply.receiverAddress != null &&
+                supply.receiverAddress!.isNotEmpty)
+              _buildDetailRow(
+                Icons.location_on_outlined,
+                'Address',
+                '${supply.receiverAddress}${supply.receiverPlace != null ? ', ${supply.receiverPlace}' : ''}',
+              ),
+
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+
+            // Patient Details (if exists)
+            if (supply.patientName != null && supply.patientName!.isNotEmpty) ...[
+              const Text(
+                'Patient Details',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.indigo,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildDetailRow(
+                Icons.person_outlined,
+                'Name',
+                supply.patientName!,
+              ),
+              if (supply.patientPhone != null && supply.patientPhone!.isNotEmpty)
+                _buildDetailRow(
+                  Icons.phone_outlined,
+                  'Phone',
+                  supply.patientPhone!,
+                ),
+               if (supply.patientAddress != null && supply.patientAddress!.isNotEmpty)
               _buildDetailRow(
                 Icons.location_on_outlined,
                 'Address',
                 supply.patientAddress!,
               ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 16),
+            ],
+
+            _buildDetailRow(
+              Icons.calendar_today_outlined,
+              'Supply Date',
+              _formatDate(supply.supplyDate),
+            ),
             if (supply.notes != null && supply.notes!.isNotEmpty)
               _buildDetailRow(Icons.note_outlined, 'Notes', supply.notes!),
             if (supply.createdBy != null)
