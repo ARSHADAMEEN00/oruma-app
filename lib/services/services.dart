@@ -8,3 +8,4 @@ export 'home_visit_service.dart';
 export 'equipment_service.dart';
 export 'equipment_supply_service.dart';
 export 'medicine_supply_service.dart';
+export 'config_service.dart';

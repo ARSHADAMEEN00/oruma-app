@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:oruma_app/homevisit.dart';
 import 'package:oruma_app/home_visit_search_page.dart';
 import 'package:oruma_app/models/home_visit.dart';
+import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/home_visit_service.dart';
+import 'package:oruma_app/services/patient_service.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
@@ -334,7 +336,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                           : Colors.grey.shade600,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     DateFormat('d').format(date),
                     style: TextStyle(
@@ -343,7 +345,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                       color: isSelected ? Colors.white : Colors.black87,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   if (hasVisits)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -366,7 +368,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                       ),
                     )
                   else
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                 ],
               ),
             ),
@@ -602,136 +604,10 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _buildVisitDetailsSheet(context, visit),
-    );
-  }
-
-  Widget _buildVisitDetailsSheet(BuildContext context, HomeVisit visit) {
-    final date = DateTime.tryParse(visit.visitDate);
-    final primaryColor = Theme.of(context).colorScheme.primary;
-
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Home Visit Details",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      visit.patientName,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.all(12),
-                child: Icon(Icons.home_work_rounded, color: primaryColor),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          _buildDetailRow(
-            Icons.calendar_today,
-            "Visit Date",
-            date != null ? DateFormat('EEEE, d MMMM yyyy').format(date) : "N/A",
-          ),
-          const SizedBox(height: 20),
-          _buildDetailRow(Icons.location_on, "Address", visit.address),
-          const SizedBox(height: 20),
-          _buildDetailRow(
-            Icons.notes,
-            "Notes",
-            visit.notes ?? "No notes provided",
-          ),
-          if (visit.createdBy != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Text(
-                "Created by: ${visit.createdBy}",
-                style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
-              ),
-            ),
-          const SizedBox(height: 40),
-          Row(
-            children: [
-              if (context.read<AuthService>().isAdmin) ...[
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _deleteVisit(visit);
-                    },
-                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                    label: const Text(
-                      "Delete",
-                      style: TextStyle(color: Colors.red),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: const BorderSide(color: Colors.red),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-              ],
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Homevisit(visit: visit),
-                      ),
-                    );
-                    if (result == true) _refreshVisits();
-                  },
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text("Edit Details"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+      builder: (context) => _VisitDetailsSheet(
+        visit: visit,
+        onDelete: () => _deleteVisit(visit),
+        onRefresh: _refreshVisits,
       ),
     );
   }
@@ -768,6 +644,23 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
         ),
       ],
     );
+  }
+
+  String _getVisitModeLabel(String visitMode) {
+    switch (visitMode) {
+      case 'new':
+        return 'New Visit';
+      case 'monthly':
+        return 'Monthly Visit';
+      case 'emergency':
+        return 'Emergency Visit';
+      case 'dhc_visit':
+        return 'DHC Visit';
+      case 'vhc_visit':
+        return 'VHC Visit';
+      default:
+        return visitMode;
+    }
   }
 
   Future<void> _deleteVisit(HomeVisit visit) async {
@@ -881,5 +774,332 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
         ),
       ),
     );
+  }
+}
+
+// Stateful widget for visit details that can fetch patient data
+class _VisitDetailsSheet extends StatefulWidget {
+  final HomeVisit visit;
+  final VoidCallback onDelete;
+  final VoidCallback onRefresh;
+
+  const _VisitDetailsSheet({
+    required this.visit,
+    required this.onDelete,
+    required this.onRefresh,
+  });
+
+  @override
+  State<_VisitDetailsSheet> createState() => _VisitDetailsSheetState();
+}
+
+class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
+  Patient? _patient;
+  bool _isLoadingPatient = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPatientData();
+  }
+
+  Future<void> _loadPatientData() async {
+    try {
+      // Search for patient by name
+      final patients = await PatientService.searchPatients(
+        widget.visit.patientName,
+        isDead: null, // Search both alive and deceased
+      );
+      
+      // Find exact match
+      final patient = patients.firstWhere(
+        (p) => p.name == widget.visit.patientName,
+        orElse: () => patients.isNotEmpty ? patients.first : throw Exception('Patient not found'),
+      );
+      
+      if (mounted) {
+        setState(() {
+          _patient = patient;
+          _isLoadingPatient = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingPatient = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final date = DateTime.tryParse(widget.visit.visitDate);
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Home Visit Details",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        widget.visit.patientName,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (_patient?.registerId != null) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          "ID: ${_patient!.registerId}",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.all(10),
+                  child: Icon(Icons.home_work_rounded, color: primaryColor, size: 22),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            
+            // Patient Information Section
+            if (_isLoadingPatient)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_patient != null) ...[
+              const Text(
+                "Patient Information",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 12,
+                children: [
+                  SizedBox(
+                    width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
+                    child: _buildDetailRow(Icons.phone, "Phone", _patient!.phone),
+                  ),
+                  if (_patient!.phone2 != null && _patient!.phone2!.isNotEmpty)
+                    SizedBox(
+                      width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
+                      child: _buildDetailRow(Icons.phone_android, "Phone 2", _patient!.phone2!),
+                    ),
+                  SizedBox(
+                    width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
+                    child: _buildDetailRow(Icons.cake, "Age", "${_patient!.age} years"),
+                  ),
+                  SizedBox(
+                    width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
+                    child: _buildDetailRow(Icons.wc, "Gender", _patient!.gender),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildDetailRow(
+                Icons.medical_services,
+                "Diseases",
+                _patient!.disease.join(', '),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Visit Information",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            
+            _buildDetailRow(
+              Icons.calendar_today,
+              "Visit Date",
+              date != null ? DateFormat('EEEE, d MMMM yyyy').format(date) : "N/A",
+            ),
+            const SizedBox(height: 12),
+            _buildDetailRow(
+              Icons.medical_services_outlined,
+              "Visit Mode",
+              _getVisitModeLabel(widget.visit.visitMode),
+            ),
+            const SizedBox(height: 12),
+            _buildDetailRow(Icons.location_on, "Address", widget.visit.address),
+            const SizedBox(height: 12),
+            _buildDetailRow(
+              Icons.group,
+              "Team",
+              widget.visit.team != null && widget.visit.team!.isNotEmpty
+                  ? widget.visit.team!
+                  : "No team assigned",
+            ),
+            const SizedBox(height: 12),
+            _buildDetailRow(
+              Icons.notes,
+              "Notes",
+              widget.visit.notes ?? "No notes provided",
+            ),
+            if (widget.visit.createdBy != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Text(
+                  "Created by: ${widget.visit.createdBy}",
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+                ),
+              ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                if (context.read<AuthService>().isAdmin) ...[
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        widget.onDelete();
+                      },
+                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      label: const Text(
+                        "Delete",
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: const BorderSide(color: Colors.red),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                ],
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Homevisit(visit: widget.visit),
+                        ),
+                      );
+                      if (result == true) widget.onRefresh();
+                    },
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text("Edit Details"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: Colors.grey.shade600),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade500,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getVisitModeLabel(String visitMode) {
+    switch (visitMode) {
+      case 'new':
+        return 'New Visit';
+      case 'monthly':
+        return 'Monthly Visit';
+      case 'emergency':
+        return 'Emergency Visit';
+      case 'dhc_visit':
+        return 'DHC Visit';
+      case 'vhc_visit':
+        return 'VHC Visit';
+      default:
+        return visitMode;
+    }
   }
 }

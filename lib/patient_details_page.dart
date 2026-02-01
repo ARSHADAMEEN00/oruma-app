@@ -215,6 +215,12 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
                       _currentPatient.name,
                     ),
                     _buildInfoTile(Icons.phone, "Phone", _currentPatient.phone),
+                    if (_currentPatient.phone2 != null && _currentPatient.phone2!.isNotEmpty)
+                      _buildInfoTile(
+                        Icons.phone_android,
+                        "Phone 2",
+                        _currentPatient.phone2!,
+                      ),
                     _buildInfoTile(
                       Icons.info_outline,
                       "Relation",

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/patient_service.dart';
+import 'package:oruma_app/services/config_service.dart';
 import 'package:intl/intl.dart';
 
 // ignore: camel_case_types
@@ -16,6 +17,8 @@ class patientrigister extends StatefulWidget {
 class _patientrigisterState extends State<patientrigister> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _isLoadingConfig = true;
+  String? _configError;
 
   // Dropdown values
   String? _selectedVillage;
@@ -33,26 +36,10 @@ class _patientrigisterState extends State<patientrigister> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController phone2Controller = TextEditingController();
 
-  // Dropdown options
-  final List<String> villages = ["Kodur", "Ponmala", "Kuruva", "Malappuram"];
-  final List<String> diseases = [
-    "CAD",
-    "HTN DM",
-    "CKD",
-    "CLD",
-    "OLD AGE",
-    "PARAPLEGIA",
-    "DIABETIC FOOT",
-    "CVA",
-    "CA",
-    "COPD",
-    "IVDP",
-    "PRESSURE SORE",
-    "MR",
-    "MND",
-    "TB",
-  ];
-  final List<String> plans = ["1/4", "1/8", "1/2", "1/1"];
+  // Dropdown options (loaded from API)
+  List<String> villages = [];
+  List<String> diseases = [];
+  List<String> plans = [];
 
   @override
   void initState() {
@@ -60,6 +47,9 @@ class _patientrigisterState extends State<patientrigister> {
     // Set default registration date to today at noon
     final now = DateTime.now();
     _registrationDate = DateTime(now.year, now.month, now.day, 12, 0, 0);
+
+    // Load configuration data
+    _loadConfig();
 
     if (widget.patient != null) {
       nameController.text = widget.patient!.name;
@@ -86,6 +76,23 @@ class _patientrigisterState extends State<patientrigister> {
           0,
         );
       }
+    }
+  }
+
+  Future<void> _loadConfig() async {
+    try {
+      final config = await ConfigService.getConfig();
+      setState(() {
+        villages = config.villages;
+        diseases = config.diseases;
+        plans = config.plans;
+        _isLoadingConfig = false;
+      });
+    } catch (e) {
+      setState(() {
+        _configError = e.toString();
+        _isLoadingConfig = false;
+      });
     }
   }
 
@@ -162,6 +169,91 @@ class _patientrigisterState extends State<patientrigister> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.patient != null;
+
+    // Show loading indicator while config is loading
+    if (_isLoadingConfig) {
+      return Scaffold(
+        backgroundColor: Colors.grey.shade100,
+        appBar: AppBar(
+          title: Text(
+            isEditing ? "Edit Patient" : "New Patient Registration",
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: const Color(0xFF1A237E),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF1A237E),
+          ),
+        ),
+      );
+    }
+
+    // Show error if config failed to load
+    if (_configError != null) {
+      return Scaffold(
+        backgroundColor: Colors.grey.shade100,
+        appBar: AppBar(
+          title: Text(
+            isEditing ? "Edit Patient" : "New Patient Registration",
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: const Color(0xFF1A237E),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                color: Colors.red,
+                size: 64,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load configuration',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  _configError!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _isLoadingConfig = true;
+                    _configError = null;
+                  });
+                  _loadConfig();
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1A237E),
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(

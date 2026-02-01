@@ -15,18 +15,18 @@ class ApiConfig {
   static String get baseUrl {
     if (kDebugMode) {
       if (kIsWeb) {
-        return 'https://api-erp-palliative.osperb.com/api';
+        return 'http://localhost:5001/api';
       }
       // For Android emulator use 10.0.2.2, for iOS/Desktop use localhost
-      return 'https://api-erp-palliative.osperb.com/api';
+      return 'http://localhost:5001/api';
     }
-    return 'https://api-erp-palliative.osperb.com/api';
+    return 'http://localhost:5001/api';
   }
 
   /// Health check endpoint
   static String get healthUrl => kDebugMode
-      ? 'https://api-erp-palliative.osperb.com/health'
-      : 'https://api-erp-palliative.osperb.com/health';
+      ? 'http://localhost:5001/health'
+      : 'http://localhost:5001/health';
 
   /// API Endpoints
   static String get patientsEndpoint => '$baseUrl/patients';

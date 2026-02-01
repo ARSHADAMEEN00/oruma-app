@@ -122,10 +122,10 @@ MONGO_URI=mongodb://localhost:27017/oruma
 
 ### App Icons & Branding
 
-The app uses **Kodur PCC** branding with custom icons generated from `assets/logo/logo.png`.
+The app uses **Kodur PCC** branding with custom icons generated from `assets/logo/logo.jpg`.
 
 **App Name**: Kodur PCC  
-**Logo Location**: `assets/logo/logo.png`
+**Logo Location**: `assets/logo/logo.jpg`
 
 Icons are automatically generated for all platforms using `flutter_launcher_icons`. To regenerate icons after updating the logo:
 
