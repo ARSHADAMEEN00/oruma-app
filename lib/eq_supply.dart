@@ -109,6 +109,29 @@ class _EqSupplyState extends State<EqSupply> {
       return;
     }
 
+    // Validate that either patient or receiver is provided
+    if (_selectedPatient == null && _receiverNameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.white),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text('Please select a patient or enter receiver details'),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() => _submitting = true);
 
     try {
