@@ -1132,7 +1132,7 @@ class _HomescreenState extends State<Homescreen> {
                   ),
                   child: ClipOval(
                     child: Image.asset(
-                      'assets/logo/logo.jpg',
+                      'assets/logo/logo.png',
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
                           const Icon(Icons.local_hospital, size: 40),
