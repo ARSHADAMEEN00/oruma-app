@@ -195,38 +195,92 @@ class _PatientListPageState extends State<PatientListPage> {
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Colors.grey.shade200),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        leading: CircleAvatar(
-          backgroundColor: patient.isDead
-              ? Colors.grey.shade300
-              : Theme.of(context).colorScheme.primary.withOpacity(0.1),
-          child: patient.isDead
-              ? const Icon(Icons.person_off, color: Colors.grey)
-              : Text(
-                  patient.name.isNotEmpty ? patient.name[0].toUpperCase() : "?",
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                patient.name,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+      child: Stack(
+        children: [
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            leading: CircleAvatar(
+              backgroundColor: patient.isDead
+                  ? Colors.grey.shade300
+                  : Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              child: patient.isDead
+                  ? const Icon(Icons.person_off, color: Colors.grey)
+                  : Text(
+                      patient.name.isNotEmpty ? patient.name[0].toUpperCase() : "?",
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
-            if (patient.isDead)
-              Container(
-                margin: const EdgeInsets.only(left: 8),
+            title: Text(
+              patient.name,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                if (patient.registerId != null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: "REG ID: ",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                          TextSpan(
+                            text: patient.registerId,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                ],
+                Text("${patient.age} years • ${patient.gender} • ${patient.plan}"),
+                Text(
+                  patient.place,
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PatientDetailsPage(patient: patient),
+                ),
+              );
+              if (result == true) {
+                _loadPatients();
+              }
+            },
+          ),
+          if (patient.isDead)
+            Positioned(
+              bottom: 8,
+              right: 8,
+              child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.red,
@@ -241,49 +295,8 @@ class _PatientListPageState extends State<PatientListPage> {
                   ),
                 ),
               ),
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            if (patient.registerId != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  "REG ID: ${patient.registerId}",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                    fontSize: 10,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-            ],
-            Text("${patient.age} years • ${patient.gender}"),
-            Text(
-              patient.village,
-              style: TextStyle(color: Colors.grey.shade600),
             ),
-          ],
-        ),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PatientDetailsPage(patient: patient),
-            ),
-          );
-          if (result == true) {
-            _loadPatients();
-          }
-        },
+        ],
       ),
     );
   }

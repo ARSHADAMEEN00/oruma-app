@@ -1,6 +1,10 @@
+import 'patient.dart';
+
 /// HomeVisit model that matches the backend schema.
 class HomeVisit {
   final String? id;
+  final String? patientId; // Patient ObjectId
+  final Patient? patientDetails; // Populated patient object from backend
   final String patientName;
   final String address;
   final String visitDate; // ISO date string
@@ -13,6 +17,8 @@ class HomeVisit {
 
   const HomeVisit({
     this.id,
+    this.patientId,
+    this.patientDetails,
     required this.patientName,
     required this.address,
     required this.visitDate,
@@ -26,8 +32,15 @@ class HomeVisit {
 
   /// Create HomeVisit from JSON (API response).
   factory HomeVisit.fromJson(Map<String, dynamic> json) {
+    Patient? patientObj;
+    if (json['patient'] is Map) {
+      patientObj = Patient.fromJson(json['patient'] as Map<String, dynamic>);
+    }
+
     return HomeVisit(
       id: json['_id']?.toString() ?? json['id']?.toString(),
+      patientId: json['patient'] is Map ? json['patient']['_id']?.toString() : json['patient']?.toString(),
+      patientDetails: patientObj,
       patientName: json['patientName']?.toString() ?? '',
       address: json['address']?.toString() ?? '',
       visitDate: json['visitDate']?.toString() ?? '',
@@ -54,6 +67,9 @@ class HomeVisit {
       'visitDate': visitDate,
       'visitMode': visitMode,
     };
+    if (patientId != null && patientId!.isNotEmpty) {
+      map['patient'] = patientId;
+    }
     if (team != null && team!.isNotEmpty) {
       map['team'] = team;
     }
@@ -66,6 +82,8 @@ class HomeVisit {
   /// Create a copy with updated fields.
   HomeVisit copyWith({
     String? id,
+    String? patientId,
+    Patient? patientDetails,
     String? patientName,
     String? address,
     String? visitDate,
@@ -75,6 +93,8 @@ class HomeVisit {
   }) {
     return HomeVisit(
       id: id ?? this.id,
+      patientId: patientId ?? this.patientId,
+      patientDetails: patientDetails ?? this.patientDetails,
       patientName: patientName ?? this.patientName,
       address: address ?? this.address,
       visitDate: visitDate ?? this.visitDate,

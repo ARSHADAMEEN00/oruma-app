@@ -489,6 +489,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
     int visitNumber,
   ) {
     final primaryColor = Theme.of(context).colorScheme.primary;
+    final patient = visit.patientDetails;
 
     return Card(
       elevation: 0,
@@ -562,6 +563,54 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                         ),
                       ],
                     ),
+                    if (patient != null && patient.registerId != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.badge_outlined,
+                            size: 14,
+                            color: Colors.grey.shade500,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              "ID: ${patient.registerId}",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (patient != null && patient.plan.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.assignment_outlined,
+                            size: 14,
+                            color: Colors.grey.shade500,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              patient.plan,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                     if (visit.notes != null && visit.notes!.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Row(
@@ -794,48 +843,11 @@ class _VisitDetailsSheet extends StatefulWidget {
 }
 
 class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
-  Patient? _patient;
-  bool _isLoadingPatient = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPatientData();
-  }
-
-  Future<void> _loadPatientData() async {
-    try {
-      // Search for patient by name
-      final patients = await PatientService.searchPatients(
-        widget.visit.patientName,
-        isDead: null, // Search both alive and deceased
-      );
-      
-      // Find exact match
-      final patient = patients.firstWhere(
-        (p) => p.name == widget.visit.patientName,
-        orElse: () => patients.isNotEmpty ? patients.first : throw Exception('Patient not found'),
-      );
-      
-      if (mounted) {
-        setState(() {
-          _patient = patient;
-          _isLoadingPatient = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoadingPatient = false;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final date = DateTime.tryParse(widget.visit.visitDate);
     final primaryColor = Theme.of(context).colorScheme.primary;
+    final patient = widget.visit.patientDetails;
 
     return Container(
       decoration: const BoxDecoration(
@@ -871,10 +883,10 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (_patient?.registerId != null) ...[
+                      if (patient?.registerId != null) ...[
                         const SizedBox(height: 3),
                         Text(
-                          "ID: ${_patient!.registerId}",
+                          "ID: ${patient!.registerId}",
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -898,14 +910,7 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
             const SizedBox(height: 20),
             
             // Patient Information Section
-            if (_isLoadingPatient)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (_patient != null) ...[
+            if (patient != null) ...[
               const Text(
                 "Patient Information",
                 style: TextStyle(
@@ -922,20 +927,20 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
                 children: [
                   SizedBox(
                     width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
-                    child: _buildDetailRow(Icons.phone, "Phone", _patient!.phone),
+                    child: _buildDetailRow(Icons.phone, "Phone", patient.phone),
                   ),
-                  if (_patient!.phone2 != null && _patient!.phone2!.isNotEmpty)
+                  if (patient.phone2 != null && patient.phone2!.isNotEmpty)
                     SizedBox(
                       width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
-                      child: _buildDetailRow(Icons.phone_android, "Phone 2", _patient!.phone2!),
+                      child: _buildDetailRow(Icons.phone_android, "Phone 2", patient.phone2!),
                     ),
                   SizedBox(
                     width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
-                    child: _buildDetailRow(Icons.cake, "Age", "${_patient!.age} years"),
+                    child: _buildDetailRow(Icons.cake, "Age", "${patient.age} years"),
                   ),
                   SizedBox(
                     width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
-                    child: _buildDetailRow(Icons.wc, "Gender", _patient!.gender),
+                    child: _buildDetailRow(Icons.wc, "Gender", patient.gender),
                   ),
                 ],
               ),
@@ -943,7 +948,7 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
               _buildDetailRow(
                 Icons.medical_services,
                 "Diseases",
-                _patient!.disease.join(', '),
+                (patient.disease.toList()..sort()).join(', '),
               ),
               const SizedBox(height: 20),
               const Text(
@@ -971,6 +976,19 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
             ),
             const SizedBox(height: 12),
             _buildDetailRow(Icons.location_on, "Address", widget.visit.address),
+            const SizedBox(height: 12),
+            if (patient != null && patient.plan.isNotEmpty)
+              _buildDetailRow(
+                Icons.assignment,
+                "Care Plan",
+                patient.plan,
+              )
+            else
+              _buildDetailRow(
+                Icons.assignment,
+                "Care Plan",
+                "No plan assigned",
+              ),
             const SizedBox(height: 12),
             _buildDetailRow(
               Icons.group,

@@ -1,3 +1,6 @@
 {
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "window.confirmSaveUntitledWorkspace": false,
+    "explorer.expandSingleFolderWorkspaces": false,
+    "cSpell.trustedWorkspace": false
 }

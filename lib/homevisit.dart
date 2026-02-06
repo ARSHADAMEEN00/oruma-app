@@ -148,6 +148,7 @@ class _HomevisitState extends State<Homevisit> {
     try {
       final homeVisit = HomeVisit(
         id: widget.visit?.id,
+        patientId: _selectedPatient!.id,
         patientName: _selectedPatient!.name,
         address: addressController.text.trim(),
         visitDate: visitDate!.toIso8601String(),
