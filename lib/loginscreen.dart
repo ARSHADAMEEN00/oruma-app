@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/homscreen.dart';
+import 'package:oruma_app/widgets/loading_screen.dart';
 
 class Loginscreen extends StatefulWidget {
   const Loginscreen({super.key});
@@ -36,10 +37,22 @@ class _LoginscreenState extends State<Loginscreen> {
     }
 
     if (success && mounted) {
-      // Navigate to home screen after successful login
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const Homescreen()),
-      );
+      // Show loading screen only on first login
+      final authService = Provider.of<AuthService>(context, listen: false);
+      if (authService.isFirstLogin) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const LoadingScreen(
+              nextScreen: Homescreen(),
+            ),
+          ),
+        );
+      } else {
+        // Subsequent logins go directly to home
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const Homescreen()),
+        );
+      }
     } else if (!success && mounted) {
       setState(() {
         _errorMessage = 'Invalid email or password';

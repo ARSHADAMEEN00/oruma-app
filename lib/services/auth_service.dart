@@ -14,6 +14,9 @@ class AuthService with ChangeNotifier {
   String? _role;
   String? get role => _role;
 
+  bool _isFirstLogin = false;
+  bool get isFirstLogin => _isFirstLogin;
+
   bool get isAuthenticated => _token != null;
   bool get isAdmin => _role == 'admin';
 
@@ -38,6 +41,11 @@ class AuthService with ChangeNotifier {
         _role = data['role']; // Get role from response
 
         final prefs = await SharedPreferences.getInstance();
+        
+        // Check if this is the first login for this user
+        final wasLoggedInBefore = prefs.containsKey('auth_token');
+        _isFirstLogin = !wasLoggedInBefore;
+
         await prefs.setString('auth_token', _token!);
         if (_role != null) {
           await prefs.setString('auth_role', _role!);
