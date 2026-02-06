@@ -24,6 +24,9 @@ class AuthService with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString('auth_token');
     _role = prefs.getString('auth_role');
+    if (_token != null) {
+      fetchUserProfile();
+    }
     notifyListeners();
   }
 
@@ -51,6 +54,9 @@ class AuthService with ChangeNotifier {
           await prefs.setString('auth_role', _role!);
         }
 
+        // Fetch user profile after successful login
+        await fetchUserProfile();
+
         notifyListeners();
         return true;
       }
@@ -58,6 +64,30 @@ class AuthService with ChangeNotifier {
     } catch (e) {
       print('Login error: $e');
       return false;
+    }
+  }
+
+  Map<String, dynamic>? _user;
+  Map<String, dynamic>? get user => _user;
+
+  Future<void> fetchUserProfile() async {
+    if (_token == null) return;
+
+    try {
+      final response = await http.get(
+        Uri.parse(ApiConfig.meEndpoint),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        _user = data;
+        notifyListeners();
+      } else {
+        print('Failed to fetch profile: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching profile: $e');
     }
   }
 

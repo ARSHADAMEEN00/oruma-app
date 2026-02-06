@@ -396,42 +396,48 @@ class _HomescreenState extends State<Homescreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 50,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
+      builder: (context) {
+        final user = context.watch<AuthService>().user;
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 50,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            const CircleAvatar(
-              radius: 40,
-              backgroundColor: Color(0xFF1A237E),
-              child: Icon(Icons.person, size: 40, color: Colors.white),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              "Team Oruma",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1A237E),
+              const SizedBox(height: 24),
+              const CircleAvatar(
+                radius: 40,
+                backgroundColor: Color(0xFF1A237E),
+                child: Icon(Icons.person, size: 40, color: Colors.white),
               ),
-            ),
-            const Text(
-              "admin@oruma.care",
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
+              const SizedBox(height: 16),
+              Text(
+                "Team Oruma",
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A237E),
+                ),
+              ),
+              Text(
+                user?['name'] ?? "",
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              Text(
+                user?['email'] ?? "",
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+              ),
             const SizedBox(height: 32),
             _buildProfileMenuItem(
               icon: Icons.settings_outlined,
@@ -463,7 +469,8 @@ class _HomescreenState extends State<Homescreen> {
             const SizedBox(height: 16),
           ],
         ),
-      ),
+      );
+    },
     );
   }
 
@@ -799,9 +806,9 @@ class _HomescreenState extends State<Homescreen> {
                   style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  "Team Oruma",
-                  style: TextStyle(
+                Text(
+                  context.watch<AuthService>().user?['name'] ?? "Team Oruma",
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,

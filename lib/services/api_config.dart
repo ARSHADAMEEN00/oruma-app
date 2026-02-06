@@ -34,6 +34,7 @@ class ApiConfig {
   static String get equipmentEndpoint => '$baseUrl/equipment';
   static String get equipmentSuppliesEndpoint => '$baseUrl/equipment-supplies';
   static String get medicineSuppliesEndpoint => '$baseUrl/medicine-supplies';
+  static String get meEndpoint => '$baseUrl/auth/me';
 
   /// Default headers for API requests
   static Map<String, String> get headers => {
