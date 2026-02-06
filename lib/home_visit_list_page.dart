@@ -61,6 +61,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
+    // Compare using local timezone (don't convert to UTC as it shifts dates)
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
@@ -97,32 +98,43 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
   }
 
   void _rebuildPageView(int initialPage) {
-    _pageController.dispose();
+    if (!mounted) return;
+    try {
+      if (!_pageController.hasClients) {
+        _pageController.dispose();
+      }
+    } catch (e) {
+      // PageController already disposed, ignore
+    }
     _pageController = PageController(initialPage: initialPage);
     _pageViewKey = UniqueKey();
   }
 
   void _goToPreviousWeek() {
+    final currentIndex = _getSelectedDateIndex();
     setState(() {
       _startOfWeek = _startOfWeek.subtract(const Duration(days: 7));
       _weekDates = List.generate(
         14,
         (i) => _startOfWeek.add(Duration(days: i)),
       );
-      _selectedDate = _weekDates[3]; // Select the 4th day
-      _rebuildPageView(3);
+      // Try to maintain same position in week, fallback to day 3
+      _selectedDate = _weekDates[currentIndex.clamp(0, _weekDates.length - 1)];
+      _rebuildPageView(currentIndex.clamp(0, _weekDates.length - 1));
     });
   }
 
   void _goToNextWeek() {
+    final currentIndex = _getSelectedDateIndex();
     setState(() {
       _startOfWeek = _startOfWeek.add(const Duration(days: 7));
       _weekDates = List.generate(
         14,
         (i) => _startOfWeek.add(Duration(days: i)),
       );
-      _selectedDate = _weekDates[3];
-      _rebuildPageView(3);
+      // Try to maintain same position in week, fallback to day 3
+      _selectedDate = _weekDates[currentIndex.clamp(0, _weekDates.length - 1)];
+      _rebuildPageView(currentIndex.clamp(0, _weekDates.length - 1));
     });
   }
 
@@ -537,6 +549,8 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                   children: [
                     Text(
                       visit.patientName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -601,7 +615,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                           Expanded(
                             child: Text(
                               patient.plan,
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 color: Colors.grey.shade600,
@@ -666,8 +680,8 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: Colors.grey.shade600),
-        const SizedBox(width: 12),
+        Icon(icon, size: 18, color: Colors.grey.shade600),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -675,7 +689,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: Colors.grey.shade500,
                   fontWeight: FontWeight.w600,
                 ),
@@ -684,7 +698,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
               Text(
                 value,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.w500,
                   color: Colors.black87,
                 ),
@@ -737,7 +751,9 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
     if (confirm == true) {
       try {
         await HomeVisitService.deleteHomeVisit(visit.id!);
-        _refreshVisits();
+        // Verify deletion by refreshing
+        await _refreshVisitsSync();
+        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -753,6 +769,14 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
           );
         }
       }
+    }
+  }
+
+  /// Synchronously refresh visits and wait for completion
+  Future<void> _refreshVisitsSync() async {
+    _allVisits = await HomeVisitService.getAllHomeVisits();
+    if (mounted) {
+      setState(() {});
     }
   }
 
@@ -793,6 +817,9 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
   }
 
   Widget _buildErrorState(String error) {
+    // Log the error for debugging
+    print('HomeVisitListPage Error: $error');
+    
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -856,11 +883,15 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -884,7 +915,7 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (patient?.registerId != null) ...[
+                      if (patient != null && patient.registerId != null && patient.registerId!.isNotEmpty) ...[
                         const SizedBox(height: 3),
                         Text(
                           "ID: ${patient!.registerId}",
@@ -926,10 +957,11 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
                 spacing: 8,
                 runSpacing: 12,
                 children: [
-                  SizedBox(
-                    width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
-                    child: _buildDetailRow(Icons.phone, "Phone", patient.phone),
-                  ),
+                  if (patient.phone.isNotEmpty)
+                    SizedBox(
+                      width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
+                      child: _buildDetailRow(Icons.phone, "Phone", patient.phone),
+                    ),
                   if (patient.phone2 != null && patient.phone2!.isNotEmpty)
                     SizedBox(
                       width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
@@ -946,11 +978,18 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
                 ],
               ),
               const SizedBox(height: 12),
-              _buildDetailRow(
-                Icons.medical_services,
-                "Diseases",
-                (patient.disease.toList()..sort()).join(', '),
-              ),
+              if (patient.disease.isNotEmpty)
+                _buildDetailRow(
+                  Icons.medical_services,
+                  "Diseases",
+                  (patient.disease.toList()..sort()).join(', '),
+                )
+              else
+                _buildDetailRow(
+                  Icons.medical_services,
+                  "Diseases",
+                  "No diseases recorded",
+                ),
               const SizedBox(height: 20),
               const Text(
                 "Visit Information",
@@ -967,7 +1006,7 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
             _buildDetailRow(
               Icons.calendar_today,
               "Visit Date",
-              date != null ? DateFormat('EEEE, d MMMM yyyy').format(date) : "N/A",
+              date != null ? DateFormat('EEEE, d MMMM yyyy').format(date) : "Invalid date",
             ),
             const SizedBox(height: 12),
             _buildDetailRow(
@@ -976,7 +1015,11 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
               _getVisitModeLabel(widget.visit.visitMode),
             ),
             const SizedBox(height: 12),
-            _buildDetailRow(Icons.location_on, "Address", widget.visit.address),
+            _buildDetailRow(
+              Icons.location_on,
+              "Address",
+              widget.visit.address.isNotEmpty ? widget.visit.address : "No address provided",
+            ),
             const SizedBox(height: 12),
             if (patient != null)
               _buildEditableDetailRow(
@@ -1000,11 +1043,18 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
                   : "No team assigned",
             ),
             const SizedBox(height: 12),
-            _buildDetailRow(
-              Icons.notes,
-              "Notes",
-              widget.visit.notes ?? "No notes provided",
-            ),
+            if (widget.visit.notes != null && widget.visit.notes!.isNotEmpty)
+              _buildDetailRow(
+                Icons.notes,
+                "Notes",
+                widget.visit.notes!,
+              )
+            else
+              _buildDetailRow(
+                Icons.notes,
+                "Notes",
+                "No notes provided",
+              ),
             if (widget.visit.createdBy != null)
               Padding(
                 padding: const EdgeInsets.only(top: 16),
@@ -1067,6 +1117,7 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
               ],
             ),
           ],
+        ),
         ),
       ),
     );
@@ -1200,32 +1251,27 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
         updatedPatient,
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Patient information updated successfully"),
-            backgroundColor: Colors.green,
-          ),
-        );
-        // Refresh visits data to get updated patient information
-        widget.onRefresh();
-        
-        // Close the bottom sheet to show fresh data
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            Navigator.pop(context);
-          }
-        });
-      }
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Patient information updated successfully"),
+          backgroundColor: Colors.green,
+        ),
+      );
+      // Refresh visits data to get updated patient information
+      widget.onRefresh();
+      
+      // Close the bottom sheet immediately after refresh
+      Navigator.pop(context);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error updating patient: $e"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error updating patient: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 }
@@ -1267,12 +1313,15 @@ class _EditPatientDialogState extends State<_EditPatientDialog> {
   Future<void> _loadConfig() async {
     try {
       final config = await ConfigService.getConfig();
+      if (!mounted) return;
       setState(() {
         _availableDiseases = config.diseases;
         _availablePlans = config.plans;
         _isLoadingConfig = false;
+        _configError = null; // Clear any previous errors
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _configError = e.toString();
         _isLoadingConfig = false;
@@ -1619,6 +1668,27 @@ class _EditPatientDialogState extends State<_EditPatientDialog> {
   }
 
   Future<void> _saveChanges() async {
+    // Validate selections
+    if (_selectedDiseases.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select at least one disease"),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedPlan == null || _selectedPlan!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select a care plan"),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     try {

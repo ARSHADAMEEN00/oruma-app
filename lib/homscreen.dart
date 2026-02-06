@@ -76,7 +76,7 @@ class _HomescreenState extends State<Homescreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    "Active Supplies",
+                    "Notifications",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -121,7 +121,7 @@ class _HomescreenState extends State<Homescreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              "No active supplies",
+                              "No notifications",
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.grey[600],
