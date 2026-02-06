@@ -353,6 +353,45 @@ class _patientrigisterState extends State<patientrigister> {
                       return null;
                     },
                   ),
+                   const SizedBox(height: 20),
+                  const Text(
+                    "Gender",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: ["Male", "Female", "Other"].map((g) {
+                      final isSelected = _gender == g;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: ChoiceChip(
+                          label: Text(g),
+                          selected: isSelected,
+                          selectedColor: const Color(0xFF1A237E),
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black,
+                          ),
+                          onSelected: (selected) {
+                            setState(() {
+                              _gender = selected ? g : null;
+                            });
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  if (_gender == null)
+                      const Padding(
+                      padding: EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        "Please select a gender",
+                        style: TextStyle(color: Colors.red, fontSize: 12),
+                      ),
+                    ),
                   const SizedBox(height: 16),
                   const Text(
                     "Diseases",
@@ -400,45 +439,6 @@ class _patientrigisterState extends State<patientrigister> {
                         style: TextStyle(color: Colors.red, fontSize: 12),
                       ),
                     ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    "Gender",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: ["Male", "Female", "Other"].map((g) {
-                      final isSelected = _gender == g;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: ChoiceChip(
-                          label: Text(g),
-                          selected: isSelected,
-                          selectedColor: const Color(0xFF1A237E),
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : Colors.black,
-                          ),
-                          onSelected: (selected) {
-                            setState(() {
-                              _gender = selected ? g : null;
-                            });
-                          },
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  if (_gender == null)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        "Please select a gender",
-                        style: TextStyle(color: Colors.red, fontSize: 12),
-                      ),
-                    ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -446,6 +446,17 @@ class _patientrigisterState extends State<patientrigister> {
                 title: "Contact Details",
                 icon: Icons.contact_phone_outlined,
                 children: [
+                   TextFormField(
+                    controller: addressController,
+                    maxLines: 2,
+                    decoration: _buildInputDecoration(
+                      "Full Address",
+                      Icons.home_outlined,
+                    ),
+                    validator: (val) =>
+                        val == null || val.isEmpty ? "Required" : null,
+                  ),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: phoneController,
                     keyboardType: TextInputType.phone,
@@ -475,17 +486,7 @@ class _patientrigisterState extends State<patientrigister> {
                     validator: (val) =>
                         val == null || val.isEmpty ? "Required" : null,
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: addressController,
-                    maxLines: 2,
-                    decoration: _buildInputDecoration(
-                      "Full Address",
-                      Icons.home_outlined,
-                    ),
-                    validator: (val) =>
-                        val == null || val.isEmpty ? "Required" : null,
-                  ),
+                 
                 ],
               ),
               const SizedBox(height: 20),

@@ -502,8 +502,8 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                       children: [
                         Text(
                           (supply.patientName?.isNotEmpty == true)
-                              ? supply.patientName!
-                              : (supply.receiverName ?? 'Unknown'),
+                              ? supply.patientName!.toUpperCase()
+                              : (supply.receiverName ?? 'Unknown').toUpperCase(),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -684,7 +684,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        supply.equipmentName,
+                        supply.equipmentName.toUpperCase(),
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
@@ -723,7 +723,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
             // Patient / Receiver Details
             if (supply.patientName != null &&
                 supply.patientName!.isNotEmpty) ...[
-              _buildDetailRow(Icons.person, 'Patient', supply.patientName!),
+              _buildDetailRow(Icons.person, 'Patient', supply.patientName!.toUpperCase()),
               _buildDetailRow(
                 Icons.phone,
                 'Phone',
@@ -740,7 +740,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
               _buildDetailRow(
                 Icons.person,
                 'Receiver',
-                supply.receiverName ?? 'Unknown',
+                (supply.receiverName ?? 'Unknown').toUpperCase(),
               ),
               _buildDetailRow(
                 Icons.phone,

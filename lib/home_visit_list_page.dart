@@ -590,7 +590,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              "ID: ${patient.registerId}",
+                              "Register Id : ${patient.registerId}",
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -614,7 +614,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              patient.plan,
+                             "Plan : ${patient.plan}",
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -1009,19 +1009,8 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
               date != null ? DateFormat('EEEE, d MMMM yyyy').format(date) : "Invalid date",
             ),
             const SizedBox(height: 12),
-            _buildDetailRow(
-              Icons.medical_services_outlined,
-              "Visit Mode",
-              _getVisitModeLabel(widget.visit.visitMode),
-            ),
-            const SizedBox(height: 12),
-            _buildDetailRow(
-              Icons.location_on,
-              "Address",
-              widget.visit.address.isNotEmpty ? widget.visit.address : "No address provided",
-            ),
-            const SizedBox(height: 12),
-            if (patient != null)
+
+                  if (patient != null)
               _buildEditableDetailRow(
                 Icons.assignment,
                 "Care Plan",
@@ -1035,6 +1024,19 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
                 "No plan assigned",
               ),
             const SizedBox(height: 12),
+            _buildDetailRow(
+              Icons.medical_services_outlined,
+              "Visit Mode",
+              _getVisitModeLabel(widget.visit.visitMode),
+            ),
+            const SizedBox(height: 12),
+            _buildDetailRow(
+              Icons.location_on,
+              "Address",
+              widget.visit.address.isNotEmpty ? widget.visit.address : "No address provided",
+            ),
+            const SizedBox(height: 12),
+      
             _buildDetailRow(
               Icons.group,
               "Team",

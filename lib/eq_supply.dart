@@ -270,7 +270,7 @@ class _EqSupplyState extends State<EqSupply> {
                                       }
                                     },
                                 displayStringForOption: (Equipment equipment) =>
-                                    '${equipment.uniqueId} - ${equipment.name}',
+                                    '${equipment.uniqueId} - ${equipment.name.toUpperCase()}',
                                 onSelected: (Equipment equipment) {
                                   setState(() {
                                     _selectedEquipment = equipment;
@@ -402,7 +402,7 @@ class _EqSupplyState extends State<EqSupply> {
                                                                 Expanded(
                                                                   child: Text(
                                                                     equipment
-                                                                        .name,
+                                                                        .name.toUpperCase(),
                                                                     style: const TextStyle(
                                                                       fontSize:
                                                                           14,
@@ -448,7 +448,7 @@ class _EqSupplyState extends State<EqSupply> {
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                          '${_selectedEquipment!.name} (${_selectedEquipment!.place})',
+                                          '${_selectedEquipment!.name.toUpperCase()} (${_selectedEquipment!.place})',
                                           style: TextStyle(
                                             color: Colors.orange.shade900,
                                             fontWeight: FontWeight.w500,
@@ -498,7 +498,7 @@ class _EqSupplyState extends State<EqSupply> {
                                             }
                                           },
                                       displayStringForOption:
-                                          (Patient patient) => patient.name,
+                                          (Patient patient) => patient.name.toUpperCase(),
                                       onSelected: (Patient patient) {
                                         setState(() {
                                           _selectedPatient = patient;
@@ -611,7 +611,7 @@ class _EqSupplyState extends State<EqSupply> {
                                                                             children: [
                                                                               Expanded(
                                                                                 child: Text(
-                                                                                  patient.name,
+                                                                                  patient.name.toUpperCase(),
                                                                                   style: const TextStyle(
                                                                                     fontSize: 15,
                                                                                     fontWeight: FontWeight.w500,
@@ -698,7 +698,7 @@ class _EqSupplyState extends State<EqSupply> {
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                          '${_selectedPatient!.name}, ${_selectedPatient!.address}',
+                                          '${_selectedPatient!.name.toUpperCase()}, ${_selectedPatient!.address}',
                                           style: TextStyle(
                                             color: Colors.blue.shade900,
                                             fontWeight: FontWeight.w500,
