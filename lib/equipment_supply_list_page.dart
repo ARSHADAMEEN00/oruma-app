@@ -559,6 +559,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                     icon: Icons.calendar_today,
                     label: _formatDate(supply.supplyDate),
                   ),
+                  if (supply.careOf != null && supply.careOf!.isNotEmpty) ...[const SizedBox(width: 16), _buildDetailItem(icon: Icons.person_outline, label: supply.careOf!)],
                 ],
               ),
               // Actions for active supplies
@@ -657,15 +658,17 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
   void _showSupplyDetails(EquipmentSupply supply) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Header
             Row(
               children: [
@@ -736,6 +739,12 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                   'Address',
                   supply.patientAddress!,
                 ),
+              if (supply.careOf != null && supply.careOf!.isNotEmpty)
+                _buildDetailRow(
+                  Icons.supervised_user_circle,
+                  'Care Of',
+                  supply.careOf!,
+                ),
             ] else ...[
               _buildDetailRow(
                 Icons.person,
@@ -754,7 +763,23 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                   'Address',
                   supply.receiverAddress!,
                 ),
+              if (supply.receiverPlace != null &&
+                  supply.receiverPlace!.isNotEmpty)
+                _buildDetailRow(
+                  Icons.location_city,
+                  'Place',
+                  supply.receiverPlace!,
+                ),
+              if (supply.careOf != null && supply.careOf!.isNotEmpty)
+                _buildDetailRow(
+                  Icons.supervised_user_circle,
+                  'Care Of',
+                  supply.careOf!,
+                ),
             ],
+            const SizedBox(height: 16),
+            Divider(color: Colors.grey.shade200),
+            const SizedBox(height: 16),
             _buildDetailRow(
               Icons.calendar_today,
               'Supply Date',
@@ -766,46 +791,48 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                 'Expected Return',
                 _formatDate(supply.returnDate!),
               ),
-            if (supply.actualReturnDate != null)
-              _buildDetailRow(
+            if (supply.actualReturnDate != null) ...[const SizedBox(height: 8), _buildDetailRow(
                 Icons.check_circle_outlined,
                 'Returned On',
                 _formatDate(supply.actualReturnDate!),
-              ),
-            if (supply.notes != null && supply.notes!.isNotEmpty)
-              _buildDetailRow(Icons.note, 'Notes', supply.notes!),
-            if (supply.returnNote != null && supply.returnNote!.isNotEmpty)
-              _buildDetailRow(
+              ),],
+            if (supply.notes != null && supply.notes!.isNotEmpty) ...[const SizedBox(height: 16), Divider(color: Colors.grey.shade200), const SizedBox(height: 16), _buildDetailRow(Icons.note, 'Notes', supply.notes!),],
+            if (supply.returnNote != null && supply.returnNote!.isNotEmpty) ...[const SizedBox(height: 8), _buildDetailRow(
                 Icons.assignment_return_outlined,
                 'Return Notes',
                 supply.returnNote!,
-              ),
-            if (supply.createdBy != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
+              ),],
+            if (supply.createdBy != null) ...[const SizedBox(height: 24), Divider(color: Colors.grey.shade200), const SizedBox(height: 16), Padding(
+                padding: const EdgeInsets.only(top: 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Created by: ${supply.createdBy}',
                       style: TextStyle(
-                        color: Colors.grey.shade400,
-                        fontSize: 11,
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     if (supply.createdAt != null)
-                      Text(
-                        'Created on: ${_formatDate(supply.createdAt!)}',
-                        style: TextStyle(
-                          color: Colors.grey.shade400,
-                          fontSize: 11,
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Created on: ${_formatDate(supply.createdAt!)}',
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                   ],
                 ),
-              ),
+              ),],
             const SizedBox(height: 16),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -813,25 +840,32 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: Colors.grey[500]),
+          Icon(icon, size: 18, color: Colors.indigo.shade400),
           const SizedBox(width: 12),
           SizedBox(
-            width: 100,
+            width: 90,
             child: Text(
               label,
               style: TextStyle(
-                color: Colors.grey[500],
-                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
               ),
             ),
           ),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+                color: Colors.grey.shade900,
+              ),
             ),
           ),
         ],
