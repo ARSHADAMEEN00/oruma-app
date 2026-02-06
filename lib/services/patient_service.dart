@@ -8,17 +8,48 @@ class PatientService {
 
   /// Get all patients from the API.
   static Future<List<Patient>> getAllPatients({bool? isDead}) async {
-    String query = '${ApiConfig.patientsEndpoint}?populate=createdBy';
-    if (isDead != null) {
-      query += '&isDead=$isDead';
+    // Adapter for legacy calls
+    String filter = 'all';
+    if (isDead == true) {
+      filter = 'dead';
+    } else if (isDead == false) {
+      filter = 'alive';
     }
 
-    final result = await ApiService.get<List<dynamic>>(query);
+    final response = await getPatientsList(filter: filter);
+    return response.patients;
+  }
+
+
+  /// Get patients with filter and counts.
+  static Future<PatientListResponse> getPatientsList({String filter = 'all'}) async {
+    final query =
+        '${ApiConfig.patientsEndpoint}?filter=$filter&populate=createdBy';
+    final result = await ApiService.get<dynamic>(query);
 
     if (result.isSuccess && result.data != null) {
-      return result.data!
-          .map((json) => Patient.fromJson(json as Map<String, dynamic>))
-          .toList();
+      if (result.data is Map<String, dynamic>) {
+        return PatientListResponse.fromJson(result.data as Map<String, dynamic>);
+      } else if (result.data is List) {
+        // Fallback for legacy API response (returns List instead of Map)
+        final list = (result.data as List)
+            .map((json) => Patient.fromJson(json as Map<String, dynamic>))
+            .toList();
+
+        // Calculate counts based on the received list
+        final allCount = list.length;
+        final deadCount = list.where((p) => p.isDead).length;
+        final aliveCount = list.where((p) => !p.isDead).length;
+
+        return PatientListResponse(
+          patients: list,
+          counts: PatientCounts(
+            allCount: allCount,
+            deadCount: deadCount,
+            aliveCount: aliveCount,
+          ),
+        );
+      }
     }
 
     throw Exception(result.error ?? 'Failed to fetch patients');

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/widgets/deceased_icon.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PatientDetailsPage extends StatefulWidget {
   final Patient patient;
@@ -24,6 +25,23 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
   void initState() {
     super.initState();
     _currentPatient = widget.patient;
+    _fetchPatientDetails();
+  }
+
+  Future<void> _fetchPatientDetails() async {
+    if (_currentPatient.id == null) return;
+    try {
+      final freshPatient = await PatientService.getPatientById(_currentPatient.id!);
+      debugPrint("Fetched Patient: ${freshPatient.name}");
+      debugPrint("Location Link from API: ${freshPatient.locationLink}");
+      if (mounted) {
+        setState(() {
+          _currentPatient = freshPatient;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching patient details: $e");
+    }
   }
 
   Future<void> _deletePatient() async {
@@ -145,8 +163,25 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
     }
   }
 
+  Future<void> _launchMap(String url) async {
+    if (url.isEmpty) return;
+    final uri = Uri.parse(url);
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        throw 'Could not launch $url';
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Could not open map: ${e.toString()}")),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    debugPrint("Building PatientDetailsPage. Location Link: ${_currentPatient}");
     return Scaffold(
       appBar: AppBar(
         title: const Text("Patient Details"),
@@ -215,17 +250,19 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
                       _currentPatient.name,
                     ),
                     _buildInfoTile(Icons.phone, "Phone", _currentPatient.phone),
-                    if (_currentPatient.phone2 != null && _currentPatient.phone2!.isNotEmpty)
-                      _buildInfoTile(
-                        Icons.phone_android,
-                        "Phone 2",
-                        _currentPatient.phone2!,
-                      ),
+              
                     _buildInfoTile(
                       Icons.info_outline,
-                      "Relation",
+                      "Caregiver/Relation",
                       _currentPatient.relation,
                     ),
+                    if (_currentPatient.phone2 != null &&
+                        _currentPatient.phone2!.isNotEmpty)
+                      _buildInfoTile(
+                        Icons.phone_android,
+                        "Caregiver Phone",
+                        _currentPatient.phone2!,
+                      ),
                     _buildInfoTile(Icons.wc, "Gender", _currentPatient.gender),
                     _buildInfoTile(
                       Icons.cake,
@@ -246,6 +283,9 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
                       "Village",
                       _currentPatient.village,
                     ),
+                    if (_currentPatient.locationLink != null &&
+                        _currentPatient.locationLink!.trim().isNotEmpty)
+                      _buildGoogleMapTile(_currentPatient.locationLink!),
                   ]),
                   const SizedBox(height: 24),
                   _buildInfoSection("Medical Details", [
@@ -412,6 +452,44 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
           fontSize: 16,
           fontWeight: FontWeight.w500,
           color: Colors.black87,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoogleMapTile(String url) {
+    return InkWell(
+      onTap: () => _launchMap(url),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: Colors.grey.shade200),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.map, color: Colors.green),
+            ),
+            const SizedBox(width: 16),
+            const Expanded(
+              child: Text(
+                "View Location on Map",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const Icon(Icons.open_in_new, size: 16, color: Colors.grey),
+          ],
         ),
       ),
     );

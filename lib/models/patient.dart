@@ -12,6 +12,7 @@ class Patient {
   final String village;
   final List<String> disease;
   final String plan;
+  final String? locationLink;
   final String? registerId;
   final DateTime? registrationDate; // User-controlled registration date
   final bool isDead;
@@ -33,6 +34,7 @@ class Patient {
     required this.village,
     this.disease = const [],
     required this.plan,
+    this.locationLink,
     this.registerId,
     this.registrationDate,
     this.isDead = false,
@@ -63,6 +65,7 @@ class Patient {
           ? [json['disease'].toString()]
           : [],
       plan: json['plan']?.toString() ?? '',
+      locationLink: json['locationLink']?.toString(),
       registerId: json['registerId']?.toString(),
       registrationDate: json['registrationDate'] != null
           ? DateTime.tryParse(json['registrationDate'].toString())
@@ -97,6 +100,7 @@ class Patient {
       'village': village,
       'disease': disease,
       'plan': plan,
+      'locationLink': locationLink,
       'registerId': registerId,
       'registrationDate': registrationDate?.toIso8601String(),
       'isDead': isDead,
@@ -118,6 +122,7 @@ class Patient {
     String? village,
     List<String>? disease,
     String? plan,
+    String? locationLink,
     String? registerId,
     DateTime? registrationDate,
     bool? isDead,
@@ -136,6 +141,7 @@ class Patient {
       village: village ?? this.village,
       disease: disease ?? this.disease,
       plan: plan ?? this.plan,
+      locationLink: locationLink ?? this.locationLink,
       registerId: registerId ?? this.registerId,
       registrationDate: registrationDate ?? this.registrationDate,
       isDead: isDead ?? this.isDead,
@@ -148,5 +154,46 @@ class Patient {
   @override
   String toString() {
     return 'Patient(id: $id, name: $name, village: $village, disease: $disease)';
+  }
+}
+
+class PatientCounts {
+  final int allCount;
+  final int deadCount;
+  final int aliveCount;
+
+  PatientCounts({
+    required this.allCount,
+    required this.deadCount,
+    required this.aliveCount,
+  });
+
+  factory PatientCounts.fromJson(Map<String, dynamic> json) {
+    return PatientCounts(
+      allCount: json['allCount'] as int? ?? 0,
+      deadCount: json['deadCount'] as int? ?? 0,
+      aliveCount: json['aliveCount'] as int? ?? 0,
+    );
+  }
+}
+
+class PatientListResponse {
+  final List<Patient> patients;
+  final PatientCounts counts;
+
+  PatientListResponse({
+    required this.patients,
+    required this.counts,
+  });
+
+  factory PatientListResponse.fromJson(Map<String, dynamic> json) {
+    return PatientListResponse(
+      patients: (json['patients'] as List<dynamic>?)
+              ?.map((e) => Patient.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      counts: PatientCounts.fromJson(
+          json['counts'] as Map<String, dynamic>? ?? {}),
+    );
   }
 }

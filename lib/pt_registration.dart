@@ -35,6 +35,7 @@ class _patientrigisterState extends State<patientrigister> {
   final TextEditingController placeController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController phone2Controller = TextEditingController();
+  final TextEditingController locationLinkController = TextEditingController();
 
   // Dropdown options (loaded from API)
   List<String> villages = [];
@@ -59,6 +60,7 @@ class _patientrigisterState extends State<patientrigister> {
       placeController.text = widget.patient!.place;
       phoneController.text = widget.patient!.phone;
       phone2Controller.text = widget.patient!.phone2 ?? '';
+      locationLinkController.text = widget.patient!.locationLink ?? '';
       _gender = widget.patient!.gender;
       _selectedVillage = widget.patient!.village;
       _selectedDiseases = widget.patient!.disease;
@@ -105,6 +107,7 @@ class _patientrigisterState extends State<patientrigister> {
     placeController.dispose();
     phoneController.dispose();
     phone2Controller.dispose();
+    locationLinkController.dispose();
     super.dispose();
   }
 
@@ -467,15 +470,7 @@ class _patientrigisterState extends State<patientrigister> {
                     validator: (val) =>
                         val == null || val.isEmpty ? "Required" : null,
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: phone2Controller,
-                    keyboardType: TextInputType.phone,
-                    decoration: _buildInputDecoration(
-                      "Phone Number 2",
-                      Icons.phone_android,
-                    ),
-                  ),
+               
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: relationController,
@@ -485,6 +480,15 @@ class _patientrigisterState extends State<patientrigister> {
                     ),
                     validator: (val) =>
                         val == null || val.isEmpty ? "Required" : null,
+                  ),
+                     const SizedBox(height: 16),
+                  TextFormField(
+                    controller: phone2Controller,
+                    keyboardType: TextInputType.phone,
+                    decoration: _buildInputDecoration(
+                      "Caregiver Phone Number",
+                      Icons.phone_android,
+                    ),
                   ),
                  
                 ],
@@ -512,6 +516,11 @@ class _patientrigisterState extends State<patientrigister> {
                     decoration: _buildInputDecoration("Place", Icons.place),
                     validator: (val) =>
                         val == null || val.isEmpty ? "Required" : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: locationLinkController,
+                    decoration: _buildInputDecoration("Location Link (Google Maps)", Icons.map),
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
@@ -653,6 +662,7 @@ class _patientrigisterState extends State<patientrigister> {
           age: int.parse(ageController.text),
           place: placeController.text,
           village: _selectedVillage!,
+          locationLink: locationLinkController.text.trim().isEmpty ? null : locationLinkController.text.trim(),
           disease: _selectedDiseases,
           plan: _selectedPlan!,
           registerId: widget.patient?.registerId,
@@ -660,10 +670,16 @@ class _patientrigisterState extends State<patientrigister> {
         );
 
         if (widget.patient != null) {
-          final updated = await PatientService.updatePatient(
+          var updated = await PatientService.updatePatient(
             widget.patient!.id!,
             patientData,
           );
+
+          // Optimistic update: If API response lacks locationLink but we sent it, preserve it
+          if (updated.locationLink == null && patientData.locationLink != null) {
+            updated = updated.copyWith(locationLink: patientData.locationLink);
+          }
+
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(

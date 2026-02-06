@@ -14,8 +14,10 @@ class PatientListPage extends StatefulWidget {
 class _PatientListPageState extends State<PatientListPage> {
   // Data
   List<Patient> _allPatients = [];
+  PatientCounts? _counts;
   bool _isLoading = true;
   String? _error;
+  String _currentFilter = 'all';
 
   // Search
   final TextEditingController _searchController = TextEditingController();
@@ -46,10 +48,11 @@ class _PatientListPageState extends State<PatientListPage> {
     });
 
     try {
-      final list = await PatientService.getAllPatients();
+      final response = await PatientService.getPatientsList(filter: _currentFilter);
       if (mounted) {
         setState(() {
-          _allPatients = list;
+          _allPatients = response.patients;
+          _counts = response.counts;
           _isLoading = false;
         });
       }
@@ -101,75 +104,97 @@ class _PatientListPageState extends State<PatientListPage> {
             ),
         ],
       ),
-      body: Builder(
-        builder: (context) {
-          if (_isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Column(
+        children: [
+          if (_counts != null) _buildFilterTabs(),
+          Expanded(
+            child: Builder(
+              builder: (context) {
+                if (_isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          if (_error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text("Error: $_error"),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _loadPatients,
-                    child: const Text("Retry"),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          final filteredPatients = _allPatients.where((p) {
-            if (_searchQuery.isEmpty) return true;
-            final q = _searchQuery.toLowerCase();
-            return p.name.toLowerCase().contains(q) ||
-                p.village.toLowerCase().contains(q) ||
-                (p.registerId ?? '').toLowerCase().contains(q) ||
-                p.phone.toLowerCase().contains(q);
-          }).toList();
-
-          if (filteredPatients.isEmpty) {
-            if (_searchQuery.isNotEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.search_off, size: 64, color: Colors.grey[300]),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No matching patients found',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
-                      ),
+                if (_error != null) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline,
+                            size: 48, color: Colors.red),
+                        const SizedBox(height: 16),
+                        Text("Error: $_error"),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadPatients,
+                          child: const Text("Retry"),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              );
-            }
-            return const Center(child: Text("No patients found."));
-          }
+                  );
+                }
 
-          return RefreshIndicator(
-            onRefresh: _loadPatients,
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: filteredPatients.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final patient = filteredPatients[index];
-                return _buildPatientCard(context, patient);
+                // Client-side filtering as fallback/robustness
+                // We check if the API returned a mixed list despite the filter request.
+                final filteredPatients = _allPatients.where((p) {
+                  // Text search filter
+                  if (_searchQuery.isNotEmpty) {
+                    final q = _searchQuery.toLowerCase();
+                    final matchesSearch =
+                        p.name.toLowerCase().contains(q) ||
+                        p.village.toLowerCase().contains(q) ||
+                        (p.registerId ?? '').toLowerCase().contains(q) ||
+                        p.phone.toLowerCase().contains(q);
+                    if (!matchesSearch) return false;
+                  }
+
+                  // Status filter (double check in case API returns mixed results)
+                  if (_currentFilter == 'alive' && p.isDead) return false;
+                  if (_currentFilter == 'dead' && !p.isDead) return false;
+
+                  return true;
+                }).toList();
+
+                if (filteredPatients.isEmpty) {
+                  if (_searchQuery.isNotEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_off,
+                              size: 64, color: Colors.grey[300]),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No matching patients found',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return const Center(child: Text("No patients found."));
+                }
+
+                return RefreshIndicator(
+                  onRefresh: _loadPatients,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: filteredPatients.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final patient = filteredPatients[index];
+                      return _buildPatientCard(context, patient);
+                    },
+                  ),
+                );
               },
             ),
-          );
-        },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
@@ -183,6 +208,106 @@ class _PatientListPageState extends State<PatientListPage> {
         },
         label: const Text("Add Patient"),
         icon: const Icon(Icons.person_add),
+      ),
+    );
+  }
+
+  Widget _buildFilterTabs() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            _buildTab("All", _counts?.allCount ?? 0, 'all'),
+            _buildTab("Alive", _counts?.aliveCount ?? 0, 'alive'),
+            _buildTab("Dead", _counts?.deadCount ?? 0, 'dead'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTab(String label, int count, String filterKey) {
+    final isSelected = _currentFilter == filterKey;
+    
+    // Determine color based on filter type
+    Color activeColor;
+    if (filterKey == 'alive') {
+      activeColor = Colors.green.shade700;
+    } else if (filterKey == 'dead') {
+      activeColor = Colors.red.shade700;
+    } else {
+      activeColor = Colors.blue.shade700;
+    }
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          if (_currentFilter != filterKey) {
+            setState(() {
+              _currentFilter = filterKey;
+            });
+            _loadPatients();
+          }
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  fontSize: 13,
+                  color: isSelected ? activeColor : Colors.grey.shade600,
+                ),
+              ),
+              if (count > 0) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isSelected 
+                        ? activeColor.withOpacity(0.1) 
+                        : Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    count > 99 ? '99+' : count.toString(),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? activeColor : Colors.grey.shade500,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
