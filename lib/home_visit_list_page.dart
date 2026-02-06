@@ -249,7 +249,9 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
         onPressed: () async {
           final result = await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const Homevisit()),
+            MaterialPageRoute(
+              builder: (context) => Homevisit(initialDate: _selectedDate),
+            ),
           );
           if (result == true) _refreshVisits();
         },

@@ -7,8 +7,9 @@ import 'package:intl/intl.dart';
 
 class Homevisit extends StatefulWidget {
   final HomeVisit? visit;
+  final DateTime? initialDate;
 
-  const Homevisit({super.key, this.visit});
+  const Homevisit({super.key, this.visit, this.initialDate});
 
   @override
   State<Homevisit> createState() => _HomevisitState();
@@ -49,6 +50,8 @@ class _HomevisitState extends State<Homevisit> {
     notesController = TextEditingController(text: widget.visit?.notes ?? '');
     if (widget.visit?.visitDate != null) {
       visitDate = DateTime.tryParse(widget.visit!.visitDate);
+    } else if (widget.initialDate != null) {
+      visitDate = widget.initialDate;
     }
     _loadInitialData();
   }
