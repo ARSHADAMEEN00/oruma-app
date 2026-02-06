@@ -33,6 +33,18 @@ class EquipmentSupplyService {
     throw Exception(result.error ?? 'Failed to fetch active supplies');
   }
 
+  /// Get supply by ID
+  static Future<EquipmentSupply> getById(String id) async {
+    final result = await ApiService.get<Map<String, dynamic>>(
+      '${ApiConfig.equipmentSuppliesEndpoint}/$id',
+    );
+
+    if (result.isSuccess && result.data != null) {
+      return EquipmentSupply.fromJson(result.data!);
+    }
+    throw Exception(result.error ?? 'Failed to fetch supply');
+  }
+
   /// Create new supply (Assign equipment to patient)
   static Future<EquipmentSupply> createSupply(EquipmentSupply supply) async {
     final result = await ApiService.post<Map<String, dynamic>>(
@@ -62,18 +74,25 @@ class EquipmentSupplyService {
     throw Exception(result.error ?? 'Failed to update supply');
   }
 
-  /// Mark supply as returned
+  /// Mark supply as returned using specific endpoint
   static Future<EquipmentSupply> returnSupply(
     String id, {
     DateTime? date,
     String? note,
   }) async {
     final updates = {
-      'status': 'returned',
       if (date != null) 'actualReturnDate': date.toIso8601String(),
       if (note != null && note.isNotEmpty) 'returnNote': note,
     };
-    return updateSupply(id, updates);
+    final result = await ApiService.put<Map<String, dynamic>>(
+      '${ApiConfig.equipmentSuppliesEndpoint}/$id/return',
+      body: updates,
+    );
+
+    if (result.isSuccess && result.data != null) {
+      return EquipmentSupply.fromJson(result.data!);
+    }
+    throw Exception(result.error ?? 'Failed to mark supply as returned');
   }
 
   /// Delete supply

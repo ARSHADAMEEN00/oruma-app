@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:oruma_app/eq_supply.dart';
+import 'package:oruma_app/eq_supply_edit.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
 
@@ -98,6 +99,17 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const EqSupply()),
+    ).then((result) {
+      if (result == true) {
+        _loadData();
+      }
+    });
+  }
+
+  void _navigateToEditSupply(EquipmentSupply supply) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => EqSupplyEdit(supply: supply)),
     ).then((result) {
       if (result == true) {
         _loadData();
@@ -568,6 +580,12 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, size: 18),
+                      onPressed: () => _navigateToEditSupply(supply),
+                      tooltip: 'Edit Supply',
+                      constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                    ),
                     TextButton.icon(
                       onPressed: () => _returnSupply(supply),
                       icon: const Icon(Icons.assignment_return, size: 18),
