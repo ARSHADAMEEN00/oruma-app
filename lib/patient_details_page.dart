@@ -472,17 +472,24 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade200),
               ),
-              child: const Icon(Icons.map, color: Colors.green),
+              child: Image.network(
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Google_Maps_icon_%282020%29.svg/512px-Google_Maps_icon_%282020%29.svg.png",
+                height: 24,
+                width: 24,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.location_on, color: Colors.red),
+              ),
             ),
             const SizedBox(width: 16),
             const Expanded(
               child: Text(
                 "View Location on Map",
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: Colors.black87,
                 ),

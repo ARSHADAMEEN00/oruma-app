@@ -9,6 +9,7 @@
       "dependencies": [
         "cupertino_icons",
         "flutter",
+        "flutter_slidable",
         "http",
         "intl",
         "provider",
@@ -57,6 +58,13 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "flutter_slidable",
+      "version": "4.0.3",
+      "dependencies": [
+        "flutter"
       ]
     },
     {

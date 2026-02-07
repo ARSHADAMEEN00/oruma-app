@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:provider/provider.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/patient_service.dart';
+import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/pt_registration.dart';
 import 'package:oruma_app/patient_details_page.dart';
 
@@ -226,7 +229,7 @@ class _PatientListPageState extends State<PatientListPage> {
         child: Row(
           children: [
             _buildTab("All", _counts?.allCount ?? 0, 'all'),
-            _buildTab("Alive", _counts?.aliveCount ?? 0, 'alive'),
+            _buildTab("Active", _counts?.aliveCount ?? 0, 'alive'),
             _buildTab("Dead", _counts?.deadCount ?? 0, 'dead'),
           ],
         ),
@@ -312,8 +315,72 @@ class _PatientListPageState extends State<PatientListPage> {
     );
   }
 
+  Future<void> _navigateToEditPatient(Patient patient) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => patientrigister(patient: patient),
+      ),
+    );
+    if (result != null) {
+      _loadPatients();
+    }
+  }
+
+  Future<void> _deletePatient(Patient patient) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Patient'),
+        content: Text(
+          'Are you sure you want to delete ${patient.name}? This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && patient.id != null) {
+      try {
+        await PatientService.deletePatient(patient.id!);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Patient deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          _loadPatients();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ Error deleting patient: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   Widget _buildPatientCard(BuildContext context, Patient patient) {
-    return Card(
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final isAdmin = authService.isAdmin;
+
+    Widget cardContent = Card(
       elevation: 0,
       color: patient.isDead ? Colors.grey.shade100 : Colors.white,
       shape: RoundedRectangleBorder(
@@ -323,7 +390,10 @@ class _PatientListPageState extends State<PatientListPage> {
       child: Stack(
         children: [
           ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 8,
+            ),
             leading: CircleAvatar(
               backgroundColor: patient.isDead
                   ? Colors.grey.shade300
@@ -331,7 +401,9 @@ class _PatientListPageState extends State<PatientListPage> {
               child: patient.isDead
                   ? const Icon(Icons.person_off, color: Colors.grey)
                   : Text(
-                      patient.name.isNotEmpty ? patient.name[0].toUpperCase() : "?",
+                      patient.name.isNotEmpty
+                          ? patient.name[0].toUpperCase()
+                          : "?",
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.bold,
@@ -353,15 +425,21 @@ class _PatientListPageState extends State<PatientListPage> {
                 const SizedBox(height: 4),
                 if (patient.registerId != null) ...[
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text.rich(
                       TextSpan(
                         children: [
-                          TextSpan(
+                          const TextSpan(
                             text: "REG ID: ",
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
@@ -370,7 +448,7 @@ class _PatientListPageState extends State<PatientListPage> {
                           ),
                           TextSpan(
                             text: patient.registerId,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
@@ -381,7 +459,9 @@ class _PatientListPageState extends State<PatientListPage> {
                   ),
                   const SizedBox(height: 4),
                 ],
-                Text("${patient.age} years • ${patient.gender} • ${patient.plan}"),
+                Text(
+                  "${patient.age} years • ${patient.gender} • ${patient.plan}",
+                ),
                 Text(
                   patient.place,
                   style: TextStyle(color: Colors.grey.shade600),
@@ -424,5 +504,42 @@ class _PatientListPageState extends State<PatientListPage> {
         ],
       ),
     );
+
+    if (isAdmin) {
+      // Wrap in a container to provide margin if needed, but Card already provides some.
+      // However, for slidable to look good with rounded card, we might need ClipRRect.
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Slidable(
+            key: ValueKey(patient.id),
+            endActionPane: ActionPane(
+              motion: const ScrollMotion(),
+              extentRatio: 0.5,
+              children: [
+                SlidableAction(
+                  onPressed: (_) => _navigateToEditPatient(patient),
+                  backgroundColor: const Color(0xFF21B7CA),
+                  foregroundColor: Colors.white,
+                  icon: Icons.edit,
+                  label: 'Edit',
+                ),
+                SlidableAction(
+                  onPressed: (_) => _deletePatient(patient),
+                  backgroundColor: const Color(0xFFFE4A49),
+                  foregroundColor: Colors.white,
+                  icon: Icons.delete,
+                  label: 'Delete',
+                ),
+              ],
+            ),
+            child: cardContent,
+          ),
+        ),
+      );
+    }
+
+    return cardContent;
   }
 }

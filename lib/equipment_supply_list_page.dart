@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:provider/provider.dart';
 import 'package:oruma_app/eq_supply.dart';
 import 'package:oruma_app/eq_supply_edit.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
+import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
 
 class EquipmentSupplyListPage extends StatefulWidget {
@@ -483,124 +486,253 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
     );
   }
 
+  Future<void> _deleteSupply(EquipmentSupply supply) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Supply'),
+        content: Text(
+          'Are you sure you want to delete the supply record for ${supply.equipmentName}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && supply.id != null) {
+      try {
+        await EquipmentSupplyService.deleteSupply(supply.id!);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Supply deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          _loadData();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ Error deleting supply: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   Widget _buildSupplyCard(EquipmentSupply supply, {required bool isActive}) {
     final statusColor = _getStatusColor(supply.status);
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final isAdmin = authService.isAdmin;
 
-    return Card(
-      elevation: 2,
-      shadowColor: Colors.black12,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    Widget cardContent = Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
         onTap: () => _showSupplyDetails(supply),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header Row
-              Row(
-                children: [
-                  // Patient Avatar
-                  CircleAvatar(
-                    backgroundColor: Colors.orange.shade50,
-                    child: Icon(Icons.person, color: Colors.orange.shade400),
-                  ),
-                  const SizedBox(width: 12),
-                  // Patient Name & Equipment
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          (supply.patientName?.isNotEmpty == true)
-                              ? supply.patientName!.toUpperCase()
-                              : (supply.receiverName ?? 'Unknown').toUpperCase(),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+              // Status Strip
+              Container(width: 6, color: statusColor),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header: Equipment ID & Date
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: Text(
+                              supply.equipmentUniqueId,
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${supply.equipmentUniqueId} • ${supply.equipmentName}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 13,
+                          Text(
+                            _formatDate(supply.supplyDate),
+                            style: TextStyle(
+                              color: Colors.grey.shade400,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Patient Name
+                      Text(
+                        (supply.patientName?.isNotEmpty == true)
+                            ? supply.patientName!.toUpperCase()
+                            : (supply.receiverName ?? 'Unknown').toUpperCase(),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: Color(0xFF2D3142),
+                          letterSpacing: 0.3,
                         ),
-                      ],
-                    ),
-                  ),
-                  // Status Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: statusColor.withOpacity(0.5)),
-                    ),
-                    child: Text(
-                      supply.status.toUpperCase(),
-                      style: TextStyle(
-                        color: statusColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 12),
-              // Details Row
-              Row(
-                children: [
-                  _buildDetailItem(
-                    icon: Icons.phone,
-                    label: (supply.patientName?.isNotEmpty == true)
-                        ? (supply.patientPhone ?? 'N/A')
-                        : (supply.receiverPhone ?? 'N/A'),
-                  ),
-                  const SizedBox(width: 16),
-                  _buildDetailItem(
-                    icon: Icons.calendar_today,
-                    label: _formatDate(supply.supplyDate),
-                  ),
-                  if (supply.careOf != null && supply.careOf!.isNotEmpty) ...[const SizedBox(width: 16), _buildDetailItem(icon: Icons.person_outline, label: supply.careOf!)],
-                ],
-              ),
-              // Actions for active supplies
-              if (isActive) ...[
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit, size: 18),
-                      onPressed: () => _navigateToEditSupply(supply),
-                      tooltip: 'Edit Supply',
-                      constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-                    ),
-                    TextButton.icon(
-                      onPressed: () => _returnSupply(supply),
-                      icon: const Icon(Icons.assignment_return, size: 18),
-                      label: const Text('Mark Returned'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.orange,
+
+                      // Equipment Name
+                      const SizedBox(height: 4),
+                      Text(
+                        supply.equipmentName,
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+
+                      // Footer: Phone & Action
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.phone_rounded,
+                            size: 14,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            (supply.patientName?.isNotEmpty == true)
+                                ? (supply.patientPhone ?? 'N/A')
+                                : (supply.receiverPhone ?? 'N/A'),
+                            style: TextStyle(
+                              color: Colors.grey.shade500,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const Spacer(),
+                          if (isActive)
+                            InkWell(
+                              onTap: () => _returnSupply(supply),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Text(
+                                      'Return',
+                                      style: TextStyle(
+                                        color: Colors.orange,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Icon(
+                                      Icons.arrow_forward_ios_rounded,
+                                      size: 10,
+                                      color: Colors.orange,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ],
           ),
         ),
       ),
+    );
+
+    if (isAdmin) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Slidable(
+            key: ValueKey(supply.id),
+            endActionPane: ActionPane(
+              motion: const ScrollMotion(),
+              extentRatio: 0.5,
+              children: [
+                SlidableAction(
+                  onPressed: (_) => _navigateToEditSupply(supply),
+                  backgroundColor: const Color(0xFF21B7CA),
+                  foregroundColor: Colors.white,
+                  icon: Icons.edit_rounded,
+                  label: 'Edit',
+                ),
+                SlidableAction(
+                  onPressed: (_) => _deleteSupply(supply),
+                  backgroundColor: const Color(0xFFFE4A49),
+                  foregroundColor: Colors.white,
+                  icon: Icons.delete_rounded,
+                  label: 'Delete',
+                ),
+              ],
+            ),
+            child: cardContent,
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+      child: cardContent,
     );
   }
 
