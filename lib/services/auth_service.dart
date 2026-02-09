@@ -19,11 +19,18 @@ class AuthService with ChangeNotifier {
 
   bool get isAuthenticated => _token != null;
   bool get isAdmin => _role == 'admin';
+  bool get isStaff => _role == 'staff';
+  bool get isUser => _role == 'user';
+
+  bool get canCreate => _role == 'admin' || _role == 'staff';
+  bool get canEdit => _role == 'admin' || _role == 'staff';
+  bool get canDelete => _role == 'admin';
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString('auth_token');
     _role = prefs.getString('auth_role');
+    debugPrint('Auth service initialized. Role: $_role');
     if (_token != null) {
       fetchUserProfile();
     }
@@ -53,6 +60,8 @@ class AuthService with ChangeNotifier {
         if (_role != null) {
           await prefs.setString('auth_role', _role!);
         }
+
+        debugPrint('Login Successful. Role: $_role');
 
         // Fetch user profile after successful login
         await fetchUserProfile();

@@ -199,19 +199,22 @@ class _PatientListPageState extends State<PatientListPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const patientrigister()),
-          );
-          if (result == true) {
-            _loadPatients();
-          }
-        },
-        label: const Text("Add Patient"),
-        icon: const Icon(Icons.person_add),
-      ),
+      floatingActionButton: Provider.of<AuthService>(context).canCreate
+          ? FloatingActionButton.extended(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const patientrigister()),
+                );
+                if (result == true) {
+                  _loadPatients();
+                }
+              },
+              label: const Text("Add Patient"),
+              icon: const Icon(Icons.person_add),
+            )
+          : null,
     );
   }
 
@@ -505,9 +508,39 @@ class _PatientListPageState extends State<PatientListPage> {
       ),
     );
 
-    if (isAdmin) {
+    final canEdit = authService.canEdit;
+    final canDelete = authService.canDelete;
+
+    if (canEdit || canDelete) {
       // Wrap in a container to provide margin if needed, but Card already provides some.
       // However, for slidable to look good with rounded card, we might need ClipRRect.
+      
+      List<Widget> actions = [];
+        
+      if (canEdit) {
+        actions.add(
+            SlidableAction(
+              onPressed: (_) => _navigateToEditPatient(patient),
+              backgroundColor: const Color(0xFF21B7CA),
+              foregroundColor: Colors.white,
+              icon: Icons.edit,
+              label: 'Edit',
+            ),
+        );
+      }
+      
+      if (canDelete) {
+        actions.add(
+             SlidableAction(
+              onPressed: (_) => _deletePatient(patient),
+              backgroundColor: const Color(0xFFFE4A49),
+              foregroundColor: Colors.white,
+              icon: Icons.delete,
+              label: 'Delete',
+            ),
+        );
+      }
+
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
         child: ClipRRect(
@@ -516,23 +549,8 @@ class _PatientListPageState extends State<PatientListPage> {
             key: ValueKey(patient.id),
             endActionPane: ActionPane(
               motion: const ScrollMotion(),
-              extentRatio: 0.5,
-              children: [
-                SlidableAction(
-                  onPressed: (_) => _navigateToEditPatient(patient),
-                  backgroundColor: const Color(0xFF21B7CA),
-                  foregroundColor: Colors.white,
-                  icon: Icons.edit,
-                  label: 'Edit',
-                ),
-                SlidableAction(
-                  onPressed: (_) => _deletePatient(patient),
-                  backgroundColor: const Color(0xFFFE4A49),
-                  foregroundColor: Colors.white,
-                  icon: Icons.delete,
-                  label: 'Delete',
-                ),
-              ],
+              extentRatio: actions.length * 0.25,
+              children: actions,
             ),
             child: cardContent,
           ),

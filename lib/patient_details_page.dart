@@ -186,41 +186,42 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
       appBar: AppBar(
         title: const Text("Patient Details"),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      patientrigister(patient: _currentPatient),
-                ),
-              );
-              if (result != null && result is Patient) {
-                setState(() {
-                  _currentPatient = result;
-                });
-              } else if (result == true) {
-                // If it just returned true, refetch
-                try {
-                  final updated = await PatientService.getPatientById(
-                    _currentPatient.id!,
-                  );
+          if (context.watch<AuthService>().canEdit)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        patientrigister(patient: _currentPatient),
+                  ),
+                );
+                if (result != null && result is Patient) {
                   setState(() {
-                    _currentPatient = updated;
+                    _currentPatient = result;
                   });
-                } catch (e) {
-                  // ignore
+                } else if (result == true) {
+                  // If it just returned true, refetch
+                  try {
+                    final updated = await PatientService.getPatientById(
+                      _currentPatient.id!,
+                    );
+                    setState(() {
+                      _currentPatient = updated;
+                    });
+                  } catch (e) {
+                    // ignore
+                  }
                 }
-              }
-            },
-          ),
-          if (context.watch<AuthService>().isAdmin)
+              },
+            ),
+          if (context.watch<AuthService>().canDelete)
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: _isLoading ? null : _deletePatient,
             ),
-          if (!_currentPatient.isDead)
+          if (!_currentPatient.isDead && context.watch<AuthService>().canEdit)
             IconButton(
               icon: const DeceasedIcon(size: 24, color: Colors.red),
               tooltip: "Mark as Passed Away",

@@ -197,11 +197,13 @@ class _EquipmentListPageState extends State<EquipmentListPage>
             ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _navigateToAdd,
-        icon: const Icon(Icons.add),
-        label: Text(_tabController.index == 0 ? 'Add Equipment' : 'Distribute'),
-      ),
+      floatingActionButton: Provider.of<AuthService>(context).canCreate
+          ? FloatingActionButton.extended(
+              onPressed: _navigateToAdd,
+              icon: const Icon(Icons.add),
+              label: Text(_tabController.index == 0 ? 'Add Equipment' : 'Distribute'),
+            )
+          : null,
       body: TabBarView(
         controller: _tabController,
         children: [_buildAvailableList(), _buildDistributedList()],
@@ -283,56 +285,59 @@ class _EquipmentListPageState extends State<EquipmentListPage>
               '${eq.name}\n${eq.place.isNotEmpty ? ' ${eq.place}' : ''}',
             ),
             isThreeLine: true,
-            trailing: PopupMenuButton<String>(
-              onSelected: (value) async {
-                if (value == 'edit') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EquipmentFormPage(equipment: eq),
-                    ),
-                  ).then((result) {
-                    if (result == true) _fetchAvailableEquipment();
-                  });
-                } else if (value == 'delete') {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Delete?'),
-                      content: Text('Delete ${eq.uniqueId}?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('Delete'),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (confirm == true) {
-                    await EquipmentService.deleteEquipment(eq.id!);
-                    _fetchAvailableEquipment();
-                  }
-                }
-              },
-              itemBuilder: (context) {
-                final isAdmin = context.read<AuthService>().isAdmin;
-                return [
-                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                  if (isAdmin)
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Text(
-                        'Delete',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ),
-                ];
-              },
-            ),
+            trailing: (context.read<AuthService>().canEdit || context.read<AuthService>().canDelete)
+                ? PopupMenuButton<String>(
+                    onSelected: (value) async {
+                      if (value == 'edit') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EquipmentFormPage(equipment: eq),
+                          ),
+                        ).then((result) {
+                          if (result == true) _fetchAvailableEquipment();
+                        });
+                      } else if (value == 'delete') {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete?'),
+                            content: Text('Delete ${eq.uniqueId}?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          await EquipmentService.deleteEquipment(eq.id!);
+                          _fetchAvailableEquipment();
+                        }
+                      }
+                    },
+                    itemBuilder: (context) {
+                      final auth = context.read<AuthService>();
+                      return [
+                        if (auth.canEdit)
+                          const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                        if (auth.canDelete)
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Text(
+                              'Delete',
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                      ];
+                    },
+                  )
+                : null,
             onTap: () => _showEquipmentDetails(eq),
           ),
         );
@@ -419,23 +424,25 @@ class _EquipmentListPageState extends State<EquipmentListPage>
               ],
             ),
             isThreeLine: true,
-            trailing: PopupMenuButton<String>(
-              onSelected: (val) {
-                if (val == 'return') _returnSupply(supply);
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'return',
-                  child: Row(
-                    children: [
-                      Icon(Icons.assignment_return, color: Colors.orange),
-                      SizedBox(width: 8),
-                      Text('Mark Returned'),
+            trailing: context.read<AuthService>().canEdit
+                ? PopupMenuButton<String>(
+                    onSelected: (val) {
+                      if (val == 'return') _returnSupply(supply);
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'return',
+                        child: Row(
+                          children: [
+                            Icon(Icons.assignment_return, color: Colors.orange),
+                            SizedBox(width: 8),
+                            Text('Mark Returned'),
+                          ],
+                        ),
+                      ),
                     ],
-                  ),
-                ),
-              ],
-            ),
+                  )
+                : null,
             onTap: () => _showSupplyDetails(supply),
           ),
         );
@@ -586,6 +593,7 @@ class _EquipmentListPageState extends State<EquipmentListPage>
                 ),
               ),
             const SizedBox(height: 24),
+            if (context.read<AuthService>().canEdit)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -711,6 +719,7 @@ class _EquipmentListPageState extends State<EquipmentListPage>
             const SizedBox(height: 24),
             Row(
               children: [
+                if (context.read<AuthService>().canEdit) ...[
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
@@ -737,7 +746,8 @@ class _EquipmentListPageState extends State<EquipmentListPage>
                     ),
                   ),
                 ),
-                if (context.read<AuthService>().isAdmin) ...[
+                ],
+                if (context.read<AuthService>().canDelete) ...[
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton.icon(

@@ -376,13 +376,15 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
             IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _navigateToCreateSupply,
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('New Supply'),
-      ),
+      floatingActionButton: Provider.of<AuthService>(context).canCreate
+          ? FloatingActionButton.extended(
+              onPressed: _navigateToCreateSupply,
+              backgroundColor: Colors.indigo,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add),
+              label: const Text('New Supply'),
+            )
+          : null,
       body: TabBarView(
         controller: _tabController,
         children: [_buildActiveList(), _buildHistoryList()],
@@ -538,7 +540,47 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
   Widget _buildSupplyCard(EquipmentSupply supply, {required bool isActive}) {
     final statusColor = _getStatusColor(supply.status);
     final authService = Provider.of<AuthService>(context, listen: false);
-    final isAdmin = authService.isAdmin;
+    final canEdit = authService.canEdit;
+    final canDelete = authService.canDelete;
+
+    // Return button visibility (Using canEdit as it modifies the state)
+    Widget buildReturnButton() {
+      if (isActive && canEdit) {
+        return InkWell(
+          onTap: () => _returnSupply(supply),
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 6,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Row(
+              children: [
+                Text(
+                  'Return',
+                  style: TextStyle(
+                    color: Colors.orange,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(width: 4),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 10,
+                  color: Colors.orange,
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+      return const SizedBox.shrink();
+    }
 
     Widget cardContent = Container(
       decoration: BoxDecoration(
@@ -585,9 +627,9 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                             child: Text(
                               supply.equipmentUniqueId,
                               style: TextStyle(
-                                color: Colors.grey.shade700,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade700,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -652,39 +694,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                             ),
                           ),
                           const Spacer(),
-                          if (isActive)
-                            InkWell(
-                              onTap: () => _returnSupply(supply),
-                              borderRadius: BorderRadius.circular(8),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.withOpacity(0.08),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Row(
-                                  children: [
-                                    Text(
-                                      'Return',
-                                      style: TextStyle(
-                                        color: Colors.orange,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    SizedBox(width: 4),
-                                    Icon(
-                                      Icons.arrow_forward_ios_rounded,
-                                      size: 10,
-                                      color: Colors.orange,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                          buildReturnButton(),
                         ],
                       ),
                     ],
@@ -697,7 +707,33 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
       ),
     );
 
-    if (isAdmin) {
+    if (canEdit || canDelete) {
+        List<Widget> actions = [];
+        
+        if (canEdit) {
+            actions.add(
+                SlidableAction(
+                  onPressed: (_) => _navigateToEditSupply(supply),
+                  backgroundColor: const Color(0xFF21B7CA),
+                  foregroundColor: Colors.white,
+                  icon: Icons.edit_rounded,
+                  label: 'Edit',
+                ),
+            );
+        }
+        
+        if (canDelete) {
+            actions.add(
+                 SlidableAction(
+                  onPressed: (_) => _deleteSupply(supply),
+                  backgroundColor: const Color(0xFFFE4A49),
+                  foregroundColor: Colors.white,
+                  icon: Icons.delete_rounded,
+                  label: 'Delete',
+                ),
+            );
+        }
+
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
         child: ClipRRect(
@@ -706,23 +742,8 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
             key: ValueKey(supply.id),
             endActionPane: ActionPane(
               motion: const ScrollMotion(),
-              extentRatio: 0.5,
-              children: [
-                SlidableAction(
-                  onPressed: (_) => _navigateToEditSupply(supply),
-                  backgroundColor: const Color(0xFF21B7CA),
-                  foregroundColor: Colors.white,
-                  icon: Icons.edit_rounded,
-                  label: 'Edit',
-                ),
-                SlidableAction(
-                  onPressed: (_) => _deleteSupply(supply),
-                  backgroundColor: const Color(0xFFFE4A49),
-                  foregroundColor: Colors.white,
-                  icon: Icons.delete_rounded,
-                  label: 'Delete',
-                ),
-              ],
+              extentRatio: actions.length * 0.25, // Adjust ratio based on number of actions
+              children: actions,
             ),
             child: cardContent,
           ),

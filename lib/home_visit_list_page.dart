@@ -245,21 +245,23 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => Homevisit(initialDate: _selectedDate),
-            ),
-          );
-          if (result == true) _refreshVisits();
-        },
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text("Schedule Visit"),
-      ),
+      floatingActionButton: Provider.of<AuthService>(context).canCreate
+          ? FloatingActionButton.extended(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Homevisit(initialDate: _selectedDate),
+                  ),
+                );
+                if (result == true) _refreshVisits();
+              },
+              backgroundColor: primaryColor,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add),
+              label: const Text("Schedule Visit"),
+            )
+          : null,
     );
   }
 
@@ -1017,7 +1019,9 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
                 Icons.assignment,
                 "Care Plan",
                 patient.plan.isEmpty ? "No plan assigned" : patient.plan,
-                onEdit: () => _showEditPatientDialog(context, patient),
+                onEdit: context.read<AuthService>().canEdit 
+                  ? () => _showEditPatientDialog(context, patient)
+                  : null,
               )
             else
               _buildDetailRow(
@@ -1070,7 +1074,7 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
             const SizedBox(height: 24),
             Row(
               children: [
-                if (context.read<AuthService>().isAdmin) ...[
+                if (context.read<AuthService>().canDelete) ...[
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () {
@@ -1093,31 +1097,32 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
                   ),
                   const SizedBox(width: 16),
                 ],
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => Homevisit(visit: widget.visit),
+                if (context.read<AuthService>().canEdit)
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => Homevisit(visit: widget.visit),
+                          ),
+                        );
+                        if (result == true) widget.onRefresh();
+                      },
+                      icon: const Icon(Icons.edit_outlined),
+                      label: const Text("Edit Details"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      );
-                      if (result == true) widget.onRefresh();
-                    },
-                    icon: const Icon(Icons.edit_outlined),
-                    label: const Text("Edit Details"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
           ],
@@ -1182,7 +1187,7 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
     IconData icon,
     String label,
     String value, {
-    required VoidCallback onEdit,
+    required VoidCallback? onEdit,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1213,21 +1218,22 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
             ],
           ),
         ),
-        GestureDetector(
-          onTap: onEdit,
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              Icons.edit_outlined,
-              size: 16,
-              color: Theme.of(context).colorScheme.primary,
+        if (onEdit != null)
+          GestureDetector(
+            onTap: onEdit,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.edit_outlined,
+                size: 16,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
           ),
-        ),
       ],
     );
   }

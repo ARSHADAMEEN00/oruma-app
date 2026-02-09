@@ -689,15 +689,18 @@ class _HomescreenState extends State<Homescreen> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('User Role: ${context.read<AuthService>().role}');
     return Scaffold(
       key: _scaffoldKey,
       drawer: _buildProfessionalDrawer(context),
       backgroundColor: Colors.grey.shade50,
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showQuickAddOptions,
-        backgroundColor: const Color(0xFF1A237E),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      floatingActionButton: context.watch<AuthService>().canCreate
+          ? FloatingActionButton(
+              onPressed: _showQuickAddOptions,
+              backgroundColor: const Color(0xFF1A237E),
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
       body: Column(
         children: [
           // Header Section
@@ -807,7 +810,7 @@ class _HomescreenState extends State<Homescreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  context.watch<AuthService>().user?['name'] ?? "Team Oruma",
+                  "Team Oruma",
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
