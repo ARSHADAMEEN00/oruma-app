@@ -10,6 +10,7 @@ class Patient {
   final int age;
   final String place;
   final String village;
+  final String? ward;
   final List<String> disease;
   final String plan;
   final String? locationLink;
@@ -32,6 +33,7 @@ class Patient {
     required this.age,
     required this.place,
     required this.village,
+    this.ward,
     this.disease = const [],
     required this.plan,
     this.locationLink,
@@ -59,6 +61,7 @@ class Patient {
           : int.tryParse(json['age']?.toString() ?? '0') ?? 0,
       place: json['place']?.toString() ?? '',
       village: json['village']?.toString() ?? '',
+      ward: json['ward']?.toString(),
       disease: json['disease'] is List
           ? List<String>.from(json['disease'])
           : json['disease'] != null
@@ -98,6 +101,7 @@ class Patient {
       'age': age,
       'place': place,
       'village': village,
+      'ward': ward,
       'disease': disease,
       'plan': plan,
       'locationLink': locationLink,
@@ -120,6 +124,7 @@ class Patient {
     int? age,
     String? place,
     String? village,
+    String? ward,
     List<String>? disease,
     String? plan,
     String? locationLink,
@@ -139,6 +144,7 @@ class Patient {
       age: age ?? this.age,
       place: place ?? this.place,
       village: village ?? this.village,
+      ward: ward ?? this.ward,
       disease: disease ?? this.disease,
       plan: plan ?? this.plan,
       locationLink: locationLink ?? this.locationLink,

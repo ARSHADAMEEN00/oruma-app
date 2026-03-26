@@ -932,6 +932,8 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
   late TextEditingController _purchasedFromController;
   late TextEditingController _purchasePlaceController;
   late TextEditingController _phoneController;
+  late TextEditingController _serialNoPrefixController;
+  late TextEditingController _uniqueIdController;
   String? _selectedStoragePlace;
   bool _isSubmitting = false;
 
@@ -951,6 +953,12 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
     _phoneController = TextEditingController(
       text: widget.equipment?.phone ?? '',
     );
+    _serialNoPrefixController = TextEditingController(
+      text: widget.equipment?.serialNo ?? '',
+    );
+    _uniqueIdController = TextEditingController(
+      text: widget.equipment?.uniqueId ?? '',
+    );
     _selectedStoragePlace = widget.equipment?.storagePlace ?? 'Store';
   }
 
@@ -962,6 +970,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
         await EquipmentService.updateEquipment(
           widget.equipment!.id!,
           name: _nameController.text.trim(),
+          serialNo: _serialNoPrefixController.text.trim().isNotEmpty ? _serialNoPrefixController.text.trim() : null,
           purchasedFrom: _purchasedFromController.text.trim(),
           place: _purchasePlaceController.text.trim(),
           phone: _phoneController.text.trim(),
@@ -977,6 +986,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
         final response = await EquipmentService.createEquipment(
           name: _nameController.text.trim(),
           quantity: int.parse(_quantityController.text.trim()),
+          serialNo: _serialNoPrefixController.text.trim().isNotEmpty ? _serialNoPrefixController.text.trim() : null,
           purchasedFrom: _purchasedFromController.text.trim(),
           place: _purchasePlaceController.text.trim(),
           phone: _phoneController.text.trim(),
@@ -1007,6 +1017,8 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
     _purchasedFromController.dispose();
     _purchasePlaceController.dispose();
     _phoneController.dispose();
+    _serialNoPrefixController.dispose();
+    _uniqueIdController.dispose();
     super.dispose();
   }
 
@@ -1155,6 +1167,22 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
                     validator: (v) => v!.isEmpty ? 'Required' : null,
                   ),
                   const SizedBox(height: 12),
+                  if (_isEditing) ...[
+                    _buildCompactField(
+                      controller: _uniqueIdController,
+                      label: 'Unique ID',
+                      icon: Icons.qr_code,
+                      readOnly: true,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  _buildCompactField(
+                    controller: _serialNoPrefixController,
+                    label: 'Serial No Prefix (Optional)',
+                    icon: Icons.tag,
+                    readOnly: _isEditing,
+                  ),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       if (!_isEditing) ...[
@@ -1251,17 +1279,23 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
+    bool readOnly = false,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       validator: validator,
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      readOnly: readOnly,
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: readOnly ? Colors.grey[700] : Colors.black,
+      ),
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, size: 20, color: Colors.grey[400]),
         filled: true,
-        fillColor: Colors.grey[50], // Very subtle background
+        fillColor: readOnly ? Colors.grey[200] : Colors.grey[50], // Very subtle background
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,

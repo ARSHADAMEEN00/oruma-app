@@ -36,6 +36,7 @@ class _patientrigisterState extends State<patientrigister> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController phone2Controller = TextEditingController();
   final TextEditingController locationLinkController = TextEditingController();
+  final TextEditingController wardController = TextEditingController();
 
   // Dropdown options (loaded from API)
   List<String> villages = [];
@@ -63,6 +64,7 @@ class _patientrigisterState extends State<patientrigister> {
       locationLinkController.text = widget.patient!.locationLink ?? '';
       _gender = widget.patient!.gender;
       _selectedVillage = widget.patient!.village;
+      wardController.text = widget.patient!.ward ?? '';
       _selectedDiseases = widget.patient!.disease;
       _selectedPlan = widget.patient!.plan;
 
@@ -108,6 +110,7 @@ class _patientrigisterState extends State<patientrigister> {
     phoneController.dispose();
     phone2Controller.dispose();
     locationLinkController.dispose();
+    wardController.dispose();
     super.dispose();
   }
 
@@ -167,6 +170,83 @@ class _patientrigisterState extends State<patientrigister> {
       );
       setState(() => _registrationDate = normalizedDate);
     }
+  }
+
+  Future<void> _showAddDiseaseDialog() async {
+    final TextEditingController newDiseaseController = TextEditingController();
+    bool isSaving = false;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateBuilder) {
+            return AlertDialog(
+              title: const Text('Add New Disease'),
+              content: TextField(
+                controller: newDiseaseController,
+                decoration: const InputDecoration(
+                  labelText: 'Disease Name',
+                  hintText: 'e.g. ASTHMA',
+                  border: OutlineInputBorder(),
+                ),
+                textCapitalization: TextCapitalization.characters,
+                autofocus: true,
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: isSaving ? null : () async {
+                    final newDisease = newDiseaseController.text.trim().toUpperCase();
+                    if (newDisease.isEmpty) return;
+                    
+                    setStateBuilder(() => isSaving = true);
+                    
+                    try {
+                      // Fetch current config to update it
+                      final config = await ConfigService.getConfig();
+                      if (!config.diseases.contains(newDisease)) {
+                        config.diseases.add(newDisease);
+                        await ConfigService.updateConfig(config);
+                      }
+                      
+                      // Update the local state
+                      setState(() {
+                        if (!diseases.contains(newDisease)) {
+                          diseases.add(newDisease);
+                        }
+                        if (!_selectedDiseases.contains(newDisease)) {
+                          _selectedDiseases.add(newDisease);
+                        }
+                      });
+                      
+                      if (context.mounted) Navigator.pop(context);
+                    } catch (e) {
+                      setStateBuilder(() => isSaving = false);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to add disease: $e'), backgroundColor: Colors.red),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1A237E),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: isSaving 
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Text('Add'),
+                ),
+              ],
+            );
+          }
+        );
+      },
+    );
   }
 
   @override
@@ -408,31 +488,49 @@ class _patientrigisterState extends State<patientrigister> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: diseases.map((disease) {
-                      final isSelected = _selectedDiseases.contains(disease);
-                      return FilterChip(
-                        label: Text(disease),
-                        selected: isSelected,
-                        selectedColor: const Color(0xFF1A237E).withOpacity(0.8),
-                        backgroundColor: Colors.grey.shade100,
-                        checkmarkColor: Colors.white,
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black87,
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.normal,
+                    children: [
+                      ...diseases.map((disease) {
+                        final isSelected = _selectedDiseases.contains(disease);
+                        return FilterChip(
+                          label: Text(disease),
+                          selected: isSelected,
+                          selectedColor: const Color(0xFF1A237E).withValues(alpha: 0.8),
+                          backgroundColor: Colors.grey.shade100,
+                          checkmarkColor: Colors.white,
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.white : Colors.black87,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedDiseases.add(disease);
+                              } else {
+                                _selectedDiseases.remove(disease);
+                              }
+                            });
+                          },
+                        );
+                      }),
+                      ActionChip(
+                        label: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.add, size: 16, color: Color(0xFF1A237E)),
+                            SizedBox(width: 4),
+                            Text('Other', style: TextStyle(color: Color(0xFF1A237E), fontWeight: FontWeight.bold)),
+                          ],
                         ),
-                        onSelected: (selected) {
-                          setState(() {
-                            if (selected) {
-                              _selectedDiseases.add(disease);
-                            } else {
-                              _selectedDiseases.remove(disease);
-                            }
-                          });
-                        },
-                      );
-                    }).toList(),
+                        backgroundColor: Colors.blue.shade50,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: Colors.blue.shade200),
+                        ),
+                        onPressed: _showAddDiseaseDialog,
+                      ),
+                    ],
                   ),
                   if (_selectedDiseases.isEmpty)
                     const Padding(
@@ -509,6 +607,11 @@ class _patientrigisterState extends State<patientrigister> {
                         .toList(),
                     onChanged: (v) => setState(() => _selectedVillage = v),
                     validator: (val) => val == null ? "Required" : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: wardController,
+                    decoration: _buildInputDecoration("Ward (Optional)", Icons.apartment),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -662,6 +765,7 @@ class _patientrigisterState extends State<patientrigister> {
           age: int.parse(ageController.text),
           place: placeController.text,
           village: _selectedVillage!,
+          ward: wardController.text.trim().isEmpty ? null : wardController.text.trim(),
           locationLink: locationLinkController.text.trim().isEmpty ? null : locationLinkController.text.trim(),
           disease: _selectedDiseases,
           plan: _selectedPlan!,

@@ -6,6 +6,7 @@ import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/pt_registration.dart';
 import 'package:oruma_app/patient_details_page.dart';
+import 'package:oruma_app/services/config_service.dart';
 
 class PatientListPage extends StatefulWidget {
   const PatientListPage({super.key});
@@ -22,6 +23,11 @@ class _PatientListPageState extends State<PatientListPage> {
   String? _error;
   String _currentFilter = 'all';
 
+  // Filters
+  List<String> _villagesList = ['All'];
+  String _selectedVillage = 'All';
+  final TextEditingController _wardFilterController = TextEditingController();
+
   // Search
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
@@ -35,12 +41,27 @@ class _PatientListPageState extends State<PatientListPage> {
         _searchQuery = _searchController.text.toLowerCase();
       });
     });
+    _loadConfig();
     _loadPatients();
+  }
+
+  Future<void> _loadConfig() async {
+    try {
+      final config = await ConfigService.getConfig();
+      if (mounted) {
+        setState(() {
+          _villagesList = ['All', ...config.villages];
+        });
+      }
+    } catch (e) {
+      // ignore
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _wardFilterController.dispose();
     super.dispose();
   }
 
@@ -51,7 +72,11 @@ class _PatientListPageState extends State<PatientListPage> {
     });
 
     try {
-      final response = await PatientService.getPatientsList(filter: _currentFilter);
+      final response = await PatientService.getPatientsList(
+        filter: _currentFilter,
+        village: _selectedVillage != 'All' ? _selectedVillage : null,
+        ward: _wardFilterController.text.trim().isNotEmpty ? _wardFilterController.text.trim() : null,
+      );
       if (mounted) {
         setState(() {
           _allPatients = response.patients;
@@ -110,6 +135,7 @@ class _PatientListPageState extends State<PatientListPage> {
       body: Column(
         children: [
           if (_counts != null) _buildFilterTabs(),
+          if (_counts != null) _buildSecondaryFilters(),
           Expanded(
             child: Builder(
               builder: (context) {
@@ -139,6 +165,19 @@ class _PatientListPageState extends State<PatientListPage> {
                 // Client-side filtering as fallback/robustness
                 // We check if the API returned a mixed list despite the filter request.
                 final filteredPatients = _allPatients.where((p) {
+                  if (_selectedVillage != 'All' && p.village != _selectedVillage) return false;
+                  if (_wardFilterController.text.trim().isNotEmpty) {
+                    final w = _wardFilterController.text.trim().toLowerCase();
+                    final escapedW = RegExp.escape(w);
+                    final fuzzyW = escapedW.replaceAll(RegExp(r'[aeiou]', caseSensitive: false), '[aeiou]');
+                    try {
+                      final regex = RegExp(fuzzyW, caseSensitive: false);
+                      if (p.ward == null || !regex.hasMatch(p.ward!)) return false;
+                    } catch (e) {
+                      if (p.ward == null || !p.ward!.toLowerCase().contains(w)) return false;
+                    }
+                  }
+
                   // Text search filter
                   if (_searchQuery.isNotEmpty) {
                     final q = _searchQuery.toLowerCase();
@@ -314,6 +353,86 @@ class _PatientListPageState extends State<PatientListPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSecondaryFilters() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 1,
+            child: Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: _selectedVillage,
+                  icon: const Icon(Icons.arrow_drop_down, size: 20),
+                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                  items: _villagesList.map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    if (newValue != null && newValue != _selectedVillage) {
+                      setState(() {
+                        _selectedVillage = newValue;
+                      });
+                      _loadPatients();
+                    }
+                  },
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 1,
+            child: Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _wardFilterController,
+                      decoration: const InputDecoration(
+                        hintText: 'Ward...',
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      style: const TextStyle(fontSize: 13),
+                      onSubmitted: (_) => _loadPatients(),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () {
+                      FocusScope.of(context).unfocus();
+                      _loadPatients();
+                    },
+                    child: const Icon(Icons.search, size: 18, color: Colors.blue),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

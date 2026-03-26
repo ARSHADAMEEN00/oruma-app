@@ -12,6 +12,7 @@ import 'package:oruma_app/loginscreen.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:oruma_app/config_page.dart';
 
 class Homescreen extends StatefulWidget {
   const Homescreen({super.key});
@@ -1247,6 +1248,21 @@ class _HomescreenState extends State<Homescreen> {
                     );
                   },
                 ),
+                if (context.read<AuthService>().isAdmin)
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.settings_outlined,
+                    title: "System Config",
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ConfigPage(),
+                        ),
+                      );
+                    },
+                  ),
               ],
             ),
           ),

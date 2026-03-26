@@ -22,9 +22,14 @@ class PatientService {
 
 
   /// Get patients with filter and counts.
-  static Future<PatientListResponse> getPatientsList({String filter = 'all'}) async {
-    final query =
-        '${ApiConfig.patientsEndpoint}?filter=$filter&populate=createdBy';
+  static Future<PatientListResponse> getPatientsList({String filter = 'all', String? village, String? ward}) async {
+    String query = '${ApiConfig.patientsEndpoint}?filter=$filter&populate=createdBy';
+    if (village != null && village.isNotEmpty) {
+      query += '&village=${Uri.encodeComponent(village)}';
+    }
+    if (ward != null && ward.isNotEmpty) {
+      query += '&ward=${Uri.encodeComponent(ward)}';
+    }
     final result = await ApiService.get<dynamic>(query);
 
     if (result.isSuccess && result.data != null) {
