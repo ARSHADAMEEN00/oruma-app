@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/services/config_service.dart';
+import 'package:oruma_app/models/config.dart';
 import 'package:intl/intl.dart';
 
 // ignore: camel_case_types
@@ -42,6 +43,9 @@ class _patientrigisterState extends State<patientrigister> {
   List<String> villages = [];
   List<String> diseases = [];
   List<String> plans = [];
+  List<WardConfig> allWards = [];
+  List<String> filteredWards = [];
+  String? _selectedWardTitle;
 
   @override
   void initState() {
@@ -64,8 +68,8 @@ class _patientrigisterState extends State<patientrigister> {
       locationLinkController.text = widget.patient!.locationLink ?? '';
       _gender = widget.patient!.gender;
       _selectedVillage = widget.patient!.village;
-      wardController.text = widget.patient!.ward ?? '';
-      _selectedDiseases = widget.patient!.disease;
+      _selectedWardTitle = widget.patient!.ward;
+      _selectedDiseases = List.from(widget.patient!.disease);
       _selectedPlan = widget.patient!.plan;
 
       // Normalize existing registration date to noon if it exists
@@ -90,6 +94,8 @@ class _patientrigisterState extends State<patientrigister> {
         villages = config.villages;
         diseases = config.diseases;
         plans = config.plans;
+        allWards = config.wards;
+        _updateFilteredWards();
         _isLoadingConfig = false;
       });
     } catch (e) {
@@ -97,6 +103,22 @@ class _patientrigisterState extends State<patientrigister> {
         _configError = e.toString();
         _isLoadingConfig = false;
       });
+    }
+  }
+
+  void _updateFilteredWards() {
+    if (_selectedVillage == null) {
+      filteredWards = [];
+    } else {
+      filteredWards = allWards
+          .where((w) => w.village == _selectedVillage)
+          .map((w) => w.title)
+          .toList()
+        ..sort();
+    }
+    // If current selected ward is not in the filtered list, clear it
+    if (_selectedWardTitle != null && !filteredWards.contains(_selectedWardTitle)) {
+      _selectedWardTitle = null;
     }
   }
 
@@ -170,6 +192,126 @@ class _patientrigisterState extends State<patientrigister> {
       );
       setState(() => _registrationDate = normalizedDate);
     }
+  }
+
+  Future<void> _showAddWardDialog() async {
+    final TextEditingController newWardController = TextEditingController();
+    String? popupSelectedVillage = _selectedVillage;
+    bool isSaving = false;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateBuilder) {
+            return AlertDialog(
+              title: const Text('Add New Ward'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    decoration: _buildInputDecoration(
+                      "Village",
+                      Icons.location_city,
+                    ),
+                    value: popupSelectedVillage,
+                    items: villages
+                        .map((v) => DropdownMenuItem(value: v, child: Text(v)))
+                        .toList(),
+                    onChanged: (v) {
+                      setStateBuilder(() {
+                        popupSelectedVillage = v;
+                      });
+                    },
+                    hint: const Text("Select Village"),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: newWardController,
+                    decoration: const InputDecoration(
+                      labelText: 'Ward Name',
+                      hintText: 'e.g. WARD 1',
+                      border: OutlineInputBorder(),
+                    ),
+                    textCapitalization: TextCapitalization.characters,
+                    autofocus: true,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: (isSaving || popupSelectedVillage == null)
+                      ? null
+                      : () async {
+                          final newWardTitle =
+                              newWardController.text.trim().toUpperCase();
+                          if (newWardTitle.isEmpty) return;
+
+                          setStateBuilder(() => isSaving = true);
+
+                          try {
+                            final config = await ConfigService.getConfig();
+                            final exists = config.wards.any((w) =>
+                                w.title.toUpperCase() == newWardTitle &&
+                                w.village == popupSelectedVillage);
+
+                            if (!exists) {
+                              config.wards.add(WardConfig(
+                                  title: newWardTitle,
+                                  village: popupSelectedVillage!));
+                              await ConfigService.updateConfig(config);
+                            }
+
+                            setState(() {
+                              if (!allWards.any((w) =>
+                                  w.title == newWardTitle &&
+                                  w.village == popupSelectedVillage)) {
+                                allWards.add(WardConfig(
+                                    title: newWardTitle,
+                                    village: popupSelectedVillage!));
+                              }
+                              // If we added it for the currently selected village in the main form,
+                              // update the filtered list and select it. Otherwise just refresh.
+                              if (_selectedVillage == popupSelectedVillage) {
+                                _updateFilteredWards();
+                                _selectedWardTitle = newWardTitle;
+                              }
+                            });
+
+                            if (context.mounted) Navigator.pop(context);
+                          } catch (e) {
+                            setStateBuilder(() => isSaving = false);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text('Failed to add ward: $e'),
+                                    backgroundColor: Colors.red),
+                              );
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1A237E),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
+                      : const Text('Add'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _showAddDiseaseDialog() async {
@@ -601,17 +743,46 @@ class _patientrigisterState extends State<patientrigister> {
                       "Village",
                       Icons.location_city,
                     ),
-                    initialValue: _selectedVillage,
+                    value: _selectedVillage,
                     items: villages
                         .map((v) => DropdownMenuItem(value: v, child: Text(v)))
                         .toList(),
-                    onChanged: (v) => setState(() => _selectedVillage = v),
+                    onChanged: (v) {
+                      setState(() {
+                        _selectedVillage = v;
+                        _updateFilteredWards();
+                      });
+                    },
                     validator: (val) => val == null ? "Required" : null,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: wardController,
-                    decoration: _buildInputDecoration("Ward (Optional)", Icons.apartment),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          decoration: _buildInputDecoration(
+                            "Ward",
+                            Icons.apartment,
+                          ),
+                          value: _selectedWardTitle,
+                          hint: const Text("Select Ward"),
+                          items: filteredWards
+                              .map((w) => DropdownMenuItem(value: w, child: Text(w)))
+                              .toList(),
+                          onChanged: (v) => setState(() => _selectedWardTitle = v),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        child: IconButton(
+                          onPressed: _showAddWardDialog,
+                          icon: const Icon(Icons.add_circle, color: Color(0xFF1A237E), size: 30),
+                          tooltip: 'Add New Ward',
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -765,7 +936,7 @@ class _patientrigisterState extends State<patientrigister> {
           age: int.parse(ageController.text),
           place: placeController.text,
           village: _selectedVillage!,
-          ward: wardController.text.trim().isEmpty ? null : wardController.text.trim(),
+          ward: _selectedWardTitle?.toUpperCase(),
           locationLink: locationLinkController.text.trim().isEmpty ? null : locationLinkController.text.trim(),
           disease: _selectedDiseases,
           plan: _selectedPlan!,

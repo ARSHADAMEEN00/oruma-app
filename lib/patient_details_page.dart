@@ -284,6 +284,13 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
                       "Village",
                       _currentPatient.village,
                     ),
+                    if (_currentPatient.ward != null &&
+                        _currentPatient.ward!.trim().isNotEmpty)
+                      _buildInfoTile(
+                        Icons.apartment,
+                        "Ward",
+                        _currentPatient.ward!,
+                      ),
                     if (_currentPatient.locationLink != null &&
                         _currentPatient.locationLink!.trim().isNotEmpty)
                       _buildGoogleMapTile(_currentPatient.locationLink!),

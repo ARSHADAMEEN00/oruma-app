@@ -7,6 +7,7 @@ import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/pt_registration.dart';
 import 'package:oruma_app/patient_details_page.dart';
 import 'package:oruma_app/services/config_service.dart';
+import 'package:oruma_app/models/config.dart';
 
 class PatientListPage extends StatefulWidget {
   const PatientListPage({super.key});
@@ -25,8 +26,10 @@ class _PatientListPageState extends State<PatientListPage> {
 
   // Filters
   List<String> _villagesList = ['All'];
+  List<WardConfig> _allWards = [];
+  List<String> _filteredWardsList = ['All'];
   String _selectedVillage = 'All';
-  final TextEditingController _wardFilterController = TextEditingController();
+  String _selectedWard = 'All';
 
   // Search
   final TextEditingController _searchController = TextEditingController();
@@ -51,6 +54,8 @@ class _PatientListPageState extends State<PatientListPage> {
       if (mounted) {
         setState(() {
           _villagesList = ['All', ...config.villages];
+          _allWards = config.wards;
+          _updateFilteredWardsList();
         });
       }
     } catch (e) {
@@ -58,10 +63,27 @@ class _PatientListPageState extends State<PatientListPage> {
     }
   }
 
+  void _updateFilteredWardsList() {
+    if (_selectedVillage == 'All') {
+      _filteredWardsList = ['All'];
+    } else {
+      _filteredWardsList = ['All']..addAll(
+          _allWards
+              .where((w) => w.village == _selectedVillage)
+              .map((w) => w.title)
+              .toList()
+            ..sort(),
+        );
+    }
+    // If current selected ward is not in the filtered list, reset it to 'All'
+    if (!_filteredWardsList.contains(_selectedWard)) {
+      _selectedWard = 'All';
+    }
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
-    _wardFilterController.dispose();
     super.dispose();
   }
 
@@ -75,7 +97,7 @@ class _PatientListPageState extends State<PatientListPage> {
       final response = await PatientService.getPatientsList(
         filter: _currentFilter,
         village: _selectedVillage != 'All' ? _selectedVillage : null,
-        ward: _wardFilterController.text.trim().isNotEmpty ? _wardFilterController.text.trim() : null,
+        ward: _selectedWard != 'All' ? _selectedWard : null,
       );
       if (mounted) {
         setState(() {
@@ -166,17 +188,7 @@ class _PatientListPageState extends State<PatientListPage> {
                 // We check if the API returned a mixed list despite the filter request.
                 final filteredPatients = _allPatients.where((p) {
                   if (_selectedVillage != 'All' && p.village != _selectedVillage) return false;
-                  if (_wardFilterController.text.trim().isNotEmpty) {
-                    final w = _wardFilterController.text.trim().toLowerCase();
-                    final escapedW = RegExp.escape(w);
-                    final fuzzyW = escapedW.replaceAll(RegExp(r'[aeiou]', caseSensitive: false), '[aeiou]');
-                    try {
-                      final regex = RegExp(fuzzyW, caseSensitive: false);
-                      if (p.ward == null || !regex.hasMatch(p.ward!)) return false;
-                    } catch (e) {
-                      if (p.ward == null || !p.ward!.toLowerCase().contains(w)) return false;
-                    }
-                  }
+                  if (_selectedWard != 'All' && p.ward != _selectedWard) return false;
 
                   // Text search filter
                   if (_searchQuery.isNotEmpty) {
@@ -388,6 +400,7 @@ class _PatientListPageState extends State<PatientListPage> {
                     if (newValue != null && newValue != _selectedVillage) {
                       setState(() {
                         _selectedVillage = newValue;
+                        _updateFilteredWardsList();
                       });
                       _loadPatients();
                     }
@@ -406,29 +419,27 @@ class _PatientListPageState extends State<PatientListPage> {
                 color: Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _wardFilterController,
-                      decoration: const InputDecoration(
-                        hintText: 'Ward...',
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      style: const TextStyle(fontSize: 13),
-                      onSubmitted: (_) => _loadPatients(),
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      FocusScope.of(context).unfocus();
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: _selectedWard,
+                  icon: const Icon(Icons.arrow_drop_down, size: 20),
+                  style: const TextStyle(fontSize: 13, color: Colors.black87),
+                  items: _filteredWardsList.map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (newValue) {
+                    if (newValue != null && newValue != _selectedWard) {
+                      setState(() {
+                        _selectedWard = newValue;
+                      });
                       _loadPatients();
-                    },
-                    child: const Icon(Icons.search, size: 18, color: Colors.blue),
-                  ),
-                ],
+                    }
+                  },
+                ),
               ),
             ),
           ),
