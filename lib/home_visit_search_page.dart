@@ -450,6 +450,8 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
   void _showVisitDetails(HomeVisit visit) {
     final date = DateTime.tryParse(visit.visitDate);
     final primaryColor = Theme.of(context).colorScheme.primary;
+    final mediaQuery = MediaQuery.of(context);
+    final bottomSafePadding = mediaQuery.viewPadding.bottom;
 
     showModalBottomSheet(
       context: context,
@@ -460,7 +462,7 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        padding: EdgeInsets.fromLTRB(24, 32, 24, 24 + bottomSafePadding),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -547,8 +549,10 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(52),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   elevation: 0,
+                  tapTargetSize: MaterialTapTargetSize.padded,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

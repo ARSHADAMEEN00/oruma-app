@@ -33,11 +33,23 @@ class EquipmentService {
   EquipmentService._();
 
   /// Get all equipment from the API.
-  static Future<List<Equipment>> getAllEquipment({String? status}) async {
-    String url = ApiConfig.equipmentEndpoint;
-    if (status != null) {
-      url += '?status=$status';
+  static Future<List<Equipment>> getAllEquipment({
+    String? status,
+    String? search,
+  }) async {
+    final queryParameters = <String, String>{};
+    if (status != null && status.isNotEmpty) {
+      queryParameters['status'] = status;
     }
+    if (search != null && search.trim().isNotEmpty) {
+      queryParameters['search'] = search.trim();
+    }
+
+    final url = Uri.parse(ApiConfig.equipmentEndpoint)
+        .replace(
+          queryParameters: queryParameters.isEmpty ? null : queryParameters,
+        )
+        .toString();
 
     final result = await ApiService.get<List<dynamic>>(url);
 
@@ -51,8 +63,8 @@ class EquipmentService {
   }
 
   /// Get only available equipment.
-  static Future<List<Equipment>> getAvailableEquipment() async {
-    return getAllEquipment(status: 'available');
+  static Future<List<Equipment>> getAvailableEquipment({String? search}) async {
+    return getAllEquipment(status: 'available', search: search);
   }
 
   /// Get a single equipment by ID.
@@ -74,6 +86,7 @@ class EquipmentService {
     required String name,
     required int quantity,
     required String purchasedFrom,
+    DateTime? purchaseDate,
     required String place,
     required String phone,
     String? serialNo,
@@ -85,6 +98,8 @@ class EquipmentService {
         'name': name,
         'quantity': quantity,
         'purchasedFrom': purchasedFrom,
+        if (purchaseDate != null)
+          'purchaseDate': purchaseDate.toIso8601String(),
         'place': place,
         'phone': phone,
         if (serialNo != null) 'serialNo': serialNo,
@@ -105,6 +120,7 @@ class EquipmentService {
     String? name,
     String? serialNo,
     String? purchasedFrom,
+    DateTime? purchaseDate,
     String? place,
     String? phone,
     String? storagePlace,
@@ -114,6 +130,9 @@ class EquipmentService {
     if (name != null) body['name'] = name;
     if (serialNo != null) body['serialNo'] = serialNo;
     if (purchasedFrom != null) body['purchasedFrom'] = purchasedFrom;
+    if (purchaseDate != null) {
+      body['purchaseDate'] = purchaseDate.toIso8601String();
+    }
     if (place != null) body['place'] = place;
     if (phone != null) body['phone'] = phone;
     if (storagePlace != null) body['storagePlace'] = storagePlace;
@@ -163,19 +182,6 @@ class EquipmentService {
     String query, {
     String? status,
   }) async {
-    String searchQuery = '${ApiConfig.equipmentEndpoint}?search=$query';
-    if (status != null) {
-      searchQuery += '&status=$status';
-    }
-
-    final result = await ApiService.get<List<dynamic>>(searchQuery);
-
-    if (result.isSuccess && result.data != null) {
-      return result.data!
-          .map((json) => Equipment.fromJson(json as Map<String, dynamic>))
-          .toList();
-    }
-
-    throw Exception(result.error ?? 'Failed to search equipment');
+    return getAllEquipment(status: status, search: query);
   }
 }

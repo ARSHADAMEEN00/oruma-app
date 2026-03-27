@@ -218,7 +218,7 @@ class _EqSupplyEditState extends State<EqSupplyEdit> {
                               _buildTextField(
                                 controller: _careOfController,
                                 label: 'C/O (Care Of)',
-                                hint: 'Guardian Name',
+                                hint: 'Volunteer / Member Name',
                                 icon: Icons.supervised_user_circle_outlined,
                               ),
                               const SizedBox(height: 16),

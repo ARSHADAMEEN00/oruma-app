@@ -155,3 +155,8 @@ The configuration is in `pubspec.yaml` under the `flutter_launcher_icons` sectio
 - [Flutter Documentation](https://docs.flutter.dev/)
 - [Express.js Documentation](https://expressjs.com/)
 - [MongoDB Documentation](https://www.mongodb.com/docs/)
+
+
+
+apk build 
+flutter build apk --release

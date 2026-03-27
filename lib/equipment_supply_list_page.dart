@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
@@ -31,24 +33,21 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
 
   // Search
   final TextEditingController _searchController = TextEditingController();
-  bool _isSearching = false;
   String _searchQuery = '';
+  Timer? _searchDebounce;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(_handleTabChange);
-    _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text.toLowerCase();
-      });
-    });
+    _searchController.addListener(_handleSearchChanged);
     _loadData();
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     _searchController.dispose();
@@ -66,35 +65,75 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
     _fetchAllSupplies();
   }
 
-  Future<void> _fetchActiveSupplies() async {
+  void _handleSearchChanged() {
+    final query = _searchController.text.trim();
+
     setState(() {
-      _loadingActive = true;
-      _errorActive = null;
+      _searchQuery = query;
     });
 
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) {
+        _fetchActiveSupplies(showLoading: false);
+        _fetchAllSupplies(showLoading: false);
+      }
+    });
+  }
+
+  Future<void> _fetchActiveSupplies({bool showLoading = true}) async {
+    final search = _searchQuery.trim();
+
+    if (showLoading) {
+      setState(() {
+        _loadingActive = true;
+        _errorActive = null;
+      });
+    }
+
     try {
-      final list = await EquipmentSupplyService.getActiveSupplies();
-      if (mounted) setState(() => _activeSupplies = list);
+      final list = await EquipmentSupplyService.getActiveSupplies(
+        search: search.isEmpty ? null : search,
+      );
+      if (!mounted || search != _searchQuery.trim()) return;
+      setState(() {
+        _activeSupplies = list;
+        _errorActive = null;
+      });
     } catch (e) {
-      if (mounted) setState(() => _errorActive = e.toString());
+      if (!mounted || search != _searchQuery.trim()) return;
+      setState(() => _errorActive = e.toString());
     } finally {
-      if (mounted) setState(() => _loadingActive = false);
+      if (!mounted || search != _searchQuery.trim()) return;
+      setState(() => _loadingActive = false);
     }
   }
 
-  Future<void> _fetchAllSupplies() async {
-    setState(() {
-      _loadingAll = true;
-      _errorAll = null;
-    });
+  Future<void> _fetchAllSupplies({bool showLoading = true}) async {
+    final search = _searchQuery.trim();
+
+    if (showLoading) {
+      setState(() {
+        _loadingAll = true;
+        _errorAll = null;
+      });
+    }
 
     try {
-      final list = await EquipmentSupplyService.getAllSupplies();
-      if (mounted) setState(() => _allSupplies = list);
+      final list = await EquipmentSupplyService.getAllSupplies(
+        search: search.isEmpty ? null : search,
+      );
+      if (!mounted || search != _searchQuery.trim()) return;
+      setState(() {
+        _allSupplies = list;
+        _errorAll = null;
+      });
     } catch (e) {
-      if (mounted) setState(() => _errorAll = e.toString());
+      if (!mounted || search != _searchQuery.trim()) return;
+      setState(() => _errorAll = e.toString());
     } finally {
-      if (mounted) setState(() => _loadingAll = false);
+      if (!mounted || search != _searchQuery.trim()) return;
+      setState(() => _loadingAll = false);
     }
   }
 
@@ -277,21 +316,10 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         elevation: 1,
-        title: _isSearching
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Search supplies...',
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(color: Colors.grey),
-                ),
-                style: const TextStyle(color: Colors.black),
-              )
-            : const Text(
-                'Equipment Supplies',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+        title: const Text(
+          'Equipment Supplies',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
@@ -358,22 +386,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
           ),
         ),
         actions: [
-          IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
-            onPressed: () {
-              setState(() {
-                if (_isSearching) {
-                  _isSearching = false;
-                  _searchController.clear();
-                  _searchQuery = '';
-                } else {
-                  _isSearching = true;
-                }
-              });
-            },
-          ),
-          if (!_isSearching)
-            IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
         ],
       ),
       floatingActionButton: Provider.of<AuthService>(context).canCreate
@@ -385,11 +398,69 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
               label: const Text('New Supply'),
             )
           : null,
-      body: TabBarView(
-        controller: _tabController,
-        children: [_buildActiveList(), _buildHistoryList()],
+      body: Column(
+        children: [
+          _buildSearchBar(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [_buildActiveList(), _buildHistoryList()],
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: TextField(
+        controller: _searchController,
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          hintText: 'Search by patient, care of, or equipment',
+          prefixIcon: const Icon(Icons.search, size: 20),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  onPressed: () {
+                    _searchController.clear();
+                    FocusScope.of(context).unfocus();
+                  },
+                )
+              : null,
+          filled: true,
+          fillColor: Colors.grey.shade50,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.grey.shade200),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.grey.shade200),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Colors.indigo, width: 1.5),
+          ),
+        ),
+      ),
+    );
+  }
+
+  bool _matchesSearch(EquipmentSupply supply) {
+    if (_searchQuery.isEmpty) return true;
+
+    final q = _searchQuery.toLowerCase();
+    return (supply.patientName?.toLowerCase().contains(q) ?? false) ||
+        (supply.careOf?.toLowerCase().contains(q) ?? false) ||
+        supply.equipmentName.toLowerCase().contains(q);
   }
 
   // --- Active Supplies Tab ---
@@ -400,16 +471,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
     if (_errorActive != null) {
       return _buildErrorWidget(_errorActive!, _fetchActiveSupplies);
     }
-    final filteredList = _activeSupplies.where((s) {
-      if (_searchQuery.isEmpty) return true;
-      final q = _searchQuery.toLowerCase();
-      return (s.patientName?.toLowerCase().contains(q) ?? false) ||
-          (s.receiverName?.toLowerCase().contains(q) ?? false) ||
-          s.equipmentName.toLowerCase().contains(q) ||
-          s.equipmentUniqueId.toLowerCase().contains(q) ||
-          (s.patientPhone?.toLowerCase().contains(q) ?? false) ||
-          (s.receiverPhone?.toLowerCase().contains(q) ?? false);
-    }).toList();
+    final filteredList = _activeSupplies.where(_matchesSearch).toList();
 
     if (filteredList.isEmpty) {
       if (_searchQuery.isNotEmpty) {
@@ -448,16 +510,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
     if (_errorAll != null) {
       return _buildErrorWidget(_errorAll!, _fetchAllSupplies);
     }
-    final filteredList = _allSupplies.where((s) {
-      if (_searchQuery.isEmpty) return true;
-      final q = _searchQuery.toLowerCase();
-      return (s.patientName?.toLowerCase().contains(q) ?? false) ||
-          (s.receiverName?.toLowerCase().contains(q) ?? false) ||
-          s.equipmentName.toLowerCase().contains(q) ||
-          s.equipmentUniqueId.toLowerCase().contains(q) ||
-          (s.patientPhone?.toLowerCase().contains(q) ?? false) ||
-          (s.receiverPhone?.toLowerCase().contains(q) ?? false);
-    }).toList();
+    final filteredList = _allSupplies.where(_matchesSearch).toList();
 
     if (filteredList.isEmpty) {
       if (_searchQuery.isNotEmpty) {

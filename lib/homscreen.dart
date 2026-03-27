@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:oruma_app/eq_supply.dart';
 import 'package:oruma_app/equipment_list_page.dart';
@@ -660,6 +661,55 @@ class _HomescreenState extends State<Homescreen> {
     );
   }
 
+  void _showQRModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  'assets/QR.jpeg',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    if (kIsWeb) {
+                      return Image.network(
+                        'assets/QR.jpeg',
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const _QrImageFallback(),
+                      );
+                    }
+
+                    return const _QrImageFallback();
+                  },
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(bottom: 20.0, left: 16.0, right: 16.0),
+              child: Text(
+                'ORUMA PALLIATIVE CARE SOCIETY KODUR',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A237E),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
   Widget _buildProfileMenuItem({
     required IconData icon,
     required String title,
@@ -739,6 +789,22 @@ class _HomescreenState extends State<Homescreen> {
                     ),
                     Row(
                       children: [
+                        GestureDetector(
+                          onTap: () => _showQRModal(context),
+                          child: Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.qr_code_2,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
                         GestureDetector(
                           onTap: _showNotifications,
                           child: Stack(
@@ -1329,6 +1395,38 @@ class _HomescreenState extends State<Homescreen> {
       selected: isSelected,
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+    );
+  }
+}
+
+class _QrImageFallback extends StatelessWidget {
+  const _QrImageFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      color: const Color(0xFFF5F7FB),
+      child: const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.qr_code_2,
+            size: 64,
+            color: Color(0xFF1A237E),
+          ),
+          SizedBox(height: 12),
+          Text(
+            'QR image unavailable',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1A237E),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

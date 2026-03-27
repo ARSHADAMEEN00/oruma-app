@@ -5,6 +5,7 @@ import 'package:oruma_app/models/equipment.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:oruma_app/services/equipment_service.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
+import 'package:intl/intl.dart';
 
 class EqSupply extends StatefulWidget {
   const EqSupply({super.key});
@@ -21,6 +22,7 @@ class _EqSupplyState extends State<EqSupply> {
   Patient? _selectedPatient;
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _careOfController = TextEditingController();
+  final TextEditingController _supplyDateController = TextEditingController();
   final TextEditingController _receiverNameController = TextEditingController();
   final TextEditingController _receiverPhoneController =
       TextEditingController();
@@ -32,13 +34,73 @@ class _EqSupplyState extends State<EqSupply> {
   // Data
   List<Equipment> _availableEquipment = [];
   List<Patient> _patients = [];
+  late DateTime _selectedSupplyDate;
   bool _loading = true;
   bool _submitting = false;
 
   @override
   void initState() {
     super.initState();
+    _selectedSupplyDate = _normalizeDate(DateTime.now());
+    _supplyDateController.text = _formatSupplyDate(_selectedSupplyDate);
     _loadInitialData();
+  }
+
+  DateTime _normalizeDate(DateTime date) {
+    return DateTime(date.year, date.month, date.day, 12, 0, 0);
+  }
+
+  String _formatSupplyDate(DateTime date) {
+    return DateFormat('dd/MM/yyyy').format(date);
+  }
+
+  DateTime _minimumSupplyDate() {
+    final purchaseDate = _selectedEquipment?.purchaseDate;
+    if (purchaseDate != null) {
+      return _normalizeDate(purchaseDate);
+    }
+
+    return DateTime(2000);
+  }
+
+  void _setSupplyDate(DateTime date) {
+    _selectedSupplyDate = _normalizeDate(date);
+    _supplyDateController.text = _formatSupplyDate(_selectedSupplyDate);
+  }
+
+  Future<void> _pickSupplyDate() async {
+    final today = _normalizeDate(DateTime.now());
+    final firstDate = _minimumSupplyDate();
+    final initialDate = _selectedSupplyDate.isBefore(firstDate)
+        ? firstDate
+        : _selectedSupplyDate.isAfter(today)
+            ? today
+            : _selectedSupplyDate;
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: today,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Colors.orange,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _setSupplyDate(picked);
+      });
+    }
   }
 
   Future<void> _loadInitialData() async {
@@ -62,6 +124,7 @@ class _EqSupplyState extends State<EqSupply> {
   void dispose() {
     _notesController.dispose();
     _careOfController.dispose();
+    _supplyDateController.dispose();
     _receiverNameController.dispose();
     _receiverPhoneController.dispose();
     _receiverAddressController.dispose();
@@ -132,6 +195,8 @@ class _EqSupplyState extends State<EqSupply> {
       return;
     }
 
+    if (!_formKey.currentState!.validate()) return;
+
     setState(() => _submitting = true);
 
     try {
@@ -147,7 +212,7 @@ class _EqSupplyState extends State<EqSupply> {
         receiverPhone: _receiverPhoneController.text.trim(),
         receiverAddress: _receiverAddressController.text.trim(),
         receiverPlace: _receiverPlaceController.text.trim(),
-        supplyDate: DateTime.now(),
+        supplyDate: _selectedSupplyDate,
         notes: _notesController.text.trim(),
       );
 
@@ -274,6 +339,13 @@ class _EqSupplyState extends State<EqSupply> {
                                 onSelected: (Equipment equipment) {
                                   setState(() {
                                     _selectedEquipment = equipment;
+                                    final minimumSupplyDate =
+                                        _minimumSupplyDate();
+                                    if (_selectedSupplyDate.isBefore(
+                                      minimumSupplyDate,
+                                    )) {
+                                      _setSupplyDate(minimumSupplyDate);
+                                    }
                                   });
                                 },
                                 fieldViewBuilder:
@@ -460,6 +532,26 @@ class _EqSupplyState extends State<EqSupply> {
                                   ),
                                 ),
                               ],
+                              const SizedBox(height: 16),
+
+                              TextFormField(
+                                controller: _supplyDateController,
+                                readOnly: true,
+                                onTap: _submitting ? null : _pickSupplyDate,
+                                validator: (value) => value == null || value.isEmpty
+                                    ? 'Please select a supply date'
+                                    : null,
+                                decoration: _inputDecoration(
+                                  'Supply Date',
+                                  Icons.calendar_today_outlined,
+                                ).copyWith(
+                                  hintText: 'Select supply date',
+                                  suffixIcon: Icon(
+                                    Icons.arrow_drop_down,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                              ),
                               const SizedBox(height: 16),
 
                               // Patient Autocomplete Search
@@ -716,7 +808,7 @@ class _EqSupplyState extends State<EqSupply> {
                               _buildTextField(
                                 controller: _careOfController,
                                 label: 'C/O (Care Of)',
-                                hint: 'Guardian Name',
+                                hint: 'Volunteer / Member Name',
                                 icon: Icons.supervised_user_circle_outlined,
                               ),
                             ],

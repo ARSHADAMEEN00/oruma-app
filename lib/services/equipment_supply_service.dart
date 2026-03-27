@@ -6,9 +6,15 @@ class EquipmentSupplyService {
   EquipmentSupplyService._();
 
   /// Get all supplies
-  static Future<List<EquipmentSupply>> getAllSupplies() async {
+  static Future<List<EquipmentSupply>> getAllSupplies({String? search}) async {
+    String url = ApiConfig.equipmentSuppliesEndpoint;
+    if (search != null && search.trim().isNotEmpty) {
+      final encodedSearch = Uri.encodeQueryComponent(search.trim());
+      url += '?search=$encodedSearch';
+    }
+
     final result = await ApiService.get<List<dynamic>>(
-      ApiConfig.equipmentSuppliesEndpoint,
+      url,
     );
 
     if (result.isSuccess && result.data != null) {
@@ -20,9 +26,15 @@ class EquipmentSupplyService {
   }
 
   /// Get active supplies (updates UI)
-  static Future<List<EquipmentSupply>> getActiveSupplies() async {
+  static Future<List<EquipmentSupply>> getActiveSupplies({String? search}) async {
+    String url = '${ApiConfig.equipmentSuppliesEndpoint}/active';
+    if (search != null && search.trim().isNotEmpty) {
+      final encodedSearch = Uri.encodeQueryComponent(search.trim());
+      url += '?search=$encodedSearch';
+    }
+
     final result = await ApiService.get<List<dynamic>>(
-      '${ApiConfig.equipmentSuppliesEndpoint}/active',
+      url,
     );
 
     if (result.isSuccess && result.data != null) {

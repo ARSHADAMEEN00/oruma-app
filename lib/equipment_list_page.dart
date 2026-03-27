@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:oruma_app/eq_supply.dart'; // Import for Distribute Page
 import 'package:oruma_app/models/equipment.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:oruma_app/services/equipment_service.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
 
@@ -31,28 +34,41 @@ class _EquipmentListPageState extends State<EquipmentListPage>
 
   // Search
   final TextEditingController _searchController = TextEditingController();
-  bool _isSearching = false;
   String _searchQuery = '';
+  Timer? _availableSearchDebounce;
+  int _availableRequestId = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(_handleTabSelection);
-    _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text.toLowerCase();
-      });
-    });
+    _searchController.addListener(_handleSearchChanged);
     _loadAllData();
   }
 
   @override
   void dispose() {
+    _availableSearchDebounce?.cancel();
+    _searchController.removeListener(_handleSearchChanged);
     _tabController.removeListener(_handleTabSelection);
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _handleSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text;
+    });
+
+    if (_currentIndex == 0) {
+      _availableSearchDebounce?.cancel();
+      _availableSearchDebounce = Timer(
+        const Duration(milliseconds: 300),
+        () => _fetchAvailableEquipment(search: _searchQuery),
+      );
+    }
   }
 
   void _handleTabSelection() {
@@ -61,7 +77,7 @@ class _EquipmentListPageState extends State<EquipmentListPage>
         _currentIndex = _tabController.index;
       });
       if (_currentIndex == 0) {
-        _fetchAvailableEquipment();
+        _fetchAvailableEquipment(search: _searchQuery);
       } else {
         _fetchDistributedEquipment();
       }
@@ -69,23 +85,36 @@ class _EquipmentListPageState extends State<EquipmentListPage>
   }
 
   void _loadAllData() {
-    _fetchAvailableEquipment();
+    _fetchAvailableEquipment(search: _searchQuery);
     _fetchDistributedEquipment();
   }
 
-  Future<void> _fetchAvailableEquipment() async {
+  Future<void> _fetchAvailableEquipment({String? search}) async {
+    final requestId = ++_availableRequestId;
+    final normalizedSearch = (search ?? _searchQuery).trim();
+
     setState(() {
       _loadingAvailable = true;
       _errorAvailable = null;
     });
 
     try {
-      final list = await EquipmentService.getAvailableEquipment();
-      if (mounted) setState(() => _availableItems = list);
+      final list = await EquipmentService.getAvailableEquipment(
+        search: normalizedSearch,
+      );
+      if (!mounted || requestId != _availableRequestId) {
+        return;
+      }
+      setState(() => _availableItems = list);
     } catch (e) {
-      if (mounted) setState(() => _errorAvailable = e.toString());
+      if (!mounted || requestId != _availableRequestId) {
+        return;
+      }
+      setState(() => _errorAvailable = e.toString());
     } finally {
-      if (mounted) setState(() => _loadingAvailable = false);
+      if (mounted && requestId == _availableRequestId) {
+        setState(() => _loadingAvailable = false);
+      }
     }
   }
 
@@ -111,7 +140,9 @@ class _EquipmentListPageState extends State<EquipmentListPage>
         context,
         MaterialPageRoute(builder: (context) => const EquipmentFormPage()),
       ).then((val) {
-        if (val == true) _fetchAvailableEquipment();
+        if (val == true) {
+          _fetchAvailableEquipment(search: _searchQuery);
+        }
       });
     } else {
       Navigator.push(
@@ -131,21 +162,10 @@ class _EquipmentListPageState extends State<EquipmentListPage>
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         elevation: 1,
-        title: _isSearching
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  hintText: 'Search...',
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(color: Colors.grey),
-                ),
-                style: const TextStyle(color: Colors.black),
-              )
-            : const Text(
-                'Equipment List',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+        title: const Text(
+          'Equipment List',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
@@ -174,39 +194,79 @@ class _EquipmentListPageState extends State<EquipmentListPage>
         ),
         actions: [
           IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            icon: const Icon(Icons.refresh),
             onPressed: () {
-              setState(() {
-                if (_isSearching) {
-                  _isSearching = false;
-                  _searchController.clear();
-                  _searchQuery = '';
-                } else {
-                  _isSearching = true;
-                }
-              });
+              _fetchAvailableEquipment(search: _searchQuery);
+              _fetchDistributedEquipment();
             },
           ),
-          if (!_isSearching)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: () {
-                _fetchAvailableEquipment();
-                _fetchDistributedEquipment();
-              },
-            ),
         ],
       ),
       floatingActionButton: Provider.of<AuthService>(context).canCreate
           ? FloatingActionButton.extended(
               onPressed: _navigateToAdd,
               icon: const Icon(Icons.add),
-              label: Text(_tabController.index == 0 ? 'Add Equipment' : 'Distribute'),
+              label: Text(
+                _tabController.index == 0 ? 'Add Equipment' : 'Distribute',
+              ),
             )
           : null,
-      body: TabBarView(
-        controller: _tabController,
-        children: [_buildAvailableList(), _buildDistributedList()],
+      body: Column(
+        children: [
+          _buildSearchBar(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [_buildAvailableList(), _buildDistributedList()],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    final isAvailableTab = _currentIndex == 0;
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: TextField(
+        controller: _searchController,
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          hintText: isAvailableTab
+              ? 'Search by equipment name or unique ID'
+              : 'Search by patient or equipment',
+          prefixIcon: const Icon(Icons.search, size: 20),
+          suffixIcon: _searchQuery.trim().isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  onPressed: () {
+                    _searchController.clear();
+                    FocusScope.of(context).unfocus();
+                  },
+                )
+              : null,
+          filled: true,
+          fillColor: Colors.grey.shade50,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.grey.shade200),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.grey.shade200),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Colors.indigo, width: 1.5),
+          ),
+        ),
       ),
     );
   }
@@ -224,34 +284,18 @@ class _EquipmentListPageState extends State<EquipmentListPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inventory_2_outlined, size: 60, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'No available equipment.',
-              style: TextStyle(color: Colors.grey[600]),
+            Icon(
+              _searchQuery.trim().isNotEmpty
+                  ? Icons.search_off
+                  : Icons.inventory_2_outlined,
+              size: 60,
+              color: Colors.grey[400],
             ),
-          ],
-        ),
-      );
-    }
-
-    final filteredItems = _availableItems.where((eq) {
-      if (_searchQuery.isEmpty) return true;
-      final query = _searchQuery.toLowerCase();
-      return eq.name.toLowerCase().contains(query) ||
-          eq.uniqueId.toLowerCase().contains(query) ||
-          eq.place.toLowerCase().contains(query);
-    }).toList();
-
-    if (filteredItems.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.search_off, size: 60, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
-              'No matching equipment found.',
+              _searchQuery.trim().isNotEmpty
+                  ? 'No matching equipment found.'
+                  : 'No available equipment.',
               style: TextStyle(color: Colors.grey[600]),
             ),
           ],
@@ -261,10 +305,10 @@ class _EquipmentListPageState extends State<EquipmentListPage>
 
     return ListView.separated(
       padding: const EdgeInsets.all(12),
-      itemCount: filteredItems.length,
+      itemCount: _availableItems.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final eq = filteredItems[index];
+        final eq = _availableItems[index];
         return Card(
           elevation: 2,
           shadowColor: Colors.black12,
@@ -282,20 +326,26 @@ class _EquipmentListPageState extends State<EquipmentListPage>
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
-              '${eq.name}\n${eq.place.isNotEmpty ? ' ${eq.place}' : ''}',
+              eq.name,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            isThreeLine: true,
-            trailing: (context.read<AuthService>().canEdit || context.read<AuthService>().canDelete)
+            isThreeLine: false,
+            trailing:
+                (context.read<AuthService>().canEdit ||
+                    context.read<AuthService>().canDelete)
                 ? PopupMenuButton<String>(
                     onSelected: (value) async {
                       if (value == 'edit') {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => EquipmentFormPage(equipment: eq),
+                            builder: (context) =>
+                                EquipmentFormPage(equipment: eq),
                           ),
                         ).then((result) {
-                          if (result == true) _fetchAvailableEquipment();
+                          if (result == true) {
+                            _fetchAvailableEquipment(search: _searchQuery);
+                          }
                         });
                       } else if (value == 'delete') {
                         final confirm = await showDialog<bool>(
@@ -317,7 +367,7 @@ class _EquipmentListPageState extends State<EquipmentListPage>
                         );
                         if (confirm == true) {
                           await EquipmentService.deleteEquipment(eq.id!);
-                          _fetchAvailableEquipment();
+                          _fetchAvailableEquipment(search: _searchQuery);
                         }
                       }
                     },
@@ -325,7 +375,10 @@ class _EquipmentListPageState extends State<EquipmentListPage>
                       final auth = context.read<AuthService>();
                       return [
                         if (auth.canEdit)
-                          const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Text('Edit'),
+                          ),
                         if (auth.canDelete)
                           const PopupMenuItem(
                             value: 'delete',
@@ -419,7 +472,10 @@ class _EquipmentListPageState extends State<EquipmentListPage>
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${supply.equipmentUniqueId} - ${supply.equipmentName}'),
+                Text(
+                  '${supply.equipmentUniqueId} - ${supply.equipmentName}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 Text('Supplied: ${_formatDate(supply.supplyDate)}'),
               ],
             ),
@@ -545,7 +601,8 @@ class _EquipmentListPageState extends State<EquipmentListPage>
             const SizedBox(height: 16),
 
             // Patient Details (if exists)
-            if (supply.patientName != null && supply.patientName!.isNotEmpty) ...[
+            if (supply.patientName != null &&
+                supply.patientName!.isNotEmpty) ...[
               const Text(
                 'Patient Details',
                 style: TextStyle(
@@ -560,18 +617,20 @@ class _EquipmentListPageState extends State<EquipmentListPage>
                 'Name',
                 supply.patientName!,
               ),
-              if (supply.patientPhone != null && supply.patientPhone!.isNotEmpty)
+              if (supply.patientPhone != null &&
+                  supply.patientPhone!.isNotEmpty)
                 _buildDetailRow(
                   Icons.phone_outlined,
                   'Phone',
                   supply.patientPhone!,
                 ),
-               if (supply.patientAddress != null && supply.patientAddress!.isNotEmpty)
-              _buildDetailRow(
-                Icons.location_on_outlined,
-                'Address',
-                supply.patientAddress!,
-              ),
+              if (supply.patientAddress != null &&
+                  supply.patientAddress!.isNotEmpty)
+                _buildDetailRow(
+                  Icons.location_on_outlined,
+                  'Address',
+                  supply.patientAddress!,
+                ),
               const SizedBox(height: 16),
               const Divider(),
               const SizedBox(height: 16),
@@ -594,26 +653,26 @@ class _EquipmentListPageState extends State<EquipmentListPage>
               ),
             const SizedBox(height: 24),
             if (context.read<AuthService>().canEdit)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _returnSupply(supply);
-                },
-                icon: const Icon(Icons.assignment_return_outlined),
-                label: const Text('Mark as Returned'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  backgroundColor: Colors.orange.shade50,
-                  foregroundColor: Colors.orange.shade700,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _returnSupply(supply);
+                  },
+                  icon: const Icon(Icons.assignment_return_outlined),
+                  label: const Text('Mark as Returned'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    backgroundColor: Colors.orange.shade50,
+                    foregroundColor: Colors.orange.shade700,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
-            ),
             const SizedBox(height: 16),
           ],
         ),
@@ -701,6 +760,12 @@ class _EquipmentListPageState extends State<EquipmentListPage>
               'Purchased From',
               eq.purchasedFrom ?? 'N/A',
             ),
+            if (eq.purchaseDate != null)
+              _buildDetailRow(
+                Icons.calendar_today_outlined,
+                'Purchase Date',
+                DateFormat('d MMM yyyy').format(eq.purchaseDate!),
+              ),
             if (eq.place.isNotEmpty)
               _buildDetailRow(
                 Icons.location_on_outlined,
@@ -720,32 +785,34 @@ class _EquipmentListPageState extends State<EquipmentListPage>
             Row(
               children: [
                 if (context.read<AuthService>().canEdit) ...[
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              EquipmentFormPage(equipment: eq),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                EquipmentFormPage(equipment: eq),
+                          ),
+                        ).then((result) {
+                          if (result == true) {
+                            _fetchAvailableEquipment(search: _searchQuery);
+                          }
+                        });
+                      },
+                      icon: const Icon(Icons.edit_outlined),
+                      label: const Text('Edit Details'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: BorderSide(color: Colors.indigo.shade200),
+                        foregroundColor: Colors.indigo,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ).then((result) {
-                        if (result == true) _fetchAvailableEquipment();
-                      });
-                    },
-                    icon: const Icon(Icons.edit_outlined),
-                    label: const Text('Edit Details'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: BorderSide(color: Colors.indigo.shade200),
-                      foregroundColor: Colors.indigo,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
-                ),
                 ],
                 if (context.read<AuthService>().canDelete) ...[
                   const SizedBox(width: 12),
@@ -775,9 +842,10 @@ class _EquipmentListPageState extends State<EquipmentListPage>
                           ),
                         );
                         if (confirm == true) {
-                          if (mounted) Navigator.pop(context);
+                          if (!mounted) return;
+                          Navigator.of(this.context).pop();
                           await EquipmentService.deleteEquipment(eq.id!);
-                          _fetchAvailableEquipment();
+                          _fetchAvailableEquipment(search: _searchQuery);
                         }
                       },
                       icon: const Icon(Icons.delete_outline),
@@ -896,7 +964,7 @@ class _EquipmentListPageState extends State<EquipmentListPage>
             context,
           ).showSnackBar(const SnackBar(content: Text('✅ Equipment returned')));
           _fetchDistributedEquipment();
-          _fetchAvailableEquipment();
+          _fetchAvailableEquipment(search: _searchQuery);
         }
       } catch (e) {
         if (mounted) {
@@ -930,10 +998,12 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
   late TextEditingController _nameController;
   late TextEditingController _quantityController;
   late TextEditingController _purchasedFromController;
+  late TextEditingController _purchaseDateController;
   late TextEditingController _purchasePlaceController;
   late TextEditingController _phoneController;
   late TextEditingController _serialNoPrefixController;
   late TextEditingController _uniqueIdController;
+  late DateTime _purchaseDate;
   String? _selectedStoragePlace;
   bool _isSubmitting = false;
 
@@ -946,6 +1016,12 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
     _quantityController = TextEditingController(text: '1');
     _purchasedFromController = TextEditingController(
       text: widget.equipment?.purchasedFrom ?? '',
+    );
+    _purchaseDate = _normalizeDate(
+      widget.equipment?.purchaseDate ?? DateTime.now(),
+    );
+    _purchaseDateController = TextEditingController(
+      text: _formatPurchaseDate(_purchaseDate),
     );
     _purchasePlaceController = TextEditingController(
       text: widget.equipment?.place ?? '',
@@ -962,6 +1038,43 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
     _selectedStoragePlace = widget.equipment?.storagePlace ?? 'Store';
   }
 
+  DateTime _normalizeDate(DateTime date) {
+    return DateTime(date.year, date.month, date.day, 12, 0, 0);
+  }
+
+  String _formatPurchaseDate(DateTime date) {
+    return DateFormat('dd/MM/yyyy').format(date);
+  }
+
+  Future<void> _pickPurchaseDate() async {
+    final today = _normalizeDate(DateTime.now());
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _purchaseDate.isAfter(today) ? today : _purchaseDate,
+      firstDate: DateTime(2000),
+      lastDate: today,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Colors.indigo,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _purchaseDate = _normalizeDate(picked);
+        _purchaseDateController.text = _formatPurchaseDate(_purchaseDate);
+      });
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSubmitting = true);
@@ -970,8 +1083,11 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
         await EquipmentService.updateEquipment(
           widget.equipment!.id!,
           name: _nameController.text.trim(),
-          serialNo: _serialNoPrefixController.text.trim().isNotEmpty ? _serialNoPrefixController.text.trim() : null,
+          serialNo: _serialNoPrefixController.text.trim().isNotEmpty
+              ? _serialNoPrefixController.text.trim()
+              : null,
           purchasedFrom: _purchasedFromController.text.trim(),
+          purchaseDate: _purchaseDate,
           place: _purchasePlaceController.text.trim(),
           phone: _phoneController.text.trim(),
           storagePlace: _selectedStoragePlace,
@@ -986,8 +1102,11 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
         final response = await EquipmentService.createEquipment(
           name: _nameController.text.trim(),
           quantity: int.parse(_quantityController.text.trim()),
-          serialNo: _serialNoPrefixController.text.trim().isNotEmpty ? _serialNoPrefixController.text.trim() : null,
+          serialNo: _serialNoPrefixController.text.trim().isNotEmpty
+              ? _serialNoPrefixController.text.trim()
+              : null,
           purchasedFrom: _purchasedFromController.text.trim(),
+          purchaseDate: _purchaseDate,
           place: _purchasePlaceController.text.trim(),
           phone: _phoneController.text.trim(),
           storagePlace: _selectedStoragePlace,
@@ -1015,6 +1134,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
     _nameController.dispose();
     _quantityController.dispose();
     _purchasedFromController.dispose();
+    _purchaseDateController.dispose();
     _purchasePlaceController.dispose();
     _phoneController.dispose();
     _serialNoPrefixController.dispose();
@@ -1220,6 +1340,8 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
                     icon: Icons.store_outlined,
                   ),
                   const SizedBox(height: 12),
+                  _buildDateField(),
+                  const SizedBox(height: 12),
                   _buildCompactField(
                     controller: _purchasePlaceController,
                     label: 'Place',
@@ -1273,6 +1395,52 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
     );
   }
 
+  Widget _buildDateField() {
+    return TextFormField(
+      controller: _purchaseDateController,
+      readOnly: true,
+      onTap: _isSubmitting ? null : _pickPurchaseDate,
+      validator: (value) => value == null || value.isEmpty ? 'Required' : null,
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: Colors.black,
+      ),
+      decoration: InputDecoration(
+        labelText: 'Purchase Date',
+        prefixIcon: Icon(
+          Icons.calendar_today_outlined,
+          size: 20,
+          color: Colors.grey[400],
+        ),
+        suffixIcon: Icon(Icons.arrow_drop_down, color: Colors.grey[500]),
+        filled: true,
+        fillColor: Colors.grey[50],
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.indigo, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCompactField({
     required TextEditingController controller,
     required String label,
@@ -1295,7 +1463,9 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
         labelText: label,
         prefixIcon: Icon(icon, size: 20, color: Colors.grey[400]),
         filled: true,
-        fillColor: readOnly ? Colors.grey[200] : Colors.grey[50], // Very subtle background
+        fillColor: readOnly
+            ? Colors.grey[200]
+            : Colors.grey[50], // Very subtle background
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,

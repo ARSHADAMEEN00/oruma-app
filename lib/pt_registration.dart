@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/services/config_service.dart';
@@ -110,11 +111,12 @@ class _patientrigisterState extends State<patientrigister> {
     if (_selectedVillage == null) {
       filteredWards = [];
     } else {
-      filteredWards = allWards
-          .where((w) => w.village == _selectedVillage)
-          .map((w) => w.title)
-          .toList()
-        ..sort(compareWardTitles);
+      filteredWards =
+          allWards
+              .where((w) => w.village == _selectedVillage)
+              .map((w) => w.number)
+              .toList()
+            ..sort(compareWardNumbers);
     }
     // If current selected ward is not in the filtered list, clear it
     if (_selectedWardTitle != null &&
@@ -230,11 +232,12 @@ class _patientrigisterState extends State<patientrigister> {
                   TextField(
                     controller: newWardController,
                     decoration: const InputDecoration(
-                      labelText: 'Ward Name',
-                      hintText: 'e.g. WARD 1',
+                      labelText: 'Ward Number',
+                      hintText: 'e.g. 1',
                       border: OutlineInputBorder(),
                     ),
-                    textCapitalization: TextCapitalization.characters,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     autofocus: true,
                   ),
                 ],
@@ -248,33 +251,41 @@ class _patientrigisterState extends State<patientrigister> {
                   onPressed: (isSaving || popupSelectedVillage == null)
                       ? null
                       : () async {
-                          final newWardTitle =
-                              newWardController.text.trim().toUpperCase();
-                          if (newWardTitle.isEmpty) return;
+                          final newWardNumber = normalizeWardNumberValue(
+                            newWardController.text,
+                          );
+                          if (newWardNumber.isEmpty) return;
 
                           setStateBuilder(() => isSaving = true);
 
                           try {
                             final config = await ConfigService.getConfig();
-                            final exists = config.wards.any((w) =>
-                                w.title.toUpperCase() == newWardTitle &&
-                                w.village == popupSelectedVillage);
+                            final exists = config.wards.any(
+                              (w) =>
+                                  w.number == newWardNumber &&
+                                  w.village == popupSelectedVillage,
+                            );
 
                             if (!exists) {
-                              config.wards.add(WardConfig(
-                                  title: newWardTitle,
-                                  village: popupSelectedVillage!));
+                              config.wards.add(
+                                WardConfig(
+                                  number: newWardNumber,
+                                  village: popupSelectedVillage!,
+                                ),
+                              );
                               await ConfigService.updateConfig(config);
                             }
 
                             setState(() {
-                              if (!allWards.any((w) =>
-                                  w.title == newWardTitle &&
-                                  w.village == popupSelectedVillage)) {
+                              if (!allWards.any(
+                                (w) =>
+                                    w.number == newWardNumber &&
+                                    w.village == popupSelectedVillage,
+                              )) {
                                 allWards = sortWardConfigs([
                                   ...allWards,
                                   WardConfig(
-                                    title: newWardTitle,
+                                    number: newWardNumber,
                                     village: popupSelectedVillage!,
                                   ),
                                 ]);
@@ -283,7 +294,7 @@ class _patientrigisterState extends State<patientrigister> {
                               // update the filtered list and select it. Otherwise just refresh.
                               if (_selectedVillage == popupSelectedVillage) {
                                 _updateFilteredWards();
-                                _selectedWardTitle = newWardTitle;
+                                _selectedWardTitle = newWardNumber;
                               }
                             });
 
@@ -293,8 +304,9 @@ class _patientrigisterState extends State<patientrigister> {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                    content: Text('Failed to add ward: $e'),
-                                    backgroundColor: Colors.red),
+                                  content: Text('Failed to add ward: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
                               );
                             }
                           }
@@ -308,7 +320,10 @@ class _patientrigisterState extends State<patientrigister> {
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Text('Add'),
                 ),
               ],
@@ -346,51 +361,65 @@ class _patientrigisterState extends State<patientrigister> {
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: isSaving ? null : () async {
-                    final newDisease = newDiseaseController.text.trim().toUpperCase();
-                    if (newDisease.isEmpty) return;
-                    
-                    setStateBuilder(() => isSaving = true);
-                    
-                    try {
-                      // Fetch current config to update it
-                      final config = await ConfigService.getConfig();
-                      if (!config.diseases.contains(newDisease)) {
-                        config.diseases.add(newDisease);
-                        await ConfigService.updateConfig(config);
-                      }
-                      
-                      // Update the local state
-                      setState(() {
-                        if (!diseases.contains(newDisease)) {
-                          diseases.add(newDisease);
-                        }
-                        if (!_selectedDiseases.contains(newDisease)) {
-                          _selectedDiseases.add(newDisease);
-                        }
-                      });
-                      
-                      if (context.mounted) Navigator.pop(context);
-                    } catch (e) {
-                      setStateBuilder(() => isSaving = false);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to add disease: $e'), backgroundColor: Colors.red),
-                        );
-                      }
-                    }
-                  },
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          final newDisease = newDiseaseController.text
+                              .trim()
+                              .toUpperCase();
+                          if (newDisease.isEmpty) return;
+
+                          setStateBuilder(() => isSaving = true);
+
+                          try {
+                            // Fetch current config to update it
+                            final config = await ConfigService.getConfig();
+                            if (!config.diseases.contains(newDisease)) {
+                              config.diseases.add(newDisease);
+                              await ConfigService.updateConfig(config);
+                            }
+
+                            // Update the local state
+                            setState(() {
+                              if (!diseases.contains(newDisease)) {
+                                diseases.add(newDisease);
+                              }
+                              if (!_selectedDiseases.contains(newDisease)) {
+                                _selectedDiseases.add(newDisease);
+                              }
+                            });
+
+                            if (context.mounted) Navigator.pop(context);
+                          } catch (e) {
+                            setStateBuilder(() => isSaving = false);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to add disease: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A237E),
                     foregroundColor: Colors.white,
                   ),
-                  child: isSaving 
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Add'),
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Add'),
                 ),
               ],
             );
-          }
+          },
         );
       },
     );
@@ -415,9 +444,7 @@ class _patientrigisterState extends State<patientrigister> {
           centerTitle: true,
         ),
         body: const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFF1A237E),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFF1A237E)),
         ),
       );
     }
@@ -440,11 +467,7 @@ class _patientrigisterState extends State<patientrigister> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline,
-                color: Colors.red,
-                size: 64,
-              ),
+              const Icon(Icons.error_outline, color: Colors.red, size: 64),
               const SizedBox(height: 16),
               Text(
                 'Failed to load configuration',
@@ -583,7 +606,7 @@ class _patientrigisterState extends State<patientrigister> {
                       return null;
                     },
                   ),
-                   const SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   const Text(
                     "Gender",
                     style: TextStyle(
@@ -615,7 +638,7 @@ class _patientrigisterState extends State<patientrigister> {
                     }).toList(),
                   ),
                   if (_gender == null)
-                      const Padding(
+                    const Padding(
                       padding: EdgeInsets.only(top: 8.0),
                       child: Text(
                         "Please select a gender",
@@ -641,7 +664,9 @@ class _patientrigisterState extends State<patientrigister> {
                         return FilterChip(
                           label: Text(disease),
                           selected: isSelected,
-                          selectedColor: const Color(0xFF1A237E).withValues(alpha: 0.8),
+                          selectedColor: const Color(
+                            0xFF1A237E,
+                          ).withValues(alpha: 0.8),
                           backgroundColor: Colors.grey.shade100,
                           checkmarkColor: Colors.white,
                           labelStyle: TextStyle(
@@ -667,7 +692,13 @@ class _patientrigisterState extends State<patientrigister> {
                           children: [
                             Icon(Icons.add, size: 16, color: Color(0xFF1A237E)),
                             SizedBox(width: 4),
-                            Text('Other', style: TextStyle(color: Color(0xFF1A237E), fontWeight: FontWeight.bold)),
+                            Text(
+                              'Other',
+                              style: TextStyle(
+                                color: Color(0xFF1A237E),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ],
                         ),
                         backgroundColor: Colors.blue.shade50,
@@ -694,7 +725,7 @@ class _patientrigisterState extends State<patientrigister> {
                 title: "Contact Details",
                 icon: Icons.contact_phone_outlined,
                 children: [
-                   TextFormField(
+                  TextFormField(
                     controller: addressController,
                     maxLines: 2,
                     decoration: _buildInputDecoration(
@@ -715,7 +746,7 @@ class _patientrigisterState extends State<patientrigister> {
                     validator: (val) =>
                         val == null || val.isEmpty ? "Required" : null,
                   ),
-               
+
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: relationController,
@@ -726,7 +757,7 @@ class _patientrigisterState extends State<patientrigister> {
                     validator: (val) =>
                         val == null || val.isEmpty ? "Required" : null,
                   ),
-                     const SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: phone2Controller,
                     keyboardType: TextInputType.phone,
@@ -735,7 +766,6 @@ class _patientrigisterState extends State<patientrigister> {
                       Icons.phone_android,
                     ),
                   ),
-                 
                 ],
               ),
               const SizedBox(height: 20),
@@ -767,15 +797,19 @@ class _patientrigisterState extends State<patientrigister> {
                       Expanded(
                         child: DropdownButtonFormField<String>(
                           decoration: _buildInputDecoration(
-                            "Ward",
+                            "Ward Number",
                             Icons.apartment,
                           ),
                           value: _selectedWardTitle,
-                          hint: const Text("Select Ward"),
+                          hint: const Text("Select Ward Number"),
                           items: filteredWards
-                              .map((w) => DropdownMenuItem(value: w, child: Text(w)))
+                              .map(
+                                (w) =>
+                                    DropdownMenuItem(value: w, child: Text(w)),
+                              )
                               .toList(),
-                          onChanged: (v) => setState(() => _selectedWardTitle = v),
+                          onChanged: (v) =>
+                              setState(() => _selectedWardTitle = v),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -783,7 +817,11 @@ class _patientrigisterState extends State<patientrigister> {
                         margin: const EdgeInsets.only(top: 8),
                         child: IconButton(
                           onPressed: _showAddWardDialog,
-                          icon: const Icon(Icons.add_circle, color: Color(0xFF1A237E), size: 30),
+                          icon: const Icon(
+                            Icons.add_circle,
+                            color: Color(0xFF1A237E),
+                            size: 30,
+                          ),
                           tooltip: 'Add New Ward',
                         ),
                       ),
@@ -799,7 +837,10 @@ class _patientrigisterState extends State<patientrigister> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: locationLinkController,
-                    decoration: _buildInputDecoration("Location Link (Google Maps)", Icons.map),
+                    decoration: _buildInputDecoration(
+                      "Location Link (Google Maps)",
+                      Icons.map,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
@@ -941,8 +982,12 @@ class _patientrigisterState extends State<patientrigister> {
           age: int.parse(ageController.text),
           place: placeController.text,
           village: _selectedVillage!,
-          ward: _selectedWardTitle?.toUpperCase(),
-          locationLink: locationLinkController.text.trim().isEmpty ? null : locationLinkController.text.trim(),
+          ward: _selectedWardTitle == null
+              ? null
+              : normalizeWardNumberValue(_selectedWardTitle),
+          locationLink: locationLinkController.text.trim().isEmpty
+              ? null
+              : locationLinkController.text.trim(),
           disease: _selectedDiseases,
           plan: _selectedPlan!,
           registerId: widget.patient?.registerId,
@@ -956,7 +1001,8 @@ class _patientrigisterState extends State<patientrigister> {
           );
 
           // Optimistic update: If API response lacks locationLink but we sent it, preserve it
-          if (updated.locationLink == null && patientData.locationLink != null) {
+          if (updated.locationLink == null &&
+              patientData.locationLink != null) {
             updated = updated.copyWith(locationLink: patientData.locationLink);
           }
 

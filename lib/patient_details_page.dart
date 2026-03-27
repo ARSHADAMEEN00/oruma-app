@@ -31,7 +31,9 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
   Future<void> _fetchPatientDetails() async {
     if (_currentPatient.id == null) return;
     try {
-      final freshPatient = await PatientService.getPatientById(_currentPatient.id!);
+      final freshPatient = await PatientService.getPatientById(
+        _currentPatient.id!,
+      );
       debugPrint("Fetched Patient: ${freshPatient.name}");
       debugPrint("Location Link from API: ${freshPatient.locationLink}");
       if (mounted) {
@@ -181,7 +183,9 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("Building PatientDetailsPage. Location Link: ${_currentPatient}");
+    debugPrint(
+      "Building PatientDetailsPage. Location Link: ${_currentPatient}",
+    );
     return Scaffold(
       appBar: AppBar(
         title: const Text("Patient Details"),
@@ -251,7 +255,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
                       _currentPatient.name,
                     ),
                     _buildInfoTile(Icons.phone, "Phone", _currentPatient.phone),
-              
+
                     _buildInfoTile(
                       Icons.info_outline,
                       "Caregiver/Relation",
@@ -288,7 +292,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
                         _currentPatient.ward!.trim().isNotEmpty)
                       _buildInfoTile(
                         Icons.apartment,
-                        "Ward",
+                        "Ward Number",
                         _currentPatient.ward!,
                       ),
                     if (_currentPatient.locationLink != null &&
@@ -471,9 +475,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(color: Colors.grey.shade200),
-          ),
+          border: Border(top: BorderSide(color: Colors.grey.shade200)),
         ),
         child: Row(
           children: [

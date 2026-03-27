@@ -67,18 +67,27 @@ class _PatientListPageState extends State<PatientListPage> {
     if (_selectedVillage == 'All') {
       _filteredWardsList = ['All'];
     } else {
-      _filteredWardsList = ['All']..addAll(
+      _filteredWardsList = ['All']
+        ..addAll(
           _allWards
               .where((w) => w.village == _selectedVillage)
-              .map((w) => w.title)
+              .map((w) => w.number)
               .toList()
-            ..sort(compareWardTitles),
+            ..sort(compareWardNumbers),
         );
     }
     // If current selected ward is not in the filtered list, reset it to 'All'
     if (!_filteredWardsList.contains(_selectedWard)) {
       _selectedWard = 'All';
     }
+  }
+
+  String _wardFilterLabel(String value) {
+    if (value == 'All') {
+      return 'Ward';
+    }
+
+    return 'Ward $value';
   }
 
   @override
@@ -170,8 +179,11 @@ class _PatientListPageState extends State<PatientListPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline,
-                            size: 48, color: Colors.red),
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
+                        ),
                         const SizedBox(height: 16),
                         Text("Error: $_error"),
                         const SizedBox(height: 16),
@@ -187,8 +199,11 @@ class _PatientListPageState extends State<PatientListPage> {
                 // Client-side filtering as fallback/robustness
                 // We check if the API returned a mixed list despite the filter request.
                 final filteredPatients = _allPatients.where((p) {
-                  if (_selectedVillage != 'All' && p.village != _selectedVillage) return false;
-                  if (_selectedWard != 'All' && p.ward != _selectedWard) return false;
+                  if (_selectedVillage != 'All' &&
+                      p.village != _selectedVillage)
+                    return false;
+                  if (_selectedWard != 'All' && p.ward != _selectedWard)
+                    return false;
 
                   // Text search filter
                   if (_searchQuery.isNotEmpty) {
@@ -214,8 +229,11 @@ class _PatientListPageState extends State<PatientListPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.search_off,
-                              size: 64, color: Colors.grey[300]),
+                          Icon(
+                            Icons.search_off,
+                            size: 64,
+                            color: Colors.grey[300],
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             'No matching patients found',
@@ -256,7 +274,8 @@ class _PatientListPageState extends State<PatientListPage> {
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const patientrigister()),
+                    builder: (context) => const patientrigister(),
+                  ),
                 );
                 if (result == true) {
                   _loadPatients();
@@ -293,7 +312,7 @@ class _PatientListPageState extends State<PatientListPage> {
 
   Widget _buildTab(String label, int count, String filterKey) {
     final isSelected = _currentFilter == filterKey;
-    
+
     // Determine color based on filter type
     Color activeColor;
     if (filterKey == 'alive') {
@@ -345,10 +364,13 @@ class _PatientListPageState extends State<PatientListPage> {
               if (count > 0) ...[
                 const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
-                    color: isSelected 
-                        ? activeColor.withOpacity(0.1) 
+                    color: isSelected
+                        ? activeColor.withOpacity(0.1)
                         : Colors.grey.shade200,
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -425,10 +447,18 @@ class _PatientListPageState extends State<PatientListPage> {
                   value: _selectedWard,
                   icon: const Icon(Icons.arrow_drop_down, size: 20),
                   style: const TextStyle(fontSize: 13, color: Colors.black87),
+                  selectedItemBuilder: (context) {
+                    return _filteredWardsList.map((String value) {
+                      return Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(_wardFilterLabel(value)),
+                      );
+                    }).toList();
+                  },
                   items: _filteredWardsList.map((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
-                      child: Text(value),
+                      child: Text(_wardFilterLabel(value)),
                     );
                   }).toList(),
                   onChanged: (newValue) {
@@ -475,10 +505,7 @@ class _PatientListPageState extends State<PatientListPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -545,10 +572,7 @@ class _PatientListPageState extends State<PatientListPage> {
             ),
             title: Text(
               patient.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -563,10 +587,9 @@ class _PatientListPageState extends State<PatientListPage> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withOpacity(0.1),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text.rich(
@@ -644,30 +667,30 @@ class _PatientListPageState extends State<PatientListPage> {
     if (canEdit || canDelete) {
       // Wrap in a container to provide margin if needed, but Card already provides some.
       // However, for slidable to look good with rounded card, we might need ClipRRect.
-      
+
       List<Widget> actions = [];
-        
+
       if (canEdit) {
         actions.add(
-            SlidableAction(
-              onPressed: (_) => _navigateToEditPatient(patient),
-              backgroundColor: const Color(0xFF21B7CA),
-              foregroundColor: Colors.white,
-              icon: Icons.edit,
-              label: 'Edit',
-            ),
+          SlidableAction(
+            onPressed: (_) => _navigateToEditPatient(patient),
+            backgroundColor: const Color(0xFF21B7CA),
+            foregroundColor: Colors.white,
+            icon: Icons.edit,
+            label: 'Edit',
+          ),
         );
       }
-      
+
       if (canDelete) {
         actions.add(
-             SlidableAction(
-              onPressed: (_) => _deletePatient(patient),
-              backgroundColor: const Color(0xFFFE4A49),
-              foregroundColor: Colors.white,
-              icon: Icons.delete,
-              label: 'Delete',
-            ),
+          SlidableAction(
+            onPressed: (_) => _deletePatient(patient),
+            backgroundColor: const Color(0xFFFE4A49),
+            foregroundColor: Colors.white,
+            icon: Icons.delete,
+            label: 'Delete',
+          ),
         );
       }
 

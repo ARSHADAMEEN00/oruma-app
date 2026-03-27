@@ -1,3 +1,5 @@
+import 'package:oruma_app/models/config.dart';
+
 /// Patient model that matches the backend schema.
 class Patient {
   final String? id;
@@ -48,6 +50,8 @@ class Patient {
 
   /// Create Patient from JSON (API response).
   factory Patient.fromJson(Map<String, dynamic> json) {
+    final normalizedWard = normalizeWardNumberValue(json['ward']);
+
     return Patient(
       id: json['_id']?.toString() ?? json['id']?.toString(),
       name: json['name']?.toString() ?? '',
@@ -61,7 +65,7 @@ class Patient {
           : int.tryParse(json['age']?.toString() ?? '0') ?? 0,
       place: json['place']?.toString() ?? '',
       village: json['village']?.toString() ?? '',
-      ward: json['ward']?.toString(),
+      ward: normalizedWard.isEmpty ? null : normalizedWard,
       disease: json['disease'] is List
           ? List<String>.from(json['disease'])
           : json['disease'] != null
@@ -101,7 +105,7 @@ class Patient {
       'age': age,
       'place': place,
       'village': village,
-      'ward': ward,
+      'ward': ward == null ? null : normalizeWardNumberValue(ward),
       'disease': disease,
       'plan': plan,
       'locationLink': locationLink,
@@ -187,19 +191,18 @@ class PatientListResponse {
   final List<Patient> patients;
   final PatientCounts counts;
 
-  PatientListResponse({
-    required this.patients,
-    required this.counts,
-  });
+  PatientListResponse({required this.patients, required this.counts});
 
   factory PatientListResponse.fromJson(Map<String, dynamic> json) {
     return PatientListResponse(
-      patients: (json['patients'] as List<dynamic>?)
+      patients:
+          (json['patients'] as List<dynamic>?)
               ?.map((e) => Patient.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       counts: PatientCounts.fromJson(
-          json['counts'] as Map<String, dynamic>? ?? {}),
+        json['counts'] as Map<String, dynamic>? ?? {},
+      ),
     );
   }
 }

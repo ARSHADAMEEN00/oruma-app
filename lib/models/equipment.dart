@@ -7,6 +7,7 @@ class Equipment {
   final String name;
   final int quantity; // Always 1 for individual items
   final String purchasedFrom;
+  final DateTime? purchaseDate;
   final String place;
   final String phone;
   final String? storagePlace; // Storage location (e.g., "Store")
@@ -21,6 +22,7 @@ class Equipment {
     required this.name,
     required this.quantity,
     required this.purchasedFrom,
+    this.purchaseDate,
     required this.place,
     required this.phone,
     this.storagePlace,
@@ -40,6 +42,9 @@ class Equipment {
           ? json['quantity'] as int
           : int.tryParse(json['quantity']?.toString() ?? '1') ?? 1,
       purchasedFrom: json['purchasedFrom']?.toString() ?? '',
+      purchaseDate: json['purchaseDate'] != null
+          ? DateTime.tryParse(json['purchaseDate'].toString())
+          : null,
       place: json['place']?.toString() ?? '',
       phone: json['phone']?.toString() ?? '',
       storagePlace: json['storagePlace']?.toString(),
@@ -61,6 +66,7 @@ class Equipment {
       'name': name,
       'quantity': quantity,
       'purchasedFrom': purchasedFrom,
+      if (purchaseDate != null) 'purchaseDate': purchaseDate!.toIso8601String(),
       'place': place,
       'phone': phone,
       if (storagePlace != null) 'storagePlace': storagePlace,
@@ -75,6 +81,7 @@ class Equipment {
     String? name,
     int? quantity,
     String? purchasedFrom,
+    DateTime? purchaseDate,
     String? place,
     String? phone,
     String? storagePlace,
@@ -87,6 +94,7 @@ class Equipment {
       name: name ?? this.name,
       quantity: quantity ?? this.quantity,
       purchasedFrom: purchasedFrom ?? this.purchasedFrom,
+      purchaseDate: purchaseDate ?? this.purchaseDate,
       place: place ?? this.place,
       phone: phone ?? this.phone,
       storagePlace: storagePlace ?? this.storagePlace,

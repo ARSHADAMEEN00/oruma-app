@@ -880,16 +880,18 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
     final date = DateTime.tryParse(widget.visit.visitDate);
     final primaryColor = Theme.of(context).colorScheme.primary;
     final patient = widget.visit.patientDetails;
+    final mediaQuery = MediaQuery.of(context);
+    final bottomSafePadding = mediaQuery.viewPadding.bottom;
 
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      padding: EdgeInsets.fromLTRB(16, 20, 16, 16 + bottomSafePadding),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
+          maxHeight: mediaQuery.size.height * 0.85,
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -1087,8 +1089,10 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
                         style: TextStyle(color: Colors.red),
                       ),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        minimumSize: const Size.fromHeight(52),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         side: const BorderSide(color: Colors.red),
+                        tapTargetSize: MaterialTapTargetSize.padded,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -1115,8 +1119,10 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        minimumSize: const Size.fromHeight(52),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
+                        tapTargetSize: MaterialTapTargetSize.padded,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -1126,7 +1132,7 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
               ],
             ),
           ],
-        ),
+          ),
         ),
       ),
     );
