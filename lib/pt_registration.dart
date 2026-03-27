@@ -94,7 +94,7 @@ class _patientrigisterState extends State<patientrigister> {
         villages = config.villages;
         diseases = config.diseases;
         plans = config.plans;
-        allWards = config.wards;
+        allWards = sortWardConfigs(config.wards);
         _updateFilteredWards();
         _isLoadingConfig = false;
       });
@@ -114,10 +114,11 @@ class _patientrigisterState extends State<patientrigister> {
           .where((w) => w.village == _selectedVillage)
           .map((w) => w.title)
           .toList()
-        ..sort();
+        ..sort(compareWardTitles);
     }
     // If current selected ward is not in the filtered list, clear it
-    if (_selectedWardTitle != null && !filteredWards.contains(_selectedWardTitle)) {
+    if (_selectedWardTitle != null &&
+        !filteredWards.contains(_selectedWardTitle)) {
       _selectedWardTitle = null;
     }
   }
@@ -270,9 +271,13 @@ class _patientrigisterState extends State<patientrigister> {
                               if (!allWards.any((w) =>
                                   w.title == newWardTitle &&
                                   w.village == popupSelectedVillage)) {
-                                allWards.add(WardConfig(
+                                allWards = sortWardConfigs([
+                                  ...allWards,
+                                  WardConfig(
                                     title: newWardTitle,
-                                    village: popupSelectedVillage!));
+                                    village: popupSelectedVillage!,
+                                  ),
+                                ]);
                               }
                               // If we added it for the currently selected village in the main form,
                               // update the filtered list and select it. Otherwise just refresh.

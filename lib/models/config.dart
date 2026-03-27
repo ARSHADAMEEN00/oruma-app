@@ -1,3 +1,70 @@
+final RegExp _naturalSortPattern = RegExp(r'\d+|\D+');
+
+int compareNaturally(String a, String b) {
+  final aParts = _naturalSortPattern
+      .allMatches(a)
+      .map((m) => m.group(0)!)
+      .toList();
+  final bParts = _naturalSortPattern
+      .allMatches(b)
+      .map((m) => m.group(0)!)
+      .toList();
+  final partsToCompare =
+      aParts.length < bParts.length ? aParts.length : bParts.length;
+
+  for (var i = 0; i < partsToCompare; i++) {
+    final aPart = aParts[i];
+    final bPart = bParts[i];
+    final aNumber = int.tryParse(aPart);
+    final bNumber = int.tryParse(bPart);
+
+    if (aNumber != null && bNumber != null) {
+      final numberCompare = aNumber.compareTo(bNumber);
+      if (numberCompare != 0) {
+        return numberCompare;
+      }
+
+      final digitLengthCompare = aPart.length.compareTo(bPart.length);
+      if (digitLengthCompare != 0) {
+        return digitLengthCompare;
+      }
+
+      continue;
+    }
+
+    final textCompare = aPart.toLowerCase().compareTo(bPart.toLowerCase());
+    if (textCompare != 0) {
+      return textCompare;
+    }
+  }
+
+  final lengthCompare = aParts.length.compareTo(bParts.length);
+  if (lengthCompare != 0) {
+    return lengthCompare;
+  }
+
+  return a.toLowerCase().compareTo(b.toLowerCase());
+}
+
+int compareWardTitles(String a, String b) {
+  return compareNaturally(a.trim(), b.trim());
+}
+
+int compareWardConfigs(WardConfig a, WardConfig b) {
+  final villageCompare =
+      compareNaturally(a.village.trim(), b.village.trim());
+  if (villageCompare != 0) {
+    return villageCompare;
+  }
+
+  return compareWardTitles(a.title, b.title);
+}
+
+List<WardConfig> sortWardConfigs(Iterable<WardConfig> wards) {
+  final sorted = wards.toList()..sort(compareWardConfigs);
+  return sorted;
+}
+
 class WardConfig {
   final String title;
   final String village;

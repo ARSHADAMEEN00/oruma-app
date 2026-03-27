@@ -54,7 +54,7 @@ class _PatientListPageState extends State<PatientListPage> {
       if (mounted) {
         setState(() {
           _villagesList = ['All', ...config.villages];
-          _allWards = config.wards;
+          _allWards = sortWardConfigs(config.wards);
           _updateFilteredWardsList();
         });
       }
@@ -72,7 +72,7 @@ class _PatientListPageState extends State<PatientListPage> {
               .where((w) => w.village == _selectedVillage)
               .map((w) => w.title)
               .toList()
-            ..sort(),
+            ..sort(compareWardTitles),
         );
     }
     // If current selected ward is not in the filtered list, reset it to 'All'
