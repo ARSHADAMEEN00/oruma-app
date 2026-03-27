@@ -1360,10 +1360,26 @@ class _HomescreenState extends State<Homescreen> {
                   },
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  "All rights reserved by Arshad Nediya from Osperb",
-                  style: TextStyle(fontSize: 10, color: Colors.grey),
-                  textAlign: TextAlign.center,
+                InkWell(
+                  onTap: () async {
+                    final Uri url = Uri.parse('https://ameen.osperb.com');
+                    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Could not launch website')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text(
+                    "All rights reserved by AFO",
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFF0277BD),
+                      // decoration: TextDecoration.underline,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ],
             ),

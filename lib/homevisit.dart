@@ -31,11 +31,11 @@ class _HomevisitState extends State<Homevisit> {
   // Visit mode options
   String _selectedVisitMode = 'new';
   final List<Map<String, String>> _visitModeOptions = [
-    {'value': 'new', 'label': 'New Visit'},
-    {'value': 'monthly', 'label': 'Monthly Visit'},
-    {'value': 'emergency', 'label': 'Emergency Visit'},
-    {'value': 'dhc_visit', 'label': 'DHC Visit'},
-    {'value': 'vhc_visit', 'label': 'VHC Visit'},
+    {'value': 'new', 'label': 'New'},
+    {'value': 'monthly', 'label': 'Monthly'},
+    {'value': 'emergency', 'label': 'Emergency'},
+    {'value': 'dhc_visit', 'label': 'DHC'},
+    {'value': 'vhc_visit', 'label': 'VHC'},
   ];
 
   bool get isEditing => widget.visit != null;
@@ -487,7 +487,7 @@ class _HomevisitState extends State<Homevisit> {
                                   children: [
                                     Icon(
                                       option['value'] == 'emergency'
-                                          ? Icons.emergency_outlined
+                                          ? Icons.emergency
                                           : option['value'] == 'monthly'
                                           ? Icons.calendar_month_outlined
                                           : option['value'] == 'dhc_visit'

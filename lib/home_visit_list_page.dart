@@ -547,122 +547,197 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
               const SizedBox(width: 16),
 
               // Visit Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                      Expanded(
+                child: Stack(
                   children: [
-                    Text(
-                      visit.patientName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 14,
-                          color: Colors.grey.shade500,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            visit.address,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 13,
-                            ),
+                        Text(
+                          visit.patientName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
                         ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on_outlined,
+                              size: 14,
+                              color: Colors.grey.shade500,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                visit.address,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (patient != null && patient.registerId != null) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.badge_outlined,
+                                size: 14,
+                                color: Colors.grey.shade500,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  "Register Id : ${patient.registerId}",
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (patient != null && patient.plan.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.assignment_outlined,
+                                size: 14,
+                                color: Colors.grey.shade500,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                 "Plan : ${patient.plan}",
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (visit.notes != null && visit.notes!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.notes_outlined,
+                                size: 14,
+                                color: Colors.grey.shade500,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  visit.notes!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Colors.grey.shade500,
+                                    fontSize: 12,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        // Small extra spacing to make room for badge if needed
+                        const SizedBox(height: 4),
                       ],
                     ),
-                    if (patient != null && patient.registerId != null) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.badge_outlined,
-                            size: 14,
-                            color: Colors.grey.shade500,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              "Register Id : ${patient.registerId}",
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                    if (patient != null && patient.plan.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.assignment_outlined,
-                            size: 14,
-                            color: Colors.grey.shade500,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                             "Plan : ${patient.plan}",
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                    if (visit.notes != null && visit.notes!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.notes_outlined,
-                            size: 14,
-                            color: Colors.grey.shade500,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              visit.notes!,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Colors.grey.shade500,
-                                fontSize: 12,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: _buildVisitModeBadge(visit.visitMode),
+                    ),
                   ],
                 ),
               ),
 
-              const Icon(Icons.chevron_right, color: Colors.grey),
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildVisitModeBadge(String mode) {
+    IconData icon;
+    Color color;
+    String label;
+
+    switch (mode) {
+      case 'new':
+        icon = Icons.add_circle_outline;
+        color = Colors.green;
+        label = 'New';
+        break;
+      case 'monthly':
+        icon = Icons.calendar_month_outlined;
+        color = Colors.blue;
+        label = 'Monthly';
+        break;
+      case 'emergency':
+        icon = Icons.emergency;
+        color = Colors.red;
+        label = 'Emergency';
+        break;
+      case 'dhc_visit':
+        icon = Icons.home_work_outlined;
+        color = Colors.orange;
+        label = 'DHC';
+        break;
+      case 'vhc_visit':
+        icon = Icons.local_hospital_outlined;
+        color = Colors.purple;
+        label = 'VHC';
+        break;
+      default:
+        icon = Icons.help_outline;
+        color = Colors.grey;
+        label = mode.toUpperCase();
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.2), width: 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
+              color: color,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -717,17 +792,17 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
   String _getVisitModeLabel(String visitMode) {
     switch (visitMode) {
       case 'new':
-        return 'New Visit';
+        return 'New';
       case 'monthly':
-        return 'Monthly Visit';
+        return 'Monthly';
       case 'emergency':
-        return 'Emergency Visit';
+        return 'Emergency';
       case 'dhc_visit':
-        return 'DHC Visit';
+        return 'DHC';
       case 'vhc_visit':
-        return 'VHC Visit';
+        return 'VHC';
       default:
-        return visitMode;
+        return visitMode.toUpperCase();
     }
   }
 
@@ -1175,17 +1250,17 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
   String _getVisitModeLabel(String visitMode) {
     switch (visitMode) {
       case 'new':
-        return 'New Visit';
+        return 'New';
       case 'monthly':
-        return 'Monthly Visit';
+        return 'Monthly';
       case 'emergency':
-        return 'Emergency Visit';
+        return 'Emergency';
       case 'dhc_visit':
-        return 'DHC Visit';
+        return 'DHC';
       case 'vhc_visit':
-        return 'VHC Visit';
+        return 'VHC';
       default:
-        return visitMode;
+        return visitMode.toUpperCase();
     }
   }
 

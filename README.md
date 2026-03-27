@@ -160,3 +160,5 @@ The configuration is in `pubspec.yaml` under the `flutter_launcher_icons` sectio
 
 apk build 
 flutter build apk --release
+
+flutter build apk --release --no-tree-shake-icons

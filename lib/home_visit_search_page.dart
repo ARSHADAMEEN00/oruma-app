@@ -435,6 +435,12 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
                         ],
                       ),
                     ],
+                    // Spacer for badge
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: _buildVisitModeBadge(visit.visitMode),
+                    ),
                   ],
                 ),
               ),
@@ -596,6 +602,69 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildVisitModeBadge(String mode) {
+    IconData icon;
+    Color color;
+    String label;
+
+    switch (mode) {
+      case 'new':
+        icon = Icons.add_circle_outline;
+        color = Colors.green;
+        label = 'New';
+        break;
+      case 'monthly':
+        icon = Icons.calendar_month_outlined;
+        color = Colors.blue;
+        label = 'Monthly';
+        break;
+      case 'emergency':
+        icon = Icons.emergency;
+        color = Colors.red;
+        label = 'Emergency';
+        break;
+      case 'dhc_visit':
+        icon = Icons.home_work_outlined;
+        color = Colors.orange;
+        label = 'DHC';
+        break;
+      case 'vhc_visit':
+        icon = Icons.local_hospital_outlined;
+        color = Colors.purple;
+        label = 'VHC';
+        break;
+      default:
+        icon = Icons.help_outline;
+        color = Colors.grey;
+        label = mode.toUpperCase();
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.2), width: 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
+              color: color,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
