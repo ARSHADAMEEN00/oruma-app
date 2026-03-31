@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Palliative Care App – Palliative Care Management Platform | AFO</title>
+  <meta name="description"
+    content="Palliative Care App is a comprehensive digital platform for managing palliative care services — patient records, home visits, equipment tracking, medicine supply, and volunteer coordination. Built by AFO." />
+  <meta name="keywords"
+    content="palliative care management, palliative care software, palliative care app, home visit scheduling, patient care management, medical equipment tracking, palliative NGO software" />
+  <meta name="author" content="AFO – ameen.osperb.com" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://ameen.osperb.com/pallicare" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Palliative Care App – Palliative Care Management Platform" />
+  <meta property="og:description"
+    content="A dignified, compassionate digital solution for palliative care organizations. Manage patients, home visits, equipment, medicine supply, and volunteers — all in one place." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://ameen.osperb.com/pallicare" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Palliative Care App – Palliative Care Management Platform" />
+  <meta name="twitter:description" content="Person-centered palliative care, powered by technology. Built by AFO." />
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Palliative Care App",
+    "description": "A comprehensive digital platform for managing palliative care services including patient records, home visits, equipment tracking, and volunteer coordination.",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Android, iOS, Web",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+    "author": { "@type": "Organization", "name": "AFO", "url": "https://ameen.osperb.com" }
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --primary: #1A237E;
+      --primary-light: #3949AB;
+      --accent: #00BCD4;
+      --accent2: #0277BD;
+      --teal: #00897B;
+      --bg: #F8FAFF;
+      --white: #ffffff;
+      --text: #1a1a2e;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --card-bg: #ffffff;
+      --gradient: linear-gradient(135deg, #1A237E 0%, #0277BD 60%, #00BCD4 100%);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 16px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(26, 35, 126, 0.08);
+      transition: box-shadow 0.3s;
+    }
+
+    nav.scrolled {
+      box-shadow: 0 4px 24px rgba(26, 35, 126, 0.12);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .nav-logo .logo-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: var(--gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+      color: white;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .nav-logo span {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 15px;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+
+    .nav-cta {
+      background: var(--gradient);
+      color: white;
+      padding: 10px 24px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 14px;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.2s;
+      box-shadow: 0 4px 16px rgba(26, 35, 126, 0.25);
+    }
+
+    .nav-cta:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .nav-burger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+    }
+
+    .nav-burger span {
+      width: 24px;
+      height: 2px;
+      background: var(--primary);
+      border-radius: 2px;
+      transition: all 0.3s;
+    }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      background: var(--gradient);
+      display: flex;
+      align-items: center;
+      padding: 100px 40px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='3'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .hero-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation: float 8s ease-in-out infinite;
+    }
+
+    .hero-blob.b1 {
+      width: 500px;
+      height: 500px;
+      background: #00BCD4;
+      top: -100px;
+      right: -100px;
+    }
+
+    .hero-blob.b2 {
+      width: 300px;
+      height: 300px;
+      background: #ffffff;
+      bottom: 50px;
+      left: -50px;
+      animation-delay: -3s;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0) scale(1);
+      }
+
+      50% {
+        transform: translateY(-20px) scale(1.05);
+      }
+    }
+
+    .hero-inner {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.95);
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      margin-bottom: 24px;
+      backdrop-filter: blur(8px);
+    }
+
+    .hero-badge::before {
+      content: '✦';
+      color: #00BCD4;
+    }
+
+    .hero-content h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(36px, 5vw, 62px);
+      font-weight: 800;
+      color: white;
+      line-height: 1.12;
+      margin-bottom: 24px;
+    }
+
+    .hero-content h1 span {
+      color: #7FFFFF;
+    }
+
+    .hero-content p {
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.85);
+      margin-bottom: 40px;
+      max-width: 500px;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      background: white;
+      color: var(--primary);
+      padding: 14px 32px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 15px;
+      text-decoration: none;
+      transition: all 0.3s;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-outline {
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      color: white;
+      padding: 14px 32px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: white;
+    }
+
+    .hero-visual {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .hero-card-stack {
+      position: relative;
+      width: 340px;
+      height: 420px;
+    }
+
+    .mock-phone {
+      width: 240px;
+      height: 420px;
+      background: white;
+      border-radius: 32px;
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.3);
+      padding: 24px 16px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      overflow: hidden;
+      animation: phone-bob 6s ease-in-out infinite;
+    }
+
+    @keyframes phone-bob {
+
+      0%,
+      100% {
+        transform: translateX(-50%) translateY(0);
+      }
+
+      50% {
+        transform: translateX(-50%) translateY(-12px);
+      }
+    }
+
+    .phone-header {
+      background: var(--gradient);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+      color: white;
+      font-size: 12px;
+    }
+
+    .phone-header strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .phone-header span {
+      opacity: 0.8;
+      font-size: 11px;
+    }
+
+    .phone-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .phone-tile {
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .phone-tile.blue {
+      background: #EBF2FF;
+      color: #1A237E;
+    }
+
+    .phone-tile.teal {
+      background: #E0F2F1;
+      color: #00695C;
+    }
+
+    .phone-tile.orange {
+      background: #FFF3E0;
+      color: #E65100;
+    }
+
+    .phone-tile.purple {
+      background: #F3E5F5;
+      color: #6A1B9A;
+    }
+
+    .phone-tile .icon {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    .phone-stat {
+      background: #F8FAFF;
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 11px;
+    }
+
+    .stat-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .float-card {
+      position: absolute;
+      background: white;
+      border-radius: 16px;
+      padding: 12px 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      animation: fc-float 5s ease-in-out infinite;
+    }
+
+    .float-card.fc1 {
+      top: 20px;
+      right: -20px;
+      animation-delay: -1s;
+      color: var(--teal);
+    }
+
+    .float-card.fc2 {
+      bottom: 60px;
+      left: -30px;
+      animation-delay: -2.5s;
+      color: var(--primary);
+    }
+
+    @keyframes fc-float {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+
+    .fc-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 40px;
+      margin-top: 48px;
+      flex-wrap: wrap;
+    }
+
+    .hero-stat {
+      color: white;
+    }
+
+    .hero-stat strong {
+      display: block;
+      font-size: 28px;
+      font-weight: 800;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .hero-stat span {
+      font-size: 13px;
+      opacity: 0.75;
+    }
+
+    /* ── SECTIONS ── */
+    section {
+      padding: 96px 40px;
+    }
+
+    .section-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-tag {
+      display: inline-block;
+      background: #EBF2FF;
+      color: var(--primary);
+      padding: 5px 14px;
+      border-radius: 50px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(28px, 4vw, 46px);
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .section-title span {
+      color: var(--primary);
+    }
+
+    .section-sub {
+      font-size: 17px;
+      color: var(--muted);
+      max-width: 580px;
+      line-height: 1.7;
+      margin-bottom: 56px;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .text-center .section-sub {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ── LOGOS STRIP ── */
+    #trust {
+      padding: 40px 40px;
+      background: white;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    #trust .trust-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    #trust p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .trust-logos {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+
+    .trust-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      color: #94a3b8;
+      font-size: 15px;
+      transition: color 0.2s;
+    }
+
+    .trust-logo:hover {
+      color: var(--primary);
+    }
+
+    .trust-logo .tl-icon {
+      font-size: 24px;
+    }
+
+    /* ── FEATURES ── */
+    #features {
+      background: var(--bg);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+    }
+
+    .feature-card {
+      background: white;
+      border-radius: 24px;
+      padding: 36px 28px;
+      border: 1px solid var(--border);
+      transition: all 0.35s cubic-bezier(.4, 0, .2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 24px 48px rgba(26, 35, 126, 0.12);
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+
+    .feature-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 20px;
+    }
+
+    .icon-blue {
+      background: #EBF2FF;
+    }
+
+    .icon-teal {
+      background: #E0F7F4;
+    }
+
+    .icon-orange {
+      background: #FFF3E0;
+    }
+
+    .icon-purple {
+      background: #F3E5F5;
+    }
+
+    .icon-green {
+      background: #E8F5E9;
+    }
+
+    .icon-red {
+      background: #FFEBEE;
+    }
+
+    .feature-card h3 {
+      font-size: 19px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* ── HOW IT WORKS ── */
+    #how {
+      background: white;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+
+    .steps::before {
+      content: '';
+      position: absolute;
+      left: 31px;
+      top: 40px;
+      bottom: 40px;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--primary), var(--accent));
+    }
+
+    .step {
+      display: flex;
+      gap: 32px;
+      align-items: flex-start;
+      padding: 32px 0;
+      position: relative;
+    }
+
+    .step-num {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--gradient);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 800;
+      font-family: 'Outfit', sans-serif;
+      box-shadow: 0 8px 24px rgba(26, 35, 126, 0.3);
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-content h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+      padding-top: 16px;
+    }
+
+    .step-content p {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+      max-width: 560px;
+    }
+
+    /* ── TESTIMONIAL ── */
+    #testimonial {
+      background: var(--gradient);
+      padding: 96px 40px;
+    }
+
+    .testimonial-inner {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .quote-mark {
+      font-size: 80px;
+      color: rgba(255, 255, 255, 0.2);
+      line-height: 1;
+      font-family: Georgia, serif;
+      margin-bottom: -20px;
+    }
+
+    .testimonial-text {
+      font-size: clamp(18px, 2.5vw, 26px);
+      color: white;
+      font-weight: 500;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .author-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .author-info strong {
+      display: block;
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .author-info span {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+    }
+
+    /* ── PRICING ── */
+    #pricing {
+      background: var(--bg);
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      align-items: center;
+    }
+
+    .pricing-card {
+      background: white;
+      border-radius: 28px;
+      padding: 40px 32px;
+      border: 1.5px solid var(--border);
+      transition: all 0.3s;
+    }
+
+    .pricing-card.featured {
+      background: var(--gradient);
+      border-color: transparent;
+      transform: scale(1.05);
+      box-shadow: 0 32px 64px rgba(26, 35, 126, 0.3);
+    }
+
+    .pricing-card:hover:not(.featured) {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(26, 35, 126, 0.1);
+    }
+
+    .pricing-tag {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
+    }
+
+    .pricing-card .pricing-tag {
+      color: var(--muted);
+    }
+
+    .pricing-card.featured .pricing-tag {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .pricing-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 3px 10px;
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+
+    .pricing-card h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .pricing-card:not(.featured) h3 {
+      color: var(--text);
+    }
+
+    .pricing-card.featured h3 {
+      color: white;
+    }
+
+    .price {
+      font-family: 'Outfit', sans-serif;
+      font-size: 42px;
+      font-weight: 800;
+      margin: 16px 0 4px;
+    }
+
+    .pricing-card:not(.featured) .price {
+      color: var(--primary);
+    }
+
+    .pricing-card.featured .price {
+      color: white;
+    }
+
+    .price-sub {
+      font-size: 13px;
+      margin-bottom: 24px;
+    }
+
+    .pricing-card:not(.featured) .price-sub {
+      color: var(--muted);
+    }
+
+    .pricing-card.featured .price-sub {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .pricing-features {
+      list-style: none;
+      margin-bottom: 32px;
+    }
+
+    .pricing-features li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    }
+
+    .pricing-card.featured .pricing-features li {
+      border-color: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .check {
+      color: #00C853;
+      font-size: 16px;
+    }
+
+    .pricing-card.featured .check {
+      color: #7FFFFF;
+    }
+
+    .btn-plan {
+      width: 100%;
+      padding: 14px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+    }
+
+    .btn-plan-outline {
+      background: transparent;
+      border: 2px solid var(--border);
+      color: var(--primary);
+    }
+
+    .btn-plan-outline:hover {
+      border-color: var(--primary);
+      background: #EBF2FF;
+    }
+
+    .btn-plan-white {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-plan-white:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    /* ── CONTACT ── */
+    #contact {
+      background: white;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: start;
+    }
+
+    .contact-info h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(28px, 3vw, 40px);
+      font-weight: 800;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .contact-info p {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+
+    .contact-item {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 28px;
+      align-items: center;
+    }
+
+    .contact-item-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: #EBF2FF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .contact-item strong {
+      display: block;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .contact-item span {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .contact-item a {
+      font-size: 14px;
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    /* ── FORM ── */
+    .contact-form {
+      background: var(--bg);
+      border-radius: 28px;
+      padding: 40px 36px;
+      border: 1px solid var(--border);
+    }
+
+    .contact-form h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .contact-form p {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: white;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.08);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 15px;
+      background: var(--gradient);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 8px 24px rgba(26, 35, 126, 0.3);
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 36px rgba(26, 35, 126, 0.4);
+    }
+
+    .btn-submit:active {
+      transform: translateY(0);
+    }
+
+    .form-note {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 12px;
+    }
+
+    .form-note a {
+      color: var(--primary);
+    }
+
+    .form-success {
+      display: none;
+      text-align: center;
+      padding: 32px;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .form-success .success-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+    }
+
+    .form-success h4 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .form-success p {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--text);
+      color: rgba(255, 255, 255, 0.7);
+      padding: 60px 40px 32px;
+    }
+
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+
+    .footer-brand p {
+      font-size: 14px;
+      line-height: 1.7;
+      margin-top: 16px;
+      max-width: 280px;
+    }
+
+    .footer-brand .brand-name {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: white;
+    }
+
+    .footer-brand .brand-by {
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .footer-brand .brand-by a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .footer-col h4 {
+      color: white;
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 20px;
+    }
+
+    .footer-col ul {
+      list-style: none;
+    }
+
+    .footer-col ul li {
+      margin-bottom: 12px;
+    }
+
+    .footer-col ul li a {
+      color: rgba(255, 255, 255, 0.6);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .footer-col ul li a:hover {
+      color: var(--accent);
+    }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .footer-bottom p {
+      font-size: 13px;
+    }
+
+    .footer-bottom a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .footer-badges {
+      display: flex;
+      gap: 12px;
+    }
+
+    .footer-badge {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* ── SCROLL ANIMATIONS ── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s cubic-bezier(.4, 0, .2, 1);
+    }
+
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .fade-up-d1 {
+      transition-delay: 0.1s;
+    }
+
+    .fade-up-d2 {
+      transition-delay: 0.2s;
+    }
+
+    .fade-up-d3 {
+      transition-delay: 0.3s;
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 1024px) {
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .pricing-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pricing-card.featured {
+        transform: none;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      nav {
+        padding: 14px 20px;
+      }
+
+      .nav-links,
+      .nav-cta {
+        display: none;
+      }
+
+      .nav-burger {
+        display: flex;
+      }
+
+      section {
+        padding: 64px 20px;
+      }
+
+      #hero {
+        padding: 90px 20px 50px;
+      }
+
+      .hero-inner {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+
+      .hero-visual {
+        order: -1;
+      }
+
+      .hero-card-stack {
+        width: 240px;
+        height: 320px;
+      }
+
+      .mock-phone {
+        width: 180px;
+        height: 320px;
+      }
+
+      .float-card {
+        display: none;
+      }
+
+      .hero-stats {
+        gap: 24px;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+      }
+
+      .footer-bottom {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+
+    /* Mobile Menu */
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: white;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+    }
+
+    .mobile-menu.open {
+      display: flex;
+    }
+
+    .mobile-menu a {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .mobile-menu .close-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 28px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--text);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <button class="close-btn" onclick="closeMobileMenu()">✕</button>
+    <a href="#features" onclick="closeMobileMenu()">Features</a>
+    <a href="#how" onclick="closeMobileMenu()">How It Works</a>
+    <a href="#pricing" onclick="closeMobileMenu()">Pricing</a>
+    <a href="#contact" onclick="closeMobileMenu()">Contact</a>
+    <a href="#contact" class="btn-primary" onclick="closeMobileMenu()">Request a Demo →</a>
+  </div>
+
+  <!-- NAV -->
+  <nav id="navbar">
+    <a href="#" class="nav-logo">
+      <div class="logo-icon">🩺</div>
+      <span>Palliative Care</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <a href="#contact" class="nav-cta" id="navCta">Request a Demo →</a>
+    <div class="nav-burger" onclick="openMobileMenu()">
+      <span></span><span></span><span></span>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero" aria-label="Hero">
+    <div class="hero-blob b1"></div>
+    <div class="hero-blob b2"></div>
+    <div class="hero-inner">
+      <div class="hero-content">
+        <div class="hero-badge">Purpose-built for Palliative Care</div>
+        <h1>Compassionate Care,<br /><span>Powered by Technology</span></h1>
+        <p>A complete digital management platform for palliative care organizations — patient records, home visits,
+          equipment tracking, medicine supply, and volunteer coordination. All in one place.</p>
+        <div class="hero-actions">
+          <a href="#contact" class="btn-primary" id="heroDemoBtn">Request a Demo →</a>
+          <a href="#features" class="btn-outline">See Features</a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><strong>100%</strong><span>Mobile Ready</span></div>
+          <div class="hero-stat"><strong>6+</strong><span>Core Modules</span></div>
+          <div class="hero-stat"><strong>24/7</strong><span>Support</span></div>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="hero-card-stack">
+          <div class="mock-phone" role="img" aria-label="Palliative Care app dashboard">
+            <div class="phone-header">
+              <strong>Palliative Care Dashboard</strong>
+              <span>Welcome, Team Oruma</span>
+            </div>
+            <div class="phone-grid">
+              <div class="phone-tile blue">
+                <div class="icon">👩‍⚕️</div>Patients
+              </div>
+              <div class="phone-tile teal">
+                <div class="icon">🏠</div>Home Visits
+              </div>
+              <div class="phone-tile orange">
+                <div class="icon">📦</div>Supplies
+              </div>
+              <div class="phone-tile purple">
+                <div class="icon">🩺</div>Equipment
+              </div>
+            </div>
+            <div class="phone-stat"><span class="stat-dot" style="background:#00BCD4"></span>
+              <div><strong style="font-size:12px">Active Supplies</strong><br /><span style="color:#64748b">3 items
+                  tracked</span></div>
+            </div>
+            <div class="phone-stat"><span class="stat-dot" style="background:#00897B"></span>
+              <div><strong style="font-size:12px">Home Visit Today</strong><br /><span style="color:#64748b">2
+                  scheduled</span></div>
+            </div>
+          </div>
+          <div class="float-card fc1">
+            <div class="fc-icon" style="background:#E0F7F4">✅</div>Visit Completed
+          </div>
+          <div class="float-card fc2">
+            <div class="fc-icon" style="background:#EBF2FF">💊</div>Medicine Supplied
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST -->
+  <div id="trust" role="complementary" aria-label="Trusted by">
+    <div class="trust-inner">
+      <p>Trusted & used by</p>
+      <div class="trust-logos">
+        <!-- <div class="trust-logo"><span class="tl-icon">🏥</span>Kodur PCC</div> -->
+        <div class="trust-logo"><span class="tl-icon">💙</span>Oruma Palliative Care Society Kodur</div>
+        <!-- <div class="trust-logo"><span class="tl-icon">📍</span>Kodur, Malappuram</div> -->
+        <div class="trust-logo"><span class="tl-icon">🛠️</span><a href="https://afo.osperb.com" target="_blank"
+            rel="noopener">Built by AFO</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="section-inner">
+      <div class="text-center">
+        <span class="section-tag fade-up">Core Features</span>
+        <h2 class="section-title fade-up fade-up-d1">Everything Your Care Team <span>Needs</span></h2>
+        <p class="section-sub fade-up fade-up-d2">From patient registration to volunteer coordination — our platform
+          covers every operational need of a modern palliative care center.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card fade-up">
+          <div class="feature-icon icon-blue">👩‍⚕️</div>
+          <h3>Patient Management</h3>
+          <p>Maintain comprehensive patient records including medical history, care plans, and real-time status updates.
+            Role-based access ensures sensitive data stays secure.</p>
+        </div>
+        <div class="feature-card fade-up fade-up-d1">
+          <div class="feature-icon icon-teal">🏠</div>
+          <h3>Home Visit Scheduling</h3>
+          <p>Plan, schedule, and track home-based care visits for your field team. Never miss a visit with built-in
+            reminders and visit logs.</p>
+        </div>
+        <div class="feature-card fade-up fade-up-d2">
+          <div class="feature-icon icon-orange">📦</div>
+          <h3>Equipment Tracking</h3>
+          <p>Manage your entire medical equipment inventory. Know what's in stock, what's been distributed, and what
+            needs to be returned — in real time.</p>
+        </div>
+        <div class="feature-card fade-up">
+          <div class="feature-icon icon-purple">💊</div>
+          <h3>Medicine Distribution</h3>
+          <p>Log and track every medicine supply given to patients. Maintain a clear audit trail of medication
+            distribution across your care network.</p>
+        </div>
+        <div class="feature-card fade-up fade-up-d1">
+          <div class="feature-icon icon-green">🤝</div>
+          <h3>Volunteer Coordination</h3>
+          <p>Manage and coordinate volunteers and caregivers who support patient care. Assign tasks, track
+            participation, and communicate efficiently.</p>
+        </div>
+        <div class="feature-card fade-up fade-up-d2">
+          <div class="feature-icon icon-red">🔐</div>
+          <h3>Role-Based Access Control</h3>
+          <p>Fine-grained access management ensures every team member sees only what they need — keeping patient data
+            safe and workflows smooth.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="section-inner">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;">
+        <div>
+          <span class="section-tag fade-up">Simple Onboarding</span>
+          <h2 class="section-title fade-up fade-up-d1">Up & Running in <span>Days, Not Months</span></h2>
+          <p class="section-sub fade-up fade-up-d2" style="margin-bottom:0">We handle setup, configuration, and training
+            so your team can focus on what matters — caring for patients.</p>
+        </div>
+        <div class="steps">
+          <div class="step fade-up">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <h3>Request a Demo</h3>
+              <p>Fill out our short enquiry form. We'll schedule a personalized walkthrough tailored to your
+                organization's needs.</p>
+            </div>
+          </div>
+          <div class="step fade-up fade-up-d1">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <h3>Custom Setup & Onboarding</h3>
+              <p>We configure the platform for your team — branding, user roles, and data migration. Your dedicated
+                setup takes 2–5 days.</p>
+            </div>
+          </div>
+          <div class="step fade-up fade-up-d2">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <h3>Train Your Team</h3>
+              <p>Our team provides hands-on training for your staff and volunteers. We ensure everyone is confident
+                before go-live.</p>
+            </div>
+          </div>
+          <div class="step fade-up fade-up-d3">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <h3>Go Live & Grow</h3>
+              <p>Start managing patients, visits, and supplies digitally. Ongoing support keeps your operations running
+                smoothly.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIAL -->
+  <section id="testimonial" aria-label="Client testimonial">
+    <div class="testimonial-inner">
+      <div class="quote-mark fade-up">"</div>
+      <p class="testimonial-text fade-up fade-up-d1">This platform transformed how we manage our palliative care
+        operations. From patient records to home visits and equipment — everything is now organized, traceable, and
+        accessible on any device. Our team can focus more on compassionate care.</p>
+      <div class="testimonial-author fade-up fade-up-d2">
+        <div class="author-avatar">🏥</div>
+        <div class="author-info">
+          <strong>Kodur PCC Team</strong>
+          <span>Oruma Palliative Care Society, Kodur, Malappuram</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <div class="section-inner">
+      <div class="text-center">
+        <span class="section-tag fade-up">Pricing</span>
+        <h2 class="section-title fade-up fade-up-d1">Plans for Every <span>Care Center</span></h2>
+        <p class="section-sub fade-up fade-up-d2">Transparent, affordable pricing with no hidden fees. Every plan
+          includes setup support and training.</p>
+      </div>
+      <div class="pricing-grid">
+
+        <!-- Card 1: Starter -->
+        <div class="pricing-card fade-up">
+          <p class="pricing-tag">Starter</p>
+          <h3>Server & Maintenance</h3>
+          <div class="price" style="font-size:32px">₹1,000<span style="font-size:16px;font-weight:500">/month</span>
+          </div>
+          <p class="price-sub">Server hosting & ongoing maintenance</p>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span>Dedicated server hosting</li>
+            <li><span class="check">✓</span>Monthly maintenance & updates</li>
+            <li><span class="check">✓</span>Uptime monitoring</li>
+            <li><span class="check">✓</span>Secure data backup</li>
+            <li><span class="check">✓</span>Email support</li>
+          </ul>
+          <a href="#contact" class="btn-plan btn-plan-outline" style="margin-bottom:14px">Get Started →</a>
+          <div
+            style="background:#F8FAFF;border-radius:10px;padding:10px 12px;font-size:12px;color:var(--muted);line-height:1.6;text-align:center">
+            💡 Combine with Standard for full platform access
+          </div>
+        </div>
+
+        <!-- Card 2: Standard (Featured) -->
+        <div class="pricing-card featured fade-up fade-up-d1">
+          <p class="pricing-tag">Most Popular <span class="pricing-badge">★ Best Value</span></p>
+          <h3>Standard</h3>
+          <div style="margin:16px 0 6px">
+            <div
+              style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em">
+              One-time software charge</div>
+            <div style="font-size:28px;font-weight:800;color:white;font-family:'Outfit',sans-serif">₹10,000</div>
+          </div>
+          <div style="margin:0 0 4px">
+            <div
+              style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em">
+              Server & Backup Maintenance</div>
+            <div style="font-size:26px;font-weight:800;color:white;font-family:'Outfit',sans-serif">₹1,250 <span
+                style="font-size:13px;font-weight:400">+ GST / month</span></div>
+          </div>
+          <p class="price-sub" style="margin-top:10px">Full platform access for your center</p>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span>Unlimited patients</li>
+            <li><span class="check">✓</span>Patient records & home visits</li>
+            <li><span class="check">✓</span>Equipment & medicine tracking</li>
+            <li><span class="check">✓</span>Volunteer coordination</li>
+            <li><span class="check">✓</span>Unlimited user accounts</li>
+            <li><span class="check">✓</span>Android, iOS & Web app</li>
+            <li><span class="check">✓</span>Priority support & training</li>
+            <li><span class="check">✓</span>Custom branding</li>
+          </ul>
+          <a href="#contact" class="btn-plan btn-plan-white">Request a Demo →</a>
+        </div>
+
+        <!-- Card 3: Custom -->
+        <div class="pricing-card fade-up fade-up-d2">
+          <p class="pricing-tag">Enterprise</p>
+          <h3>Custom</h3>
+          <div class="price" style="font-size:26px;margin:16px 0 4px">Connect Our Team</div>
+          <p class="price-sub">Tailored for your organization</p>
+          <ul class="pricing-features">
+            <li><span class="check">✓</span>All Standard features</li>
+            <li><span class="check">✓</span>Unlimited custom updates</li>
+            <li><span class="check">✓</span>Feature additions on request</li>
+            <li><span class="check">✓</span>Multi-center management</li>
+            <li><span class="check">✓</span>Dedicated account manager</li>
+            <li><span class="check">✓</span>SLA-backed support</li>
+          </ul>
+          <div
+            style="background:#F8FAFF;border-radius:10px;padding:10px 12px;font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.6">
+            🛠️ Feature add-ons: <strong>₹2,500 – ₹5,000</strong> per custom module</div>
+          <a href="#contact" class="btn-plan btn-plan-outline">Talk to Our Team →</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="section-inner">
+      <div class="contact-grid">
+        <div class="contact-info">
+          <span class="section-tag fade-up">Contact Us</span>
+          <h2 class="fade-up fade-up-d1">Ready to Transform Your<br />Care Operations?</h2>
+          <p class="fade-up fade-up-d2">Send us an enquiry and we'll get back to you within 24 hours to discuss how our
+            platform can work for your organization.</p>
+          <div class="contact-item fade-up">
+            <div class="contact-item-icon">📞</div>
+            <div>
+              <strong>Phone / WhatsApp</strong>
+              <a href="tel:+919995566067">+91 999 55 66 067</a>
+            </div>
+          </div>
+          <div class="contact-item fade-up fade-up-d1">
+            <div class="contact-item-icon">🌐</div>
+            <div>
+              <strong>Website</strong>
+              <a href="https://ameen.osperb.com" target="_blank" rel="noopener"
+                style="display:inline-flex;align-items:center;gap:5px">Visit Website →</a>
+            </div>
+          </div>
+          <div class="contact-item fade-up fade-up-d2">
+            <div class="contact-item-icon">📍</div>
+            <div>
+              <strong>Based in</strong>
+              <span>Malappuram, Kerala, India</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="contact-form fade-up fade-up-d1" id="contactFormWrapper">
+          <h3>Request a Free Demo</h3>
+          <p>Tell us about your palliative care center and we'll customize a demo for you.</p>
+          <form id="enquiryForm" novalidate>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="firstName">First Name *</label>
+                <input type="text" id="firstName" name="firstName" placeholder="Your first name" required />
+              </div>
+              <div class="form-group">
+                <label for="lastName">Last Name</label>
+                <input type="text" id="lastName" name="lastName" placeholder="Last name" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="organization">Organization / Center Name *</label>
+              <input type="text" id="organization" name="organization" placeholder="e.g. ABC Palliative Care Society"
+                required />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="phone">Phone / WhatsApp *</label>
+                <input type="tel" id="phone" name="phone" placeholder="+91 XXXXX XXXXX" required />
+              </div>
+              <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="your@email.com" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="centerSize">Number of Patients</label>
+              <select id="centerSize" name="centerSize">
+                <option value="">Select range</option>
+                <option value="<25">Less than 25</option>
+                <option value="25-100">25 – 100</option>
+                <option value="100-300">100 – 300</option>
+                <option value="300+">300+</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="message">Message / Requirements</label>
+              <textarea id="message" name="message"
+                placeholder="Tell us about your current challenges and what you're looking for..."></textarea>
+            </div>
+            <button type="submit" class="btn-submit" id="submitBtn">Send Enquiry →</button>
+            <p class="form-note">By submitting, you agree to our <a href="privacy-policy.html">Privacy Policy</a>. We
+              never share your data.</p>
+          </form>
+          <div class="form-success" id="formSuccess">
+            <div class="success-icon">🎉</div>
+            <h4>Thank you! We'll be in touch.</h4>
+            <p>Our team will reach out within 24 hours to schedule your personalized demo.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="brand-name">🩺 Palliative Care</div>
+          <div class="brand-by">Built with ❤️ by <a href="https://ameen.osperb.com" target="_blank"
+              rel="noopener">AFO</a></div>
+          <p>A complete digital management platform for palliative care organizations — compassionate care, powered by
+            technology.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#how">How It Works</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#contact">Request Demo</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Platform</h4>
+          <ul>
+            <li><a href="#">Android App</a></li>
+            <li><a href="#">iOS App</a></li>
+            <li><a href="#">Web Dashboard</a></li>
+            <li><a href="#">API Access</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="https://ameen.osperb.com" target="_blank" rel="noopener">AFO Portfolio</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="privacy-policy.html">Privacy Policy</a></li>
+            <li><a href="privacy-policy.html#terms">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2025 Palliative Care App by <a href="https://ameen.osperb.com" target="_blank" rel="noopener">AFO
+          </a>. All rights reserved.</p>
+        <div class="footer-badges">
+          <span class="footer-badge">Android</span>
+          <span class="footer-badge">iOS</span>
+          <span class="footer-badge">Web</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Nav scroll effect
+    window.addEventListener('scroll', () => {
+      document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
+    });
+
+    // Intersection Observer for fade-up animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+    // Mobile menu
+    function openMobileMenu() { document.getElementById('mobileMenu').classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeMobileMenu() { document.getElementById('mobileMenu').classList.remove('open'); document.body.style.overflow = ''; }
+
+    // Form submission
+    document.getElementById('enquiryForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.textContent = 'Sending...'; btn.disabled = true;
+
+      // Collect form data
+      const data = {
+        firstName: document.getElementById('firstName').value,
+        organization: document.getElementById('organization').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        centerSize: document.getElementById('centerSize').value,
+        message: document.getElementById('message').value,
+      };
+
+      // Simulate submission (replace with actual API endpoint)
+      setTimeout(() => {
+        document.querySelector('#contactFormWrapper form').style.display = 'none';
+        document.getElementById('formSuccess').style.display = 'block';
+      }, 1200);
+    });
+
+    // Smooth scroll for nav links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      });
+    });
+  </script>
+
+  <!-- WhatsApp Floating Button -->
+  <style>
+    .wa-float {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #25D366;
+      color: white;
+      padding: 13px 20px 13px 16px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 8px 32px rgba(37, 211, 102, 0.4);
+      transition: all 0.3s cubic-bezier(.4, 0, .2, 1);
+      animation: wa-pulse 3s ease-in-out infinite;
+    }
+
+    .wa-float:hover {
+      background: #1ebe5d;
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 16px 40px rgba(37, 211, 102, 0.5);
+    }
+
+    .wa-float svg {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    @keyframes wa-pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 8px 32px rgba(37, 211, 102, 0.4);
+      }
+
+      50% {
+        box-shadow: 0 8px 40px rgba(37, 211, 102, 0.65);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .wa-float span {
+        display: none;
+      }
+
+      .wa-float {
+        padding: 14px;
+        border-radius: 50%;
+      }
+    }
+  </style>
+
+  <a href="https://wa.me/919995566067?text=Hi%2C%20I%27m%20interested%20in%20the%20Palliative%20Care%20management%20platform.%20Can%20you%20share%20more%20details%3F"
+    target="_blank" rel="noopener noreferrer" class="wa-float" aria-label="Chat with us on WhatsApp" id="whatsappBtn">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="16" cy="16" r="16" fill="#25D366" />
+      <path
+        d="M23.5 8.5C21.6 6.6 19.1 5.5 16.4 5.5C10.8 5.5 6.3 10 6.3 15.6C6.3 17.5 6.8 19.3 7.7 20.9L6.2 26L11.5 24.5C13 25.3 14.7 25.8 16.4 25.8C22 25.8 26.5 21.3 26.5 15.7C26.5 13 25.4 10.4 23.5 8.5ZM16.4 24C14.8 24 13.3 23.6 11.9 22.8L11.6 22.6L8.5 23.5L9.4 20.5L9.2 20.2C8.3 18.8 7.9 17.2 7.9 15.6C7.9 10.9 11.7 7.1 16.4 7.1C18.7 7.1 20.8 8 22.4 9.6C24 11.2 24.9 13.3 24.9 15.6C24.9 20.4 21.1 24 16.4 24ZM21.1 17.8C20.8 17.6 19.4 16.9 19.1 16.8C18.8 16.7 18.6 16.6 18.4 16.9C18.2 17.2 17.7 17.8 17.5 18C17.3 18.2 17.1 18.2 16.8 18.1C15.1 17.2 14 16.5 12.9 14.6C12.6 14.1 13.2 14.1 13.7 13.1C13.8 12.9 13.7 12.7 13.7 12.5C13.6 12.3 13.1 10.9 12.9 10.4C12.6 9.9 12.4 9.9 12.1 9.9C11.9 9.9 11.7 9.9 11.5 9.9C11.3 9.9 10.9 10 10.6 10.3C10.3 10.6 9.6 11.3 9.6 12.7C9.6 14.1 10.6 15.4 10.8 15.7C11 15.9 13.1 19.1 16.2 20.3C18.2 21.1 19 21.1 20 20.9C20.6 20.8 21.8 20.1 22.1 19.4C22.3 18.7 22.3 18.1 22.2 18C22.1 17.9 21.9 17.9 21.1 17.8Z"
+        fill="white" />
+    </svg>
+    <span>Chat on WhatsApp</span>
+  </a>
+
+</body>
+
+</html>

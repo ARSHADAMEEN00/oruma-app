@@ -744,7 +744,7 @@ class _HomescreenState extends State<Homescreen> {
     return Scaffold(
       key: _scaffoldKey,
       drawer: _buildProfessionalDrawer(context),
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: Colors.white,
       floatingActionButton: context.watch<AuthService>().canCreate
           ? FloatingActionButton(
               onPressed: _showQuickAddOptions,
@@ -912,38 +912,38 @@ class _HomescreenState extends State<Homescreen> {
                     crossAxisCount: 2,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
-                    childAspectRatio: 1.1,
+                    childAspectRatio: 1.05,
                     children: [
                       _buildModernActionCard(
                         context,
                         title: "Patients",
-                        subtitle: "Manage Directory",
-                        icon: Icons.people_outline_rounded,
-                        color: Colors.blue,
+                        icon: Icons.people_alt_rounded,
+                        cardColor: const Color(0xFFE3EFFE),
+                        iconColor: const Color(0xFF2563EB),
                         page: const PatientListPage(),
                       ),
                       _buildModernActionCard(
                         context,
                         title: "Home Visits",
-                        subtitle: "Schedule & View",
-                        icon: Icons.home_work_outlined,
-                        color: Colors.teal,
+                        icon: Icons.home_rounded,
+                        cardColor: const Color(0xFFE6F4EA),
+                        iconColor: const Color(0xFF16A34A),
                         page: const HomeVisitListPage(),
                       ),
                       _buildModernActionCard(
                         context,
                         title: "Supply List",
-                        subtitle: "Track History",
-                        icon: Icons.inventory_2_outlined,
-                        color: Colors.orange,
+                        icon: Icons.inventory_2_rounded,
+                        cardColor: const Color(0xFFFFF3E0),
+                        iconColor: const Color(0xFFEA580C),
                         page: const EquipmentSupplyListPage(),
                       ),
                       _buildModernActionCard(
                         context,
                         title: "Equipment",
-                        subtitle: "Inventory Status",
-                        icon: Icons.medical_services_outlined,
-                        color: Colors.purple,
+                        icon: Icons.medical_services_rounded,
+                        cardColor: const Color(0xFFF3E8FF),
+                        iconColor: const Color(0xFF7C3AED),
                         page: const EquipmentListPage(),
                       ),
                     ],
@@ -991,60 +991,52 @@ class _HomescreenState extends State<Homescreen> {
   Widget _buildModernActionCard(
     BuildContext context, {
     required String title,
-    required String subtitle,
     required IconData icon,
-    required Color color,
+    required Color cardColor,
+    required Color iconColor,
     required Widget page,
   }) {
     return Material(
-      color: Colors.white,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(20),
-      elevation: 4,
-      shadowColor: Colors.black.withOpacity(0.1),
       child: InkWell(
         onTap: () async {
           await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => page),
           );
-          // Reload supplies after returning from navigation
           if (title == "Supply List") {
             _loadActiveSupplies();
           }
         },
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(20),
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: iconColor.withOpacity(0.12),
+                  shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: color, size: 28),
+                child: Icon(icon, color: iconColor, size: 34),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                ],
+              const SizedBox(height: 14),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: iconColor,
+                ),
               ),
             ],
           ),
