@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://palliative.ziyaq.in/sitemap.xml
