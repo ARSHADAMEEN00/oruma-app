@@ -929,9 +929,9 @@ class _HomescreenState extends State<Homescreen> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.05,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.4,
                     children: [
                       _buildModernActionCard(
                         context,
@@ -976,7 +976,7 @@ class _HomescreenState extends State<Homescreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 18),
 
                   // Active Supplies Section
                   Row(
@@ -1048,20 +1048,20 @@ class _HomescreenState extends State<Homescreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 64,
-                height: 64,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
                   color: palette.iconBackground,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: palette.primary, size: 34),
+                child: Icon(icon, color: palette.primary, size: 26),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               Text(
                 title,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: palette.primary,
                 ),
@@ -1107,7 +1107,7 @@ class _HomescreenState extends State<Homescreen> {
 
         final supplies = snapshot.data!;
         return SizedBox(
-          height: 160,
+          height: 130,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -1115,17 +1115,17 @@ class _HomescreenState extends State<Homescreen> {
             itemBuilder: (context, index) {
               final supply = supplies[index];
               return Container(
-                width: 280,
-                margin: const EdgeInsets.only(right: 16, bottom: 8, top: 2),
-                padding: const EdgeInsets.all(16),
+                width: 240,
+                margin: const EdgeInsets.only(right: 12, bottom: 4, top: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -1135,24 +1135,24 @@ class _HomescreenState extends State<Homescreen> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(7),
                           decoration: BoxDecoration(
                             color: Colors.red.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
                             Icons.medical_services_outlined,
                             color: Colors.red,
-                            size: 20,
+                            size: 16,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             supply.equipmentName,
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 15,
+                              fontSize: 14,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1160,12 +1160,12 @@ class _HomescreenState extends State<Homescreen> {
                         ),
                       ],
                     ),
-                    const Divider(height: 24),
+                    const Divider(height: 16),
                     _buildInfoRow(
                       Icons.person_outline,
                       supply.patientName ?? 'Unknown',
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     _buildInfoRow(
                       Icons.calendar_today_outlined,
                       "Since: ${supply.supplyDate}",
