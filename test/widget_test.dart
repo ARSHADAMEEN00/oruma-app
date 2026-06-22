@@ -1,30 +1,76 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:oruma_app/main.dart';
+import 'package:oruma_app/models/patient.dart';
+import 'package:oruma_app/medicine_list_page.dart';
+import 'package:oruma_app/patient_details_page.dart';
+import 'package:oruma_app/services/auth_service.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('patient details shows the phase 2 sections', (tester) async {
+    const patient = Patient(
+      name: 'RASIYA,KALLINGAL',
+      relation: 'Daughter',
+      gender: 'Female',
+      address: 'Kallingal House',
+      phone: '9744407173',
+      phone2: '9961104085',
+      age: 54,
+      place: 'Kodur',
+      village: 'Kodur',
+      ward: '12',
+      disease: ['HTN', 'DM'],
+      plan: 'Monthly care',
+      registerId: '23/26',
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpWidget(
+      ChangeNotifierProvider(
+        create: (_) => AuthService(),
+        child: const MaterialApp(home: PatientDetailsPage(patient: patient)),
+      ),
+    );
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Patient Details'), findsOneWidget);
+    expect(find.text('Rasiya, Kallingal'), findsWidgets);
+    expect(find.text('Overview'), findsOneWidget);
+    expect(find.text('Medical'), findsOneWidget);
+    expect(find.text('Home Visits (0)'), findsOneWidget);
+    expect(find.text('Equipment (0)'), findsOneWidget);
+
+    await tester.drag(find.byType(NestedScrollView), const Offset(0, -220));
+    await tester.pumpAndSettle();
+    expect(find.text('Medical'), findsOneWidget);
+
+    await tester.tap(find.text('Medical'));
+    await tester.pumpAndSettle();
+    expect(find.text('Medical details'), findsOneWidget);
+    expect(find.text('Monthly care'), findsOneWidget);
+
+    await tester.tap(find.text('Home Visits (0)'));
+    await tester.pumpAndSettle();
+    expect(find.text('Could not load home visits'), findsOneWidget);
+  });
+
+  testWidgets('medicine form reveals optional details progressively', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const MaterialApp(home: MedicineFormPage()));
+
+    expect(find.text('Medicine code'), findsOneWidget);
+    expect(find.text('Generic / scientific name'), findsOneWidget);
+    expect(find.text('Dosage strength'), findsOneWidget);
+    expect(find.text('Quantity'), findsOneWidget);
+    expect(find.text('Additional details'), findsNothing);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -480));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('More details'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Additional details'), findsOneWidget);
+    expect(find.text('Barcode'), findsOneWidget);
+    expect(find.text('Batch / lot number'), findsOneWidget);
   });
 }

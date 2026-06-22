@@ -4,6 +4,7 @@ import 'package:oruma_app/eq_supply.dart';
 import 'package:oruma_app/equipment_list_page.dart';
 import 'package:oruma_app/equipment_supply_list_page.dart';
 import 'package:oruma_app/home_visit_list_page.dart';
+import 'package:oruma_app/medicine_list_page.dart';
 import 'package:oruma_app/pt_registration.dart' show patientrigister;
 import 'package:oruma_app/patient_list_page.dart';
 import 'package:oruma_app/deceased_patient_list_page.dart';
@@ -440,39 +441,41 @@ class _HomescreenState extends State<Homescreen> {
                 user?['email'] ?? "",
                 style: const TextStyle(fontSize: 14, color: Colors.grey),
               ),
-            const SizedBox(height: 32),
-            _buildProfileMenuItem(
-              icon: Icons.settings_outlined,
-              title: "Settings",
-              onTap: () => Navigator.pop(context),
-            ),
-            _buildProfileMenuItem(
-              icon: Icons.help_outline,
-              title: "Help & Support",
-              onTap: () {
-                Navigator.pop(context);
-                _showHelpAndSupport(context);
-              },
-            ),
-            const Divider(height: 32),
-            _buildProfileMenuItem(
-              icon: Icons.logout,
-              title: "Logout",
-              color: Colors.red,
-              onTap: () {
-                Navigator.pop(context); // Close sheet
-                context.read<AuthService>().logout();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const Loginscreen()),
-                  (route) => false,
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      );
-    },
+              const SizedBox(height: 32),
+              _buildProfileMenuItem(
+                icon: Icons.settings_outlined,
+                title: "Settings",
+                onTap: () => Navigator.pop(context),
+              ),
+              _buildProfileMenuItem(
+                icon: Icons.help_outline,
+                title: "Help & Support",
+                onTap: () {
+                  Navigator.pop(context);
+                  _showHelpAndSupport(context);
+                },
+              ),
+              const Divider(height: 32),
+              _buildProfileMenuItem(
+                icon: Icons.logout,
+                title: "Logout",
+                color: Colors.red,
+                onTap: () {
+                  Navigator.pop(context); // Close sheet
+                  context.read<AuthService>().logout();
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (context) => const Loginscreen(),
+                    ),
+                    (route) => false,
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -709,7 +712,6 @@ class _HomescreenState extends State<Homescreen> {
     );
   }
 
-
   Widget _buildProfileMenuItem({
     required IconData icon,
     required String title,
@@ -932,7 +934,7 @@ class _HomescreenState extends State<Homescreen> {
                       ),
                       _buildModernActionCard(
                         context,
-                        title: "Supply List",
+                        title: "Equipment Supply",
                         icon: Icons.inventory_2_rounded,
                         cardColor: const Color(0xFFFFF3E0),
                         iconColor: const Color(0xFFEA580C),
@@ -940,11 +942,11 @@ class _HomescreenState extends State<Homescreen> {
                       ),
                       _buildModernActionCard(
                         context,
-                        title: "Equipment",
-                        icon: Icons.medical_services_rounded,
-                        cardColor: const Color(0xFFF3E8FF),
-                        iconColor: const Color(0xFF7C3AED),
-                        page: const EquipmentListPage(),
+                        title: "Medicine Supply",
+                        icon: Icons.medication_liquid_rounded,
+                        cardColor: const Color(0xFFE3F7F1),
+                        iconColor: const Color(0xFF0B8F73),
+                        page: const MedicineListPage(),
                       ),
                     ],
                   ),
@@ -1005,7 +1007,7 @@ class _HomescreenState extends State<Homescreen> {
             context,
             MaterialPageRoute(builder: (context) => page),
           );
-          if (title == "Supply List") {
+          if (title == "Equipment Supply") {
             _loadActiveSupplies();
           }
         },
@@ -1355,10 +1357,15 @@ class _HomescreenState extends State<Homescreen> {
                 InkWell(
                   onTap: () async {
                     final Uri url = Uri.parse('https://ameen.osperb.com');
-                    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                    if (!await launchUrl(
+                      url,
+                      mode: LaunchMode.externalApplication,
+                    )) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Could not launch website')),
+                          const SnackBar(
+                            content: Text('Could not launch website'),
+                          ),
                         );
                       }
                     }
@@ -1418,11 +1425,7 @@ class _QrImageFallback extends StatelessWidget {
       child: const Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.qr_code_2,
-            size: 64,
-            color: Color(0xFF1A237E),
-          ),
+          Icon(Icons.qr_code_2, size: 64, color: Color(0xFF1A237E)),
           SizedBox(height: 12),
           Text(
             'QR image unavailable',

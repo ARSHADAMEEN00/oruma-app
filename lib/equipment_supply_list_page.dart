@@ -5,6 +5,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/eq_supply.dart';
 import 'package:oruma_app/eq_supply_edit.dart';
+import 'package:oruma_app/equipment_list_page.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
@@ -386,6 +387,19 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
           ),
         ),
         actions: [
+          TextButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const EquipmentListPage(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.medical_services_outlined, size: 18),
+            label: const Text('Equipment'),
+            style: TextButton.styleFrom(foregroundColor: Colors.indigo),
+          ),
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
         ],
       ),
@@ -556,10 +570,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -603,10 +614,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
           onTap: () => _returnSupply(supply),
           borderRadius: BorderRadius.circular(8),
           child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 6,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.orange.withOpacity(0.08),
               borderRadius: BorderRadius.circular(8),
@@ -680,9 +688,9 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                             child: Text(
                               supply.equipmentUniqueId,
                               style: TextStyle(
-                              color: Colors.grey.shade700,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade700,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -761,31 +769,31 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
     );
 
     if (canEdit || canDelete) {
-        List<Widget> actions = [];
-        
-        if (canEdit) {
-            actions.add(
-                SlidableAction(
-                  onPressed: (_) => _navigateToEditSupply(supply),
-                  backgroundColor: const Color(0xFF21B7CA),
-                  foregroundColor: Colors.white,
-                  icon: Icons.edit_rounded,
-                  label: 'Edit',
-                ),
-            );
-        }
-        
-        if (canDelete) {
-            actions.add(
-                 SlidableAction(
-                  onPressed: (_) => _deleteSupply(supply),
-                  backgroundColor: const Color(0xFFFE4A49),
-                  foregroundColor: Colors.white,
-                  icon: Icons.delete_rounded,
-                  label: 'Delete',
-                ),
-            );
-        }
+      List<Widget> actions = [];
+
+      if (canEdit) {
+        actions.add(
+          SlidableAction(
+            onPressed: (_) => _navigateToEditSupply(supply),
+            backgroundColor: const Color(0xFF21B7CA),
+            foregroundColor: Colors.white,
+            icon: Icons.edit_rounded,
+            label: 'Edit',
+          ),
+        );
+      }
+
+      if (canDelete) {
+        actions.add(
+          SlidableAction(
+            onPressed: (_) => _deleteSupply(supply),
+            backgroundColor: const Color(0xFFFE4A49),
+            foregroundColor: Colors.white,
+            icon: Icons.delete_rounded,
+            label: 'Delete',
+          ),
+        );
+      }
 
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
@@ -795,7 +803,9 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
             key: ValueKey(supply.id),
             endActionPane: ActionPane(
               motion: const ScrollMotion(),
-              extentRatio: actions.length * 0.25, // Adjust ratio based on number of actions
+              extentRatio:
+                  actions.length *
+                  0.25, // Adjust ratio based on number of actions
               children: actions,
             ),
             child: cardContent,
@@ -893,168 +903,189 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-            // Header
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Colors.orange.shade50,
-                  child: Icon(
-                    Icons.medical_services,
-                    color: Colors.orange.shade400,
-                    size: 28,
+              // Header
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: Colors.orange.shade50,
+                    child: Icon(
+                      Icons.medical_services,
+                      color: Colors.orange.shade400,
+                      size: 28,
+                    ),
                   ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          supply.equipmentName.toUpperCase(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        Text(
+                          supply.equipmentUniqueId,
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(supply.status).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      supply.status.toUpperCase(),
+                      style: TextStyle(
+                        color: _getStatusColor(supply.status),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              const Divider(),
+              const SizedBox(height: 16),
+              // Patient / Receiver Details
+              if (supply.patientName != null &&
+                  supply.patientName!.isNotEmpty) ...[
+                _buildDetailRow(
+                  Icons.person,
+                  'Patient',
+                  supply.patientName!.toUpperCase(),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
+                _buildDetailRow(
+                  Icons.phone,
+                  'Phone',
+                  supply.patientPhone ?? 'N/A',
+                ),
+                if (supply.patientAddress != null &&
+                    supply.patientAddress!.isNotEmpty)
+                  _buildDetailRow(
+                    Icons.location_on,
+                    'Address',
+                    supply.patientAddress!,
+                  ),
+                if (supply.careOf != null && supply.careOf!.isNotEmpty)
+                  _buildDetailRow(
+                    Icons.supervised_user_circle,
+                    'Care Of',
+                    supply.careOf!,
+                  ),
+              ] else ...[
+                _buildDetailRow(
+                  Icons.person,
+                  'Receiver',
+                  (supply.receiverName ?? 'Unknown').toUpperCase(),
+                ),
+                _buildDetailRow(
+                  Icons.phone,
+                  'Phone',
+                  supply.receiverPhone ?? 'N/A',
+                ),
+                if (supply.receiverAddress != null &&
+                    supply.receiverAddress!.isNotEmpty)
+                  _buildDetailRow(
+                    Icons.location_on,
+                    'Address',
+                    supply.receiverAddress!,
+                  ),
+                if (supply.receiverPlace != null &&
+                    supply.receiverPlace!.isNotEmpty)
+                  _buildDetailRow(
+                    Icons.location_city,
+                    'Place',
+                    supply.receiverPlace!,
+                  ),
+                if (supply.careOf != null && supply.careOf!.isNotEmpty)
+                  _buildDetailRow(
+                    Icons.supervised_user_circle,
+                    'Care Of',
+                    supply.careOf!,
+                  ),
+              ],
+              const SizedBox(height: 16),
+              Divider(color: Colors.grey.shade200),
+              const SizedBox(height: 16),
+              _buildDetailRow(
+                Icons.calendar_today,
+                'Supply Date',
+                _formatDate(supply.supplyDate),
+              ),
+              if (supply.returnDate != null)
+                _buildDetailRow(
+                  Icons.event_available,
+                  'Expected Return',
+                  _formatDate(supply.returnDate!),
+                ),
+              if (supply.actualReturnDate != null) ...[
+                const SizedBox(height: 8),
+                _buildDetailRow(
+                  Icons.check_circle_outlined,
+                  'Returned On',
+                  _formatDate(supply.actualReturnDate!),
+                ),
+              ],
+              if (supply.notes != null && supply.notes!.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Divider(color: Colors.grey.shade200),
+                const SizedBox(height: 16),
+                _buildDetailRow(Icons.note, 'Notes', supply.notes!),
+              ],
+              if (supply.returnNote != null &&
+                  supply.returnNote!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _buildDetailRow(
+                  Icons.assignment_return_outlined,
+                  'Return Notes',
+                  supply.returnNote!,
+                ),
+              ],
+              if (supply.createdBy != null) ...[
+                const SizedBox(height: 24),
+                Divider(color: Colors.grey.shade200),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.only(top: 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        supply.equipmentName.toUpperCase(),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                        'Created by: ${supply.createdBy}',
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      Text(
-                        supply.equipmentUniqueId,
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
+                      if (supply.createdAt != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            'Created on: ${_formatDate(supply.createdAt!)}',
+                            style: TextStyle(
+                              color: Colors.grey.shade500,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(supply.status).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    supply.status.toUpperCase(),
-                    style: TextStyle(
-                      color: _getStatusColor(supply.status),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
               ],
-            ),
-            const SizedBox(height: 24),
-            const Divider(),
-            const SizedBox(height: 16),
-            // Patient / Receiver Details
-            if (supply.patientName != null &&
-                supply.patientName!.isNotEmpty) ...[
-              _buildDetailRow(Icons.person, 'Patient', supply.patientName!.toUpperCase()),
-              _buildDetailRow(
-                Icons.phone,
-                'Phone',
-                supply.patientPhone ?? 'N/A',
-              ),
-              if (supply.patientAddress != null &&
-                  supply.patientAddress!.isNotEmpty)
-                _buildDetailRow(
-                  Icons.location_on,
-                  'Address',
-                  supply.patientAddress!,
-                ),
-              if (supply.careOf != null && supply.careOf!.isNotEmpty)
-                _buildDetailRow(
-                  Icons.supervised_user_circle,
-                  'Care Of',
-                  supply.careOf!,
-                ),
-            ] else ...[
-              _buildDetailRow(
-                Icons.person,
-                'Receiver',
-                (supply.receiverName ?? 'Unknown').toUpperCase(),
-              ),
-              _buildDetailRow(
-                Icons.phone,
-                'Phone',
-                supply.receiverPhone ?? 'N/A',
-              ),
-              if (supply.receiverAddress != null &&
-                  supply.receiverAddress!.isNotEmpty)
-                _buildDetailRow(
-                  Icons.location_on,
-                  'Address',
-                  supply.receiverAddress!,
-                ),
-              if (supply.receiverPlace != null &&
-                  supply.receiverPlace!.isNotEmpty)
-                _buildDetailRow(
-                  Icons.location_city,
-                  'Place',
-                  supply.receiverPlace!,
-                ),
-              if (supply.careOf != null && supply.careOf!.isNotEmpty)
-                _buildDetailRow(
-                  Icons.supervised_user_circle,
-                  'Care Of',
-                  supply.careOf!,
-                ),
-            ],
-            const SizedBox(height: 16),
-            Divider(color: Colors.grey.shade200),
-            const SizedBox(height: 16),
-            _buildDetailRow(
-              Icons.calendar_today,
-              'Supply Date',
-              _formatDate(supply.supplyDate),
-            ),
-            if (supply.returnDate != null)
-              _buildDetailRow(
-                Icons.event_available,
-                'Expected Return',
-                _formatDate(supply.returnDate!),
-              ),
-            if (supply.actualReturnDate != null) ...[const SizedBox(height: 8), _buildDetailRow(
-                Icons.check_circle_outlined,
-                'Returned On',
-                _formatDate(supply.actualReturnDate!),
-              ),],
-            if (supply.notes != null && supply.notes!.isNotEmpty) ...[const SizedBox(height: 16), Divider(color: Colors.grey.shade200), const SizedBox(height: 16), _buildDetailRow(Icons.note, 'Notes', supply.notes!),],
-            if (supply.returnNote != null && supply.returnNote!.isNotEmpty) ...[const SizedBox(height: 8), _buildDetailRow(
-                Icons.assignment_return_outlined,
-                'Return Notes',
-                supply.returnNote!,
-              ),],
-            if (supply.createdBy != null) ...[const SizedBox(height: 24), Divider(color: Colors.grey.shade200), const SizedBox(height: 16), Padding(
-                padding: const EdgeInsets.only(top: 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Created by: ${supply.createdBy}',
-                      style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    if (supply.createdAt != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          'Created on: ${_formatDate(supply.createdAt!)}',
-                          style: TextStyle(
-                            color: Colors.grey.shade500,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),],
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
             ],
           ),
         ),

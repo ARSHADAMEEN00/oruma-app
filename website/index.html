@@ -348,6 +348,10 @@
       color: var(--text);
     }
 
+    .header-cta {
+      white-space: nowrap;
+    }
+
     .hero {
       padding: 56px 0 72px;
     }
@@ -364,6 +368,77 @@
       font-size: 18px;
       color: var(--muted);
       line-height: 1.78;
+    }
+
+    .hero-offer {
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 26px;
+      padding: 14px 18px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%);
+      border: 1px solid rgba(26, 115, 232, 0.16);
+      box-shadow: 0 14px 28px rgba(58, 95, 140, 0.08);
+    }
+
+    .hero-offer-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 30px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .hero-offer-price {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .hero-offer-old {
+      color: rgba(15, 31, 56, 0.4);
+      font-size: 16px;
+      font-weight: 700;
+      text-decoration: line-through;
+    }
+
+    .hero-offer-new {
+      color: var(--text);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .hero-offer-discount {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: rgba(25, 128, 56, 0.1);
+      color: var(--success);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .hero-offer-note {
+      width: 100%;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700;
+      line-height: 1.6;
     }
 
     .hero-note {
@@ -1375,16 +1450,47 @@
 
       .nav-shell {
         min-height: 72px;
-        flex-wrap: wrap;
-        padding: 10px 0;
+        flex-wrap: nowrap;
+        padding: 12px 0;
+        gap: 14px;
       }
 
       .nav-links {
         display: none;
       }
 
+      .brand {
+        flex: 1;
+        min-width: 0;
+        gap: 10px;
+      }
+
+      .brand-mark {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        font-size: 13px;
+      }
+
+      .brand-title {
+        font-size: 15px;
+        line-height: 1.1;
+      }
+
+      .site-header .header-cta {
+        flex-shrink: 0;
+        min-height: 44px;
+        padding: 0 18px;
+        font-size: 14px;
+        box-shadow: 0 10px 22px rgba(26, 115, 232, 0.14);
+      }
+
       .hero {
         padding-top: 36px;
+      }
+
+      .hero-offer {
+        width: 100%;
       }
 
       .hero-metrics,
@@ -1423,8 +1529,57 @@
         width: 100%;
       }
 
+      .nav-shell {
+        min-height: 64px;
+        gap: 10px;
+      }
+
       .brand-subtitle {
         display: none;
+      }
+
+      .brand-mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 11px;
+        font-size: 12px;
+      }
+
+      .brand-title {
+        max-width: 180px;
+        font-size: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .site-header .header-cta {
+        width: auto;
+        min-height: 40px;
+        padding: 0 14px;
+        font-size: 13px;
+      }
+
+      .hero-copy p {
+        font-size: 17px;
+      }
+
+      .hero-offer {
+        gap: 10px;
+        padding: 14px 14px;
+        border-radius: 20px;
+      }
+
+      .hero-offer-label {
+        font-size: 10px;
+      }
+
+      .hero-offer-new {
+        font-size: 24px;
+      }
+
+      .hero-offer-note {
+        font-size: 12px;
       }
 
       .hero-note {
@@ -1467,7 +1622,7 @@
         </ul>
       </nav>
 
-      <a href="#contact" class="btn btn-primary">Request a Demo</a>
+      <a href="#contact" class="btn btn-primary header-cta">Request Demo</a>
     </div>
   </header>
 
@@ -1475,14 +1630,23 @@
     <section class="hero">
       <div class="container hero-grid">
         <div class="hero-copy fade-up">
-          <span class="eyebrow">Palliative Care ERP &amp; Management Software</span>
           <h1>Palliative Care Management App, <span class="highlight">powered by technology</span></h1>
           <p>A complete palliative care ERP and management platform for NGOs, clinics, hospitals, and home care teams -
             patient records, home visits, equipment tracking, medicine supply, and volunteer coordination in one place.
           </p>
 
+          <div class="hero-offer">
+            <span class="hero-offer-label">Limited 2026 Offer</span>
+            <div class="hero-offer-price">
+              <span class="hero-offer-old">₹14,999</span>
+              <span class="hero-offer-new">₹9,999</span>
+              <span class="hero-offer-discount">33% off</span>
+            </div>
+            <div class="hero-offer-note">One-time software charge for the Standard plan.</div>
+          </div>
+
           <div class="btn-row">
-            <a href="#contact" class="btn btn-primary" id="heroDemoBtn">Request a Demo</a>
+            <a href="#contact" class="btn btn-primary" id="heroDemoBtn">Purchase Now</a>
             <a href="#features" class="btn btn-secondary">See Features</a>
           </div>
 
