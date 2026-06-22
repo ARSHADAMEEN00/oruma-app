@@ -9,10 +9,15 @@ import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/patient_details_service.dart';
 import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/widgets/deceased_icon.dart';
+import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 enum _PatientAction { markDeceased, delete }
+
+const _patientCardBackground = Color(0xFFE6F1FB);
+const _patientIconBackground = Color(0xFFB5D4F4);
+const _patientPrimary = Color(0xFF185FA5);
 
 class PatientDetailsPage extends StatefulWidget {
   final Patient patient;
@@ -89,7 +94,10 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => patientrigister(patient: _currentPatient),
+        builder: (context) => ModuleTheme(
+          palette: ModulePalettes.patients,
+          child: patientrigister(patient: _currentPatient),
+        ),
       ),
     );
 
@@ -252,7 +260,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
         auth.canDelete || (auth.canEdit && !_currentPatient.isDead);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5FA),
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           NestedScrollView(
@@ -262,8 +270,8 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
                 const SliverToBoxAdapter(
                   child: LinearProgressIndicator(
                     minHeight: 2,
-                    color: Color(0xFF6E63DF),
-                    backgroundColor: Color(0xFFE7E5FA),
+                    color: _patientPrimary,
+                    backgroundColor: _patientIconBackground,
                   ),
                 ),
               SliverPersistentHeader(
@@ -306,7 +314,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
       toolbarHeight: kToolbarHeight,
       elevation: 0,
       scrolledUnderElevation: 0,
-      backgroundColor: const Color(0xFF7167E8),
+      backgroundColor: _patientPrimary,
       foregroundColor: Colors.white,
       leading: IconButton(
         tooltip: 'Back',
@@ -326,13 +334,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
             fit: StackFit.expand,
             children: [
               const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF7167E8), Color(0xFF917CF3)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
+                decoration: BoxDecoration(color: _patientPrimary),
               ),
               Positioned(
                 top: topPadding + 17,
@@ -455,13 +457,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF7167E8), Color(0xFF917CF3)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
+      decoration: const BoxDecoration(color: _patientPrimary),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -471,7 +467,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
             decoration: BoxDecoration(
               color: _currentPatient.isDead
                   ? Colors.white.withValues(alpha: 0.2)
-                  : Colors.white,
+                  : _patientIconBackground,
               shape: BoxShape.circle,
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.75),
@@ -495,7 +491,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
                 : Text(
                     initial,
                     style: const TextStyle(
-                      color: Color(0xFF6B5FE1),
+                      color: _patientPrimary,
                       fontSize: 30,
                       fontWeight: FontWeight.w800,
                     ),
@@ -622,7 +618,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF524D85).withValues(alpha: 0.08),
+            color: _patientPrimary.withValues(alpha: 0.12),
             blurRadius: 18,
             offset: const Offset(0, 7),
           ),
@@ -635,11 +631,11 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
         dividerColor: Colors.transparent,
         indicatorSize: TabBarIndicatorSize.tab,
         indicator: BoxDecoration(
-          color: const Color(0xFF6E63DF),
+          color: _patientPrimary,
           borderRadius: BorderRadius.circular(14),
         ),
         labelColor: Colors.white,
-        unselectedLabelColor: const Color(0xFF77778A),
+        unselectedLabelColor: _patientPrimary,
         labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
         unselectedLabelStyle: const TextStyle(
           fontSize: 12,
@@ -782,12 +778,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
                   spacing: 8,
                   runSpacing: 8,
                   children: _currentPatient.disease
-                      .map(
-                        (disease) => _statusPill(
-                          disease,
-                          Theme.of(context).colorScheme.primary,
-                        ),
-                      )
+                      .map((disease) => _statusPill(disease, _patientPrimary))
                       .toList(),
                 ),
               const SizedBox(height: 22),
@@ -1078,14 +1069,14 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
         children: [
           Row(
             children: [
-              Icon(icon, color: const Color(0xFF242533), size: 22),
+              Icon(icon, color: _patientPrimary, size: 22),
               const SizedBox(width: 10),
               Text(
                 title,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF242533),
+                  color: _patientPrimary,
                 ),
               ),
             ],
@@ -1110,10 +1101,10 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: const Color(0xFF6E63DF).withValues(alpha: 0.08),
+            color: _patientIconBackground,
             borderRadius: BorderRadius.circular(13),
           ),
-          child: Icon(icon, color: const Color(0xFF6E63DF), size: 20),
+          child: Icon(icon, color: _patientPrimary, size: 20),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -1154,10 +1145,10 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
           width: 34,
           height: 34,
           decoration: BoxDecoration(
-            color: const Color(0xFFF2F1F8),
+            color: _patientIconBackground,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, size: 17, color: const Color(0xFF6E63DF)),
+          child: Icon(icon, size: 17, color: _patientPrimary),
         ),
         const SizedBox(width: 11),
         Expanded(
@@ -1196,18 +1187,18 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         decoration: BoxDecoration(
-          color: const Color(0xFF6E63DF).withValues(alpha: 0.08),
+          color: _patientIconBackground,
           borderRadius: BorderRadius.circular(15),
         ),
         child: Row(
           children: [
-            const Icon(Icons.map_outlined, size: 20, color: Color(0xFF6E63DF)),
+            const Icon(Icons.map_outlined, size: 20, color: _patientPrimary),
             const SizedBox(width: 12),
             const Expanded(
               child: Text(
                 'View location on map',
                 style: TextStyle(
-                  color: Color(0xFF5F55CF),
+                  color: _patientPrimary,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
@@ -1216,7 +1207,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
             const Icon(
               Icons.arrow_forward_ios_rounded,
               size: 14,
-              color: Color(0xFF6E63DF),
+              color: _patientPrimary,
             ),
           ],
         ),
@@ -1231,7 +1222,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
       tooltip: 'Call $phone',
       onPressed: () => _callPhone(phone),
       style: IconButton.styleFrom(
-        backgroundColor: const Color(0xFF6E63DF),
+        backgroundColor: _patientPrimary,
         foregroundColor: Colors.white,
       ),
       icon: const Icon(Icons.call_outlined, size: 17),
@@ -1427,11 +1418,11 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
 
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
-      color: Colors.white,
+      color: _patientCardBackground,
       borderRadius: BorderRadius.circular(24),
       boxShadow: [
         BoxShadow(
-          color: const Color(0xFF565276).withValues(alpha: 0.08),
+          color: _patientPrimary.withValues(alpha: 0.08),
           blurRadius: 22,
           offset: const Offset(0, 9),
         ),
@@ -1593,7 +1584,7 @@ class _PatientTabsHeaderDelegate extends SliverPersistentHeaderDelegate {
   ) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5FA),
+        color: Colors.white,
         borderRadius: shrinkOffset == 0
             ? const BorderRadius.vertical(top: Radius.circular(30))
             : BorderRadius.zero,

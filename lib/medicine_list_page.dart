@@ -7,9 +7,10 @@ import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/medicine_service.dart';
 import 'package:provider/provider.dart';
 
-const _medicineGreen = Color(0xFF11A683);
-const _medicineDarkGreen = Color(0xFF087B66);
-const _medicineSurface = Color(0xFFEAF8F4);
+const _medicineGreen = Color(0xFF0F6E56);
+const _medicineDarkGreen = Color(0xFF0F6E56);
+const _medicineSurface = Color(0xFFE1F5EE);
+const _medicineIconBackground = Color(0xFF9FE1CB);
 
 class MedicineListPage extends StatefulWidget {
   const MedicineListPage({super.key});
@@ -524,7 +525,9 @@ class _MedicineListPageState extends State<MedicineListPage> {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: medicine.isActive ? _medicineSurface : Colors.grey.shade200,
+        color: medicine.isActive
+            ? _medicineIconBackground
+            : Colors.grey.shade200,
         borderRadius: BorderRadius.circular(size * 0.32),
       ),
       child: Icon(

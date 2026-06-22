@@ -15,6 +15,7 @@ import 'package:oruma_app/services/equipment_supply_service.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:oruma_app/config_page.dart';
+import 'package:oruma_app/widgets/module_theme.dart';
 
 class Homescreen extends StatefulWidget {
   const Homescreen({super.key});
@@ -234,8 +235,10 @@ class _HomescreenState extends State<Homescreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    const EquipmentSupplyListPage(),
+                                builder: (context) => const ModuleTheme(
+                                  palette: ModulePalettes.equipmentSupply,
+                                  child: EquipmentSupplyListPage(),
+                                ),
                               ),
                             );
                           },
@@ -258,7 +261,10 @@ class _HomescreenState extends State<Homescreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const EquipmentSupplyListPage(),
+                          builder: (context) => const ModuleTheme(
+                            palette: ModulePalettes.equipmentSupply,
+                            child: EquipmentSupplyListPage(),
+                          ),
                         ),
                       );
                     },
@@ -323,7 +329,10 @@ class _HomescreenState extends State<Homescreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const patientrigister(),
+                        builder: (context) => const ModuleTheme(
+                          palette: ModulePalettes.patients,
+                          child: patientrigister(),
+                        ),
                       ),
                     );
                   },
@@ -338,7 +347,10 @@ class _HomescreenState extends State<Homescreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const HomeVisitListPage(),
+                        builder: (context) => const ModuleTheme(
+                          palette: ModulePalettes.homeVisits,
+                          child: HomeVisitListPage(),
+                        ),
                       ),
                     );
                   },
@@ -351,7 +363,12 @@ class _HomescreenState extends State<Homescreen> {
                     Navigator.pop(context);
                     await Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const EqSupply()),
+                      MaterialPageRoute(
+                        builder: (context) => const ModuleTheme(
+                          palette: ModulePalettes.equipmentSupply,
+                          child: EqSupply(),
+                        ),
+                      ),
                     );
                     _loadActiveSupplies();
                   },
@@ -920,33 +937,41 @@ class _HomescreenState extends State<Homescreen> {
                         context,
                         title: "Patients",
                         icon: Icons.people_alt_rounded,
-                        cardColor: const Color(0xFFE3EFFE),
-                        iconColor: const Color(0xFF2563EB),
-                        page: const PatientListPage(),
+                        palette: ModulePalettes.patients,
+                        page: const ModuleTheme(
+                          palette: ModulePalettes.patients,
+                          child: PatientListPage(),
+                        ),
                       ),
                       _buildModernActionCard(
                         context,
                         title: "Home Visits",
                         icon: Icons.home_rounded,
-                        cardColor: const Color(0xFFE6F4EA),
-                        iconColor: const Color(0xFF16A34A),
-                        page: const HomeVisitListPage(),
+                        palette: ModulePalettes.homeVisits,
+                        page: const ModuleTheme(
+                          palette: ModulePalettes.homeVisits,
+                          child: HomeVisitListPage(),
+                        ),
                       ),
                       _buildModernActionCard(
                         context,
                         title: "Equipment Supply",
                         icon: Icons.inventory_2_rounded,
-                        cardColor: const Color(0xFFFFF3E0),
-                        iconColor: const Color(0xFFEA580C),
-                        page: const EquipmentSupplyListPage(),
+                        palette: ModulePalettes.equipmentSupply,
+                        page: const ModuleTheme(
+                          palette: ModulePalettes.equipmentSupply,
+                          child: EquipmentSupplyListPage(),
+                        ),
                       ),
                       _buildModernActionCard(
                         context,
                         title: "Medicine Supply",
                         icon: Icons.medication_liquid_rounded,
-                        cardColor: const Color(0xFFE3F7F1),
-                        iconColor: const Color(0xFF0B8F73),
-                        page: const MedicineListPage(),
+                        palette: ModulePalettes.medicineSupply,
+                        page: const ModuleTheme(
+                          palette: ModulePalettes.medicineSupply,
+                          child: MedicineListPage(),
+                        ),
                       ),
                     ],
                   ),
@@ -970,8 +995,10 @@ class _HomescreenState extends State<Homescreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  const EquipmentSupplyListPage(),
+                              builder: (context) => const ModuleTheme(
+                                palette: ModulePalettes.equipmentSupply,
+                                child: EquipmentSupplyListPage(),
+                              ),
                             ),
                           );
                         },
@@ -994,8 +1021,7 @@ class _HomescreenState extends State<Homescreen> {
     BuildContext context, {
     required String title,
     required IconData icon,
-    required Color cardColor,
-    required Color iconColor,
+    required ModulePalette palette,
     required Widget page,
   }) {
     return Material(
@@ -1014,7 +1040,7 @@ class _HomescreenState extends State<Homescreen> {
         borderRadius: BorderRadius.circular(20),
         child: Container(
           decoration: BoxDecoration(
-            color: cardColor,
+            color: palette.cardBackground,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
@@ -1025,10 +1051,10 @@ class _HomescreenState extends State<Homescreen> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.12),
+                  color: palette.iconBackground,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: iconColor, size: 34),
+                child: Icon(icon, color: palette.primary, size: 34),
               ),
               const SizedBox(height: 14),
               Text(
@@ -1037,7 +1063,7 @@ class _HomescreenState extends State<Homescreen> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
-                  color: iconColor,
+                  color: palette.primary,
                 ),
               ),
             ],
@@ -1172,218 +1198,328 @@ class _HomescreenState extends State<Homescreen> {
   }
 
   Widget _buildProfessionalDrawer(BuildContext context) {
+    final auth = context.watch<AuthService>();
+    final user = auth.user;
+    final userName = (user?['name']?.toString().trim().isNotEmpty ?? false)
+        ? user!['name'].toString()
+        : 'Team Oruma';
+    final userDetail = (user?['email']?.toString().trim().isNotEmpty ?? false)
+        ? user!['email'].toString()
+        : 'Healthcare Management';
+    final drawerWidth = MediaQuery.sizeOf(context).width > 520
+        ? 360.0
+        : MediaQuery.sizeOf(context).width * 0.88;
+
     return Drawer(
+      width: drawerWidth,
       backgroundColor: Colors.white,
-      child: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 24,
-              bottom: 24,
-              left: 24,
-              right: 24,
-            ),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF1A237E), Color(0xFF0277BD)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 70,
-                  height: 70,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/logo/logo.png',
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.local_hospital, size: 40),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(30)),
+      ),
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 22, 14, 20),
+              child: Row(
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE6F1FB),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFB5D4F4)),
+                    ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/logo/logo.png',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                              Icons.local_hospital_outlined,
+                              color: Color(0xFF185FA5),
+                              size: 30,
+                            ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "Oruma Care",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Hello,',
+                          style: TextStyle(
+                            color: Color(0xFF1D1D24),
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          userName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF696974),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          userDetail,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const Text(
-                  "Healthcare Management",
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
-                ),
-              ],
+                  IconButton(
+                    tooltip: 'Close menu',
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded),
+                    color: Colors.grey.shade500,
+                  ),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              children: [
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.dashboard_outlined,
-                  title: "Dashboard",
-                  onTap: () => Navigator.pop(context),
-                  isSelected: true,
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.people_outline,
-                  title: "Patients",
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const PatientListPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.person_off_outlined,
-                  title: "Passed Away Patients",
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const DeceasedPatientListPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.home_work_outlined,
-                  title: "Home Visits",
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const HomeVisitListPage(),
-                      ),
-                    );
-                  },
-                ),
-                const Divider(indent: 20, endIndent: 20),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.inventory_2_outlined,
-                  title: "Equipment Inventory",
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const EquipmentListPage(),
-                      ),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  context,
-                  icon: Icons.medical_services_outlined,
-                  title: "Supply Record",
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const EquipmentSupplyListPage(),
-                      ),
-                    );
-                  },
-                ),
-                if (context.read<AuthService>().isAdmin)
+            Divider(height: 1, color: Colors.grey.shade200),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(14, 18, 14, 12),
+                children: [
                   _buildDrawerItem(
                     context,
-                    icon: Icons.settings_outlined,
-                    title: "System Config",
+                    icon: Icons.home_outlined,
+                    title: "Dashboard",
+                    onTap: () => Navigator.pop(context),
+                    isSelected: true,
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.people_outline_rounded,
+                    title: "Patients",
+                    color: ModulePalettes.patients.primary,
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const ConfigPage(),
+                          builder: (context) => const ModuleTheme(
+                            palette: ModulePalettes.patients,
+                            child: PatientListPage(),
+                          ),
                         ),
                       );
                     },
                   ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-            child: Column(
-              children: [
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.logout, color: Colors.red),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.person_off_outlined,
+                    title: "Passed Away Patients",
+                    color: ModulePalettes.patients.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ModuleTheme(
+                            palette: ModulePalettes.patients,
+                            child: DeceasedPatientListPage(),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  title: const Text(
-                    "Logout",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.home_work_outlined,
+                    title: "Home Visits",
+                    color: ModulePalettes.homeVisits.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ModuleTheme(
+                            palette: ModulePalettes.homeVisits,
+                            child: HomeVisitListPage(),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  onTap: () {
-                    context.read<AuthService>().logout();
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) => const Loginscreen(),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(14, 14, 14, 7),
+                    child: Text(
+                      'INVENTORY',
+                      style: TextStyle(
+                        color: Color(0xFF9A9AA5),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
                       ),
-                      (route) => false,
-                    );
-                  },
-                ),
-                const SizedBox(height: 12),
-                InkWell(
-                  onTap: () async {
-                    final Uri url = Uri.parse('https://ameen.osperb.com');
-                    if (!await launchUrl(
-                      url,
-                      mode: LaunchMode.externalApplication,
-                    )) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Could not launch website'),
+                    ),
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.inventory_2_outlined,
+                    title: "Equipment Inventory",
+                    color: ModulePalettes.equipmentSupply.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ModuleTheme(
+                            palette: ModulePalettes.equipmentSupply,
+                            child: EquipmentListPage(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.local_shipping_outlined,
+                    title: "Distributed",
+                    color: ModulePalettes.equipmentSupply.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ModuleTheme(
+                            palette: ModulePalettes.equipmentSupply,
+                            child: EquipmentListPage(initialTab: 1),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.medical_services_outlined,
+                    title: "Supply Record",
+                    color: ModulePalettes.equipmentSupply.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ModuleTheme(
+                            palette: ModulePalettes.equipmentSupply,
+                            child: EquipmentSupplyListPage(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.medication_liquid_outlined,
+                    title: "Medicine",
+                    color: ModulePalettes.medicineSupply.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ModuleTheme(
+                            palette: ModulePalettes.medicineSupply,
+                            child: MedicineListPage(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  if (auth.isAdmin) ...[
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(14, 14, 14, 7),
+                      child: Text(
+                        'SYSTEM',
+                        style: TextStyle(
+                          color: Color(0xFF9A9AA5),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                    ),
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.settings_outlined,
+                      title: "System Config",
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ConfigPage(),
                           ),
                         );
-                      }
-                    }
-                  },
-                  child: const Text(
-                    "All rights reserved by AFO",
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Color(0xFF0277BD),
-                      // decoration: TextDecoration.underline,
+                      },
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
+                  ],
+                ],
+              ),
             ),
-          ),
-        ],
+            Divider(height: 1, color: Colors.grey.shade200),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+              child: Column(
+                children: [
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.logout_rounded,
+                    title: "Logout",
+                    color: const Color(0xFFC23B3B),
+                    onTap: () {
+                      auth.logout();
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (context) => const Loginscreen(),
+                        ),
+                        (route) => false,
+                      );
+                    },
+                  ),
+                  InkWell(
+                    onTap: () async {
+                      final Uri url = Uri.parse('https://ameen.osperb.com');
+                      if (!await launchUrl(
+                        url,
+                        mode: LaunchMode.externalApplication,
+                      )) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Could not launch website'),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    child: Text(
+                      "All rights reserved by AFO",
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: Colors.grey.shade400,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1394,22 +1530,37 @@ class _HomescreenState extends State<Homescreen> {
     required String title,
     required VoidCallback onTap,
     bool isSelected = false,
+    Color? color,
   }) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: isSelected ? const Color(0xFF1A237E) : Colors.grey.shade600,
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: isSelected ? const Color(0xFF1A237E) : Colors.grey.shade800,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+    final itemColor = color ?? const Color(0xFF20212A);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Material(
+        color: isSelected ? const Color(0xFFF0F1F4) : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: ListTile(
+          minLeadingWidth: 28,
+          leading: Icon(
+            icon,
+            color: isSelected ? const Color(0xFF20212A) : itemColor,
+            size: 22,
+          ),
+          title: Text(
+            title,
+            style: TextStyle(
+              color: const Color(0xFF20212A),
+              fontSize: 14,
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+            ),
+          ),
+          onTap: onTap,
+          dense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 3,
+          ),
         ),
       ),
-      selected: isSelected,
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
     );
   }
 }

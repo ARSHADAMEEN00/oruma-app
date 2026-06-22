@@ -9,6 +9,7 @@ import 'package:oruma_app/services/config_service.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
+import 'package:oruma_app/widgets/module_theme.dart';
 
 class HomeVisitListPage extends StatefulWidget {
   const HomeVisitListPage({super.key});
@@ -251,7 +252,10 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => Homevisit(initialDate: _selectedDate),
+                    builder: (context) => ModuleTheme(
+                      palette: ModulePalettes.homeVisits,
+                      child: Homevisit(initialDate: _selectedDate),
+                    ),
                   ),
                 );
                 if (result == true) _refreshVisits();
@@ -547,7 +551,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
               const SizedBox(width: 16),
 
               // Visit Details
-                      Expanded(
+              Expanded(
                 child: Stack(
                   children: [
                     Column(
@@ -620,7 +624,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                 "Plan : ${patient.plan}",
+                                  "Plan : ${patient.plan}",
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
@@ -832,7 +836,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
         await HomeVisitService.deleteHomeVisit(visit.id!);
         // Verify deletion by refreshing
         await _refreshVisitsSync();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -898,7 +902,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
   Widget _buildErrorState(String error) {
     // Log the error for debugging
     print('HomeVisitListPage Error: $error');
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -965,248 +969,270 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
       ),
       padding: EdgeInsets.fromLTRB(16, 20, 16, 16 + bottomSafePadding),
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: mediaQuery.size.height * 0.85,
-        ),
+        constraints: BoxConstraints(maxHeight: mediaQuery.size.height * 0.85),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Home Visit Details",
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        widget.visit.patientName,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (patient != null && patient.registerId != null && patient.registerId!.isNotEmpty) ...[
-                        const SizedBox(height: 3),
-                        Text(
-                          "ID: ${patient!.registerId}",
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Home Visit Details",
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: primaryColor,
+                            color: Colors.grey,
                           ),
                         ),
+                        const SizedBox(height: 3),
+                        Text(
+                          widget.visit.patientName,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (patient != null &&
+                            patient.registerId != null &&
+                            patient.registerId!.isNotEmpty) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            "ID: ${patient!.registerId}",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.all(10),
-                  child: Icon(Icons.home_work_rounded, color: primaryColor, size: 22),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            
-            // Patient Information Section
-            if (patient != null) ...[
-              const Text(
-                "Patient Information",
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 12,
-                children: [
-                  if (patient.phone.isNotEmpty)
-                    SizedBox(
-                      width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
-                      child: _buildDetailRow(Icons.phone, "Phone", patient.phone),
                     ),
-                  if (patient.phone2 != null && patient.phone2!.isNotEmpty)
-                    SizedBox(
-                      width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
-                      child: _buildDetailRow(Icons.phone_android, "Phone 2", patient.phone2!),
-                    ),
-                  SizedBox(
-                    width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
-                    child: _buildDetailRow(Icons.cake, "Age", "${patient.age} years"),
                   ),
-                  SizedBox(
-                    width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
-                    child: _buildDetailRow(Icons.wc, "Gender", patient.gender),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.all(10),
+                    child: Icon(
+                      Icons.home_work_rounded,
+                      color: primaryColor,
+                      size: 22,
+                    ),
                   ),
                 ],
               ),
+              const SizedBox(height: 20),
+
+              // Patient Information Section
+              if (patient != null) ...[
+                const Text(
+                  "Patient Information",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 12,
+                  children: [
+                    if (patient.phone.isNotEmpty)
+                      SizedBox(
+                        width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
+                        child: _buildDetailRow(
+                          Icons.phone,
+                          "Phone",
+                          patient.phone,
+                        ),
+                      ),
+                    if (patient.phone2 != null && patient.phone2!.isNotEmpty)
+                      SizedBox(
+                        width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
+                        child: _buildDetailRow(
+                          Icons.phone_android,
+                          "Phone 2",
+                          patient.phone2!,
+                        ),
+                      ),
+                    SizedBox(
+                      width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
+                      child: _buildDetailRow(
+                        Icons.cake,
+                        "Age",
+                        "${patient.age} years",
+                      ),
+                    ),
+                    SizedBox(
+                      width: (MediaQuery.of(context).size.width - 48) / 2 - 4,
+                      child: _buildDetailRow(
+                        Icons.wc,
+                        "Gender",
+                        patient.gender,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (patient.disease.isNotEmpty)
+                  _buildDetailRow(
+                    Icons.medical_services,
+                    "Diseases",
+                    (patient.disease.toList()..sort()).join(', '),
+                  )
+                else
+                  _buildDetailRow(
+                    Icons.medical_services,
+                    "Diseases",
+                    "No diseases recorded",
+                  ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Visit Information",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+
+              _buildDetailRow(
+                Icons.calendar_today,
+                "Visit Date",
+                date != null
+                    ? DateFormat('EEEE, d MMMM yyyy').format(date)
+                    : "Invalid date",
+              ),
               const SizedBox(height: 12),
-              if (patient.disease.isNotEmpty)
-                _buildDetailRow(
-                  Icons.medical_services,
-                  "Diseases",
-                  (patient.disease.toList()..sort()).join(', '),
+
+              if (patient != null)
+                _buildEditableDetailRow(
+                  Icons.assignment,
+                  "Care Plan",
+                  patient.plan.isEmpty ? "No plan assigned" : patient.plan,
+                  onEdit: context.read<AuthService>().canEdit
+                      ? () => _showEditPatientDialog(context, patient)
+                      : null,
                 )
               else
                 _buildDetailRow(
-                  Icons.medical_services,
-                  "Diseases",
-                  "No diseases recorded",
+                  Icons.assignment,
+                  "Care Plan",
+                  "No plan assigned",
                 ),
-              const SizedBox(height: 20),
-              const Text(
-                "Visit Information",
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
-                  letterSpacing: 0.5,
-                ),
+              const SizedBox(height: 12),
+              _buildDetailRow(
+                Icons.medical_services_outlined,
+                "Visit Mode",
+                _getVisitModeLabel(widget.visit.visitMode),
               ),
-              const SizedBox(height: 8),
-            ],
-            
-            _buildDetailRow(
-              Icons.calendar_today,
-              "Visit Date",
-              date != null ? DateFormat('EEEE, d MMMM yyyy').format(date) : "Invalid date",
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
+              _buildDetailRow(
+                Icons.location_on,
+                "Address",
+                widget.visit.address.isNotEmpty
+                    ? widget.visit.address
+                    : "No address provided",
+              ),
+              const SizedBox(height: 12),
 
-                  if (patient != null)
-              _buildEditableDetailRow(
-                Icons.assignment,
-                "Care Plan",
-                patient.plan.isEmpty ? "No plan assigned" : patient.plan,
-                onEdit: context.read<AuthService>().canEdit 
-                  ? () => _showEditPatientDialog(context, patient)
-                  : null,
-              )
-            else
               _buildDetailRow(
-                Icons.assignment,
-                "Care Plan",
-                "No plan assigned",
+                Icons.group,
+                "Team",
+                widget.visit.team != null && widget.visit.team!.isNotEmpty
+                    ? widget.visit.team!
+                    : "No team assigned",
               ),
-            const SizedBox(height: 12),
-            _buildDetailRow(
-              Icons.medical_services_outlined,
-              "Visit Mode",
-              _getVisitModeLabel(widget.visit.visitMode),
-            ),
-            const SizedBox(height: 12),
-            _buildDetailRow(
-              Icons.location_on,
-              "Address",
-              widget.visit.address.isNotEmpty ? widget.visit.address : "No address provided",
-            ),
-            const SizedBox(height: 12),
-      
-            _buildDetailRow(
-              Icons.group,
-              "Team",
-              widget.visit.team != null && widget.visit.team!.isNotEmpty
-                  ? widget.visit.team!
-                  : "No team assigned",
-            ),
-            const SizedBox(height: 12),
-            if (widget.visit.notes != null && widget.visit.notes!.isNotEmpty)
-              _buildDetailRow(
-                Icons.notes,
-                "Notes",
-                widget.visit.notes!,
-              )
-            else
-              _buildDetailRow(
-                Icons.notes,
-                "Notes",
-                "No notes provided",
-              ),
-            if (widget.visit.createdBy != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Text(
-                  "Created by: ${widget.visit.createdBy}",
-                  style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+              const SizedBox(height: 12),
+              if (widget.visit.notes != null && widget.visit.notes!.isNotEmpty)
+                _buildDetailRow(Icons.notes, "Notes", widget.visit.notes!)
+              else
+                _buildDetailRow(Icons.notes, "Notes", "No notes provided"),
+              if (widget.visit.createdBy != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Text(
+                    "Created by: ${widget.visit.createdBy}",
+                    style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+                  ),
                 ),
-              ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                if (context.read<AuthService>().canDelete) ...[
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        widget.onDelete();
-                      },
-                      icon: const Icon(Icons.delete_outline, color: Colors.red),
-                      label: const Text(
-                        "Delete",
-                        style: TextStyle(color: Colors.red),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: Colors.red),
-                        tapTargetSize: MaterialTapTargetSize.padded,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  if (context.read<AuthService>().canDelete) ...[
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          widget.onDelete();
+                        },
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
                         ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                ],
-                if (context.read<AuthService>().canEdit)
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => Homevisit(visit: widget.visit),
+                        label: const Text(
+                          "Delete",
+                          style: TextStyle(color: Colors.red),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(52),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: const BorderSide(color: Colors.red),
+                          tapTargetSize: MaterialTapTargetSize.padded,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        );
-                        if (result == true) widget.onRefresh();
-                      },
-                      icon: const Icon(Icons.edit_outlined),
-                      label: const Text("Edit Details"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size.fromHeight(52),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        elevation: 0,
-                        tapTargetSize: MaterialTapTargetSize.padded,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-          ],
+                    const SizedBox(width: 16),
+                  ],
+                  if (context.read<AuthService>().canEdit)
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ModuleTheme(
+                                palette: ModulePalettes.homeVisits,
+                                child: Homevisit(visit: widget.visit),
+                              ),
+                            ),
+                          );
+                          if (result == true) widget.onRefresh();
+                        },
+                        icon: const Icon(Icons.edit_outlined),
+                        label: const Text("Edit Details"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(52),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                          tapTargetSize: MaterialTapTargetSize.padded,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
@@ -1217,7 +1243,7 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: Colors.grey.shade600),
+        Icon(icon, size: 18, color: const Color(0xFF3B6D11)),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -1273,7 +1299,7 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: Colors.grey.shade600),
+        Icon(icon, size: 18, color: const Color(0xFF3B6D11)),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -1336,14 +1362,11 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
   Future<void> _updatePatient(Patient updatedPatient) async {
     try {
       if (updatedPatient.id == null) return;
-      
-      await PatientService.updatePatient(
-        updatedPatient.id!,
-        updatedPatient,
-      );
+
+      await PatientService.updatePatient(updatedPatient.id!, updatedPatient);
 
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Patient information updated successfully"),
@@ -1352,7 +1375,7 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
       );
       // Refresh visits data to get updated patient information
       widget.onRefresh();
-      
+
       // Close the bottom sheet immediately after refresh
       Navigator.pop(context);
     } catch (e) {
@@ -1372,10 +1395,7 @@ class _EditPatientDialog extends StatefulWidget {
   final Patient patient;
   final Function(Patient) onSave;
 
-  const _EditPatientDialog({
-    required this.patient,
-    required this.onSave,
-  });
+  const _EditPatientDialog({required this.patient, required this.onSave});
 
   @override
   State<_EditPatientDialog> createState() => _EditPatientDialogState();
@@ -1440,9 +1460,7 @@ class _EditPatientDialogState extends State<_EditPatientDialog> {
             borderRadius: BorderRadius.circular(20),
           ),
           padding: const EdgeInsets.all(40),
-          child: const Center(
-            child: CircularProgressIndicator(),
-          ),
+          child: const Center(child: CircularProgressIndicator()),
         ),
       );
     }
@@ -1460,11 +1478,7 @@ class _EditPatientDialogState extends State<_EditPatientDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.error_outline,
-                color: Colors.red,
-                size: 48,
-              ),
+              const Icon(Icons.error_outline, color: Colors.red, size: 48),
               const SizedBox(height: 16),
               const Text(
                 'Failed to load configuration',
@@ -1537,10 +1551,7 @@ class _EditPatientDialogState extends State<_EditPatientDialog> {
                           color: Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(
-                          Icons.close,
-                          color: Colors.grey.shade600,
-                        ),
+                        child: Icon(Icons.close, color: Colors.grey.shade600),
                       ),
                     ),
                   ],
@@ -1590,10 +1601,12 @@ class _EditPatientDialogState extends State<_EditPatientDialog> {
                       ),
                       value: _selectedPlan,
                       items: _availablePlans
-                          .map((plan) => DropdownMenuItem(
-                                value: plan,
-                                child: Text(plan),
-                              ))
+                          .map(
+                            (plan) => DropdownMenuItem(
+                              value: plan,
+                              child: Text(plan),
+                            ),
+                          )
                           .toList(),
                       onChanged: (value) {
                         setState(() {
@@ -1657,9 +1670,7 @@ class _EditPatientDialogState extends State<_EditPatientDialog> {
                               borderRadius: BorderRadius.circular(20),
                               border: isSelected
                                   ? null
-                                  : Border.all(
-                                      color: Colors.grey.shade300,
-                                    ),
+                                  : Border.all(color: Colors.grey.shade300),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -1681,7 +1692,7 @@ class _EditPatientDialogState extends State<_EditPatientDialog> {
                                     size: 14,
                                     color: Colors.white,
                                   ),
-                                ]
+                                ],
                               ],
                             ),
                           ),
@@ -1729,7 +1740,9 @@ class _EditPatientDialogState extends State<_EditPatientDialog> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          disabledBackgroundColor: primaryColor.withOpacity(0.5),
+                          disabledBackgroundColor: primaryColor.withOpacity(
+                            0.5,
+                          ),
                         ),
                         child: _isSaving
                             ? const SizedBox(
@@ -1810,10 +1823,7 @@ class _EditPatientDialogState extends State<_EditPatientDialog> {
       setState(() => _isSaving = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error: $e"),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
         );
       }
     }

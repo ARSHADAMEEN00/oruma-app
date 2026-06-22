@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/patient_details_page.dart';
+import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:intl/intl.dart';
 
 class DeceasedPatientListPage extends StatefulWidget {
@@ -229,7 +230,10 @@ class _DeceasedPatientListPageState extends State<DeceasedPatientListPage> {
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => PatientDetailsPage(patient: patient),
+              builder: (context) => ModuleTheme(
+                palette: ModulePalettes.patients,
+                child: PatientDetailsPage(patient: patient),
+              ),
             ),
           );
           if (result == true) {

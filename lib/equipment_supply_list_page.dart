@@ -9,6 +9,10 @@ import 'package:oruma_app/equipment_list_page.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
+import 'package:oruma_app/widgets/module_theme.dart';
+
+const _equipmentSupplyPrimary = Color(0xFF854F0B);
+const _equipmentSupplySurface = Color(0xFFFAEEDA);
 
 class EquipmentSupplyListPage extends StatefulWidget {
   const EquipmentSupplyListPage({super.key});
@@ -226,7 +230,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                         const Icon(
                           Icons.calendar_today,
                           size: 16,
-                          color: Colors.indigo,
+                          color: _equipmentSupplyPrimary,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -314,23 +318,24 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: _equipmentSupplySurface,
+        surfaceTintColor: _equipmentSupplySurface,
+        foregroundColor: _equipmentSupplyPrimary,
         elevation: 1,
         title: const Text(
           'Equipment Supplies',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        centerTitle: true,
+        centerTitle: false,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Container(
             color: Colors.white,
             child: TabBar(
               controller: _tabController,
-              labelColor: Colors.indigo,
+              labelColor: _equipmentSupplyPrimary,
               unselectedLabelColor: Colors.grey[600],
-              indicatorColor: Colors.indigo,
+              indicatorColor: _equipmentSupplyPrimary,
               indicatorWeight: 3,
               labelStyle: const TextStyle(
                 fontWeight: FontWeight.w600,
@@ -356,7 +361,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.indigo,
+                            color: _equipmentSupplyPrimary,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
@@ -392,13 +397,18 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const EquipmentListPage(),
+                  builder: (context) => const ModuleTheme(
+                    palette: ModulePalettes.equipmentSupply,
+                    child: EquipmentListPage(),
+                  ),
                 ),
               );
             },
             icon: const Icon(Icons.medical_services_outlined, size: 18),
             label: const Text('Equipment'),
-            style: TextButton.styleFrom(foregroundColor: Colors.indigo),
+            style: TextButton.styleFrom(
+              foregroundColor: _equipmentSupplyPrimary,
+            ),
           ),
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
         ],
@@ -406,7 +416,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
       floatingActionButton: Provider.of<AuthService>(context).canCreate
           ? FloatingActionButton.extended(
               onPressed: _navigateToCreateSupply,
-              backgroundColor: Colors.indigo,
+              backgroundColor: _equipmentSupplyPrimary,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.add),
               label: const Text('New Supply'),
@@ -461,7 +471,10 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Colors.indigo, width: 1.5),
+            borderSide: const BorderSide(
+              color: _equipmentSupplyPrimary,
+              width: 1.5,
+            ),
           ),
         ),
       ),
@@ -896,6 +909,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      backgroundColor: Colors.white,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         child: SingleChildScrollView(
@@ -1099,7 +1113,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: Colors.indigo.shade400),
+          Icon(icon, size: 18, color: _equipmentSupplyPrimary),
           const SizedBox(width: 12),
           SizedBox(
             width: 90,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:oruma_app/homevisit.dart';
+import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:oruma_app/models/home_visit.dart';
 import 'package:oruma_app/services/home_visit_service.dart';
 import 'package:intl/intl.dart';
@@ -155,11 +156,11 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
         children: [
           Container(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+            decoration: const BoxDecoration(
+              color: Color(0xFFEAF3DE),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.search, size: 48, color: Colors.grey.shade400),
+            child: const Icon(Icons.search, size: 48, color: Color(0xFF3B6D11)),
           ),
           const SizedBox(height: 20),
           Text(
@@ -183,18 +184,18 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
+              color: const Color(0xFFEAF3DE),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.info_outline, size: 18, color: Colors.blue.shade600),
+                const Icon(Icons.info_outline, size: 18, color: Color(0xFF3B6D11)),
                 const SizedBox(width: 8),
                 Text(
                   "${_allVisits.length} total visits available",
-                  style: TextStyle(
-                    color: Colors.blue.shade700,
+                  style: const TextStyle(
+                    color: Color(0xFF3B6D11),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -501,11 +502,11 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
                 ),
                 Container(
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
+                    color: const Color(0xFFEAF3DE),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   padding: const EdgeInsets.all(12),
-                  child: Icon(Icons.home_work_rounded, color: primaryColor),
+                  child: const Icon(Icons.home_work_rounded, color: Color(0xFF3B6D11)),
                 ),
               ],
             ),
@@ -542,7 +543,10 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => Homevisit(visit: visit),
+                      builder: (context) => ModuleTheme(
+                        palette: ModulePalettes.homeVisits,
+                        child: Homevisit(visit: visit),
+                      ),
                     ),
                   );
                   if (result == true) {
@@ -553,7 +557,7 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
                 icon: const Icon(Icons.edit_outlined),
                 label: const Text("Edit Details"),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
+                  backgroundColor: const Color(0xFF3B6D11),
                   foregroundColor: Colors.white,
                   minimumSize: const Size.fromHeight(52),
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -575,7 +579,7 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: Colors.grey.shade600),
+        Icon(icon, size: 20, color: const Color(0xFF3B6D11)),
         const SizedBox(width: 12),
         Expanded(
           child: Column(

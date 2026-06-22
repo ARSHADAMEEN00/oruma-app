@@ -10,8 +10,14 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
 
+const _equipmentPrimary = Color(0xFF854F0B);
+const _equipmentSurface = Color(0xFFFAEEDA);
+const _equipmentIconSurface = Color(0xFFFAC775);
+
 class EquipmentListPage extends StatefulWidget {
-  const EquipmentListPage({super.key});
+  final int initialTab;
+
+  const EquipmentListPage({super.key, this.initialTab = 0});
 
   @override
   State<EquipmentListPage> createState() => _EquipmentListPageState();
@@ -41,7 +47,12 @@ class _EquipmentListPageState extends State<EquipmentListPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _currentIndex = widget.initialTab == 1 ? 1 : 0;
+    _tabController = TabController(
+      length: 2,
+      initialIndex: _currentIndex,
+      vsync: this,
+    );
     _tabController.addListener(_handleTabSelection);
     _searchController.addListener(_handleSearchChanged);
     _loadAllData();
@@ -173,9 +184,9 @@ class _EquipmentListPageState extends State<EquipmentListPage>
             color: Colors.white,
             child: TabBar(
               controller: _tabController,
-              labelColor: Colors.indigo,
+              labelColor: _equipmentPrimary,
               unselectedLabelColor: Colors.grey[600],
-              indicatorColor: Colors.indigo,
+              indicatorColor: _equipmentPrimary,
               indicatorWeight: 3,
               labelStyle: const TextStyle(
                 fontWeight: FontWeight.w600,
@@ -264,7 +275,7 @@ class _EquipmentListPageState extends State<EquipmentListPage>
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Colors.indigo, width: 1.5),
+            borderSide: const BorderSide(color: _equipmentPrimary, width: 1.5),
           ),
         ),
       ),
@@ -315,11 +326,8 @@ class _EquipmentListPageState extends State<EquipmentListPage>
           child: ListTile(
             contentPadding: const EdgeInsets.all(12),
             leading: CircleAvatar(
-              backgroundColor: Colors.indigo.shade50,
-              child: Icon(
-                Icons.medical_services,
-                color: Colors.indigo.shade400,
-              ),
+              backgroundColor: _equipmentSurface,
+              child: Icon(Icons.medical_services, color: _equipmentPrimary),
             ),
             title: Text(
               eq.uniqueId,
@@ -574,7 +582,7 @@ class _EquipmentListPageState extends State<EquipmentListPage>
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: Colors.indigo,
+                color: _equipmentPrimary,
               ),
             ),
             const SizedBox(height: 8),
@@ -608,7 +616,7 @@ class _EquipmentListPageState extends State<EquipmentListPage>
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: Colors.indigo,
+                  color: _equipmentPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -711,12 +719,12 @@ class _EquipmentListPageState extends State<EquipmentListPage>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.indigo.shade50,
+                    color: _equipmentSurface,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(
                     Icons.medical_services,
-                    color: Colors.indigo.shade400,
+                    color: _equipmentPrimary,
                     size: 28,
                   ),
                 ),
@@ -805,8 +813,8 @@ class _EquipmentListPageState extends State<EquipmentListPage>
                       label: const Text('Edit Details'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: BorderSide(color: Colors.indigo.shade200),
-                        foregroundColor: Colors.indigo,
+                        side: const BorderSide(color: _equipmentIconSurface),
+                        foregroundColor: _equipmentPrimary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -1057,7 +1065,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Colors.indigo,
+              primary: _equipmentPrimary,
               onPrimary: Colors.white,
               onSurface: Colors.black,
             ),
@@ -1177,7 +1185,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
             child: ElevatedButton(
               onPressed: _isSubmitting ? null : _submit,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.indigo,
+                backgroundColor: _equipmentPrimary,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -1219,14 +1227,14 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
                 ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Colors.indigo.shade500, Colors.indigo.shade700],
+                    colors: [_equipmentPrimary, Color(0xFF68400C)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.indigo.withOpacity(0.3),
+                      color: _equipmentPrimary.withValues(alpha: 0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -1265,7 +1273,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
                                 ? 'Modify existing record'
                                 : 'Add to inventory',
                             style: TextStyle(
-                              color: Colors.indigo.shade100,
+                              color: _equipmentIconSurface,
                               fontSize: 13,
                             ),
                           ),
@@ -1431,7 +1439,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.indigo, width: 1.5),
+          borderSide: const BorderSide(color: _equipmentPrimary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -1481,7 +1489,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.indigo, width: 1.5),
+          borderSide: const BorderSide(color: _equipmentPrimary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -1518,7 +1526,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.indigo, width: 1.5),
+          borderSide: const BorderSide(color: _equipmentPrimary, width: 1.5),
         ),
       ),
       items: const [DropdownMenuItem(value: 'Store', child: Text('Store'))],

@@ -6,6 +6,10 @@ import 'package:oruma_app/services/config_service.dart';
 import 'package:oruma_app/models/config.dart';
 import 'package:intl/intl.dart';
 
+const _patientCardBackground = Color(0xFFE6F1FB);
+const _patientIconBackground = Color(0xFFB5D4F4);
+const _patientPrimary = Color(0xFF185FA5);
+
 // ignore: camel_case_types
 class patientrigister extends StatefulWidget {
   final Patient? patient;
@@ -142,10 +146,20 @@ class _patientrigisterState extends State<patientrigister> {
   InputDecoration _buildInputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      prefixIcon: Icon(icon, size: 22, color: const Color(0xFF1A237E)),
+      prefixIcon: Container(
+        width: 40,
+        height: 40,
+        margin: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: _patientIconBackground,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, size: 20, color: _patientPrimary),
+      ),
+      prefixIconConstraints: const BoxConstraints(minWidth: 56, minHeight: 56),
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
-      fillColor: Colors.grey.shade50,
+      fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: Colors.grey.shade300),
@@ -156,7 +170,7 @@ class _patientrigisterState extends State<patientrigister> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF1A237E), width: 2),
+        borderSide: const BorderSide(color: _patientPrimary, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
     );
@@ -173,7 +187,7 @@ class _patientrigisterState extends State<patientrigister> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF1A237E),
+              primary: _patientPrimary,
               onPrimary: Colors.white,
               onSurface: Colors.black,
             ),
@@ -312,7 +326,7 @@ class _patientrigisterState extends State<patientrigister> {
                           }
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1A237E),
+                    backgroundColor: _patientPrimary,
                     foregroundColor: Colors.white,
                   ),
                   child: isSaving
@@ -403,7 +417,7 @@ class _patientrigisterState extends State<patientrigister> {
                           }
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1A237E),
+                    backgroundColor: _patientPrimary,
                     foregroundColor: Colors.white,
                   ),
                   child: isSaving
@@ -432,19 +446,19 @@ class _patientrigisterState extends State<patientrigister> {
     // Show loading indicator while config is loading
     if (_isLoadingConfig) {
       return Scaffold(
-        backgroundColor: Colors.grey.shade100,
+        backgroundColor: Colors.white,
         appBar: AppBar(
           title: Text(
             isEditing ? "Edit Patient" : "New Patient Registration",
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          backgroundColor: const Color(0xFF1A237E),
+          backgroundColor: _patientPrimary,
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
         ),
         body: const Center(
-          child: CircularProgressIndicator(color: Color(0xFF1A237E)),
+          child: CircularProgressIndicator(color: _patientPrimary),
         ),
       );
     }
@@ -452,13 +466,13 @@ class _patientrigisterState extends State<patientrigister> {
     // Show error if config failed to load
     if (_configError != null) {
       return Scaffold(
-        backgroundColor: Colors.grey.shade100,
+        backgroundColor: Colors.white,
         appBar: AppBar(
           title: Text(
             isEditing ? "Edit Patient" : "New Patient Registration",
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          backgroundColor: const Color(0xFF1A237E),
+          backgroundColor: _patientPrimary,
           foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
@@ -497,7 +511,7 @@ class _patientrigisterState extends State<patientrigister> {
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A237E),
+                  backgroundColor: _patientPrimary,
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -508,13 +522,13 @@ class _patientrigisterState extends State<patientrigister> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
           isEditing ? "Edit Patient" : "New Patient Registration",
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFF1A237E),
+        backgroundColor: _patientPrimary,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -535,7 +549,7 @@ class _patientrigisterState extends State<patientrigister> {
                     vertical: 16,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
+                    color: _patientCardBackground,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.grey.shade300),
                   ),
@@ -543,7 +557,7 @@ class _patientrigisterState extends State<patientrigister> {
                     children: [
                       const Icon(
                         Icons.calendar_today,
-                        color: Color(0xFF1A237E),
+                        color: _patientPrimary,
                         size: 22,
                       ),
                       const SizedBox(width: 12),
@@ -624,7 +638,7 @@ class _patientrigisterState extends State<patientrigister> {
                         child: ChoiceChip(
                           label: Text(g),
                           selected: isSelected,
-                          selectedColor: const Color(0xFF1A237E),
+                          selectedColor: _patientPrimary,
                           labelStyle: TextStyle(
                             color: isSelected ? Colors.white : Colors.black,
                           ),
@@ -664,9 +678,7 @@ class _patientrigisterState extends State<patientrigister> {
                         return FilterChip(
                           label: Text(disease),
                           selected: isSelected,
-                          selectedColor: const Color(
-                            0xFF1A237E,
-                          ).withValues(alpha: 0.8),
+                          selectedColor: _patientPrimary,
                           backgroundColor: Colors.grey.shade100,
                           checkmarkColor: Colors.white,
                           labelStyle: TextStyle(
@@ -690,21 +702,21 @@ class _patientrigisterState extends State<patientrigister> {
                         label: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.add, size: 16, color: Color(0xFF1A237E)),
+                            Icon(Icons.add, size: 16, color: _patientPrimary),
                             SizedBox(width: 4),
                             Text(
                               'Other',
                               style: TextStyle(
-                                color: Color(0xFF1A237E),
+                                color: _patientPrimary,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
-                        backgroundColor: Colors.blue.shade50,
+                        backgroundColor: _patientCardBackground,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(color: Colors.blue.shade200),
+                          side: const BorderSide(color: _patientIconBackground),
                         ),
                         onPressed: _showAddDiseaseDialog,
                       ),
@@ -819,7 +831,7 @@ class _patientrigisterState extends State<patientrigister> {
                           onPressed: _showAddWardDialog,
                           icon: const Icon(
                             Icons.add_circle,
-                            color: Color(0xFF1A237E),
+                            color: _patientPrimary,
                             size: 30,
                           ),
                           tooltip: 'Add New Ward',
@@ -879,7 +891,7 @@ class _patientrigisterState extends State<patientrigister> {
           child: ElevatedButton(
             onPressed: _isLoading ? null : _handleSubmit,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1A237E),
+              backgroundColor: _patientPrimary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -917,7 +929,7 @@ class _patientrigisterState extends State<patientrigister> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _patientCardBackground,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -935,10 +947,10 @@ class _patientrigisterState extends State<patientrigister> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1A237E).withOpacity(0.1),
+                  color: _patientIconBackground,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: const Color(0xFF1A237E), size: 20),
+                child: Icon(icon, color: _patientPrimary, size: 20),
               ),
               const SizedBox(width: 12),
               Text(

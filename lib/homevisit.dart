@@ -5,6 +5,10 @@ import 'package:oruma_app/services/home_visit_service.dart';
 import 'package:oruma_app/services/patient_service.dart';
 import 'package:intl/intl.dart';
 
+const _homeVisitCardBackground = Color(0xFFEAF3DE);
+const _homeVisitIconBackground = Color(0xFFC0DD97);
+const _homeVisitPrimary = Color(0xFF3B6D11);
+
 class Homevisit extends StatefulWidget {
   final HomeVisit? visit;
   final DateTime? initialDate;
@@ -108,8 +112,8 @@ class _HomevisitState extends State<Homevisit> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Theme.of(context).colorScheme.primary,
+            colorScheme: const ColorScheme.light(
+              primary: _homeVisitPrimary,
               onPrimary: Colors.white,
               onSurface: Colors.black,
             ),
@@ -164,7 +168,6 @@ class _HomevisitState extends State<Homevisit> {
             : null,
       );
 
-
       if (isEditing) {
         await HomeVisitService.updateHomeVisit(widget.visit!.id!, homeVisit);
       } else {
@@ -179,7 +182,7 @@ class _HomevisitState extends State<Homevisit> {
                   ? '✅ Visit updated successfully'
                   : '✅ Visit scheduled successfully',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: _homeVisitPrimary,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -204,18 +207,20 @@ class _HomevisitState extends State<Homevisit> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
+    const primaryColor = _homeVisitPrimary;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: _homeVisitCardBackground,
       appBar: AppBar(
         title: Text(isEditing ? 'Edit Home Visit' : 'Schedule Home Visit'),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor: _homeVisitPrimary,
+        foregroundColor: Colors.white,
       ),
       body: _isLoadingPatients
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: _homeVisitPrimary),
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Form(
@@ -270,10 +275,12 @@ class _HomevisitState extends State<Homevisit> {
                             return TextFormField(
                               controller: textEditingController,
                               focusNode: focusNode,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'Search Patient',
                                 hintText: 'Type to search...',
-                                prefixIcon: Icon(Icons.person_search, size: 22),
+                                prefixIcon: _themedPrefixIcon(
+                                  Icons.person_search,
+                                ),
                                 border: InputBorder.none,
                                 enabledBorder: InputBorder.none,
                                 focusedBorder: InputBorder.none,
@@ -281,7 +288,7 @@ class _HomevisitState extends State<Homevisit> {
                                 disabledBorder: InputBorder.none,
                                 filled: true,
                                 fillColor: Colors.white,
-                                contentPadding: EdgeInsets.symmetric(
+                                contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 12,
                                 ),
@@ -337,7 +344,7 @@ class _HomevisitState extends State<Homevisit> {
                                                 Icon(
                                                   Icons.person,
                                                   size: 18,
-                                                  color: Colors.grey.shade600,
+                                                  color: _homeVisitPrimary,
                                                 ),
                                                 const SizedBox(width: 12),
                                                 Expanded(
@@ -371,13 +378,7 @@ class _HomevisitState extends State<Homevisit> {
                                                                   ),
                                                               decoration: BoxDecoration(
                                                                 color:
-                                                                    Theme.of(
-                                                                          context,
-                                                                        )
-                                                                        .primaryColor
-                                                                        .withOpacity(
-                                                                          0.15,
-                                                                        ),
+                                                                    _homeVisitIconBackground,
                                                                 borderRadius:
                                                                     BorderRadius.circular(
                                                                       6,
@@ -390,9 +391,8 @@ class _HomevisitState extends State<Homevisit> {
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w600,
-                                                                  color: Theme.of(
-                                                                    context,
-                                                                  ).primaryColor,
+                                                                  color:
+                                                                      _homeVisitPrimary,
                                                                 ),
                                                               ),
                                                             ),
@@ -457,9 +457,8 @@ class _HomevisitState extends State<Homevisit> {
                         initialValue: _selectedVisitMode,
                         decoration: InputDecoration(
                           labelText: 'Visit Mode',
-                          prefixIcon: const Icon(
+                          prefixIcon: _themedPrefixIcon(
                             Icons.medical_services_outlined,
-                            size: 22,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -498,13 +497,7 @@ class _HomevisitState extends State<Homevisit> {
                                       size: 18,
                                       color: option['value'] == 'emergency'
                                           ? Colors.red
-                                          : option['value'] == 'monthly'
-                                          ? Colors.blue
-                                          : option['value'] == 'dhc_visit'
-                                          ? Colors.orange
-                                          : option['value'] == 'vhc_visit'
-                                          ? Colors.purple
-                                          : Colors.green,
+                                          : _homeVisitPrimary,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(option['label']!),
@@ -534,15 +527,11 @@ class _HomevisitState extends State<Homevisit> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(color: _homeVisitIconBackground),
                         ),
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.calendar_today_outlined,
-                              color: primaryColor,
-                              size: 22,
-                            ),
+                            _themedPrefixIcon(Icons.calendar_today_outlined),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
@@ -625,13 +614,20 @@ class _HomevisitState extends State<Homevisit> {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        color: Theme.of(context).colorScheme.primary,
-        letterSpacing: 0.5,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: _homeVisitCardBackground,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: _homeVisitPrimary,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
@@ -662,7 +658,7 @@ class _HomevisitState extends State<Homevisit> {
         validator: validator,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, size: 22),
+          prefixIcon: _themedPrefixIcon(icon),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Colors.grey.shade300),
@@ -673,10 +669,7 @@ class _HomevisitState extends State<Homevisit> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.primary,
-              width: 1.5,
-            ),
+            borderSide: BorderSide(color: _homeVisitPrimary, width: 1.5),
           ),
           filled: true,
           fillColor: Colors.white,
@@ -686,6 +679,19 @@ class _HomevisitState extends State<Homevisit> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _themedPrefixIcon(IconData icon) {
+    return Container(
+      width: 40,
+      height: 40,
+      margin: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: _homeVisitIconBackground,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(icon, size: 20, color: _homeVisitPrimary),
     );
   }
 }

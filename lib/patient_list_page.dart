@@ -6,6 +6,7 @@ import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/pt_registration.dart';
 import 'package:oruma_app/patient_details_page.dart';
+import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:oruma_app/services/config_service.dart';
 import 'package:oruma_app/models/config.dart';
 
@@ -274,7 +275,10 @@ class _PatientListPageState extends State<PatientListPage> {
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const patientrigister(),
+                    builder: (context) => const ModuleTheme(
+                      palette: ModulePalettes.patients,
+                      child: patientrigister(),
+                    ),
                   ),
                 );
                 if (result == true) {
@@ -482,7 +486,10 @@ class _PatientListPageState extends State<PatientListPage> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => patientrigister(patient: patient),
+        builder: (context) => ModuleTheme(
+          palette: ModulePalettes.patients,
+          child: patientrigister(patient: patient),
+        ),
       ),
     );
     if (result != null) {
@@ -629,7 +636,10 @@ class _PatientListPageState extends State<PatientListPage> {
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => PatientDetailsPage(patient: patient),
+                  builder: (context) => ModuleTheme(
+                    palette: ModulePalettes.patients,
+                    child: PatientDetailsPage(patient: patient),
+                  ),
                 ),
               );
               if (result == true) {
