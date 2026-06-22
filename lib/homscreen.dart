@@ -16,6 +16,7 @@ import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:oruma_app/config_page.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
+import 'package:intl/intl.dart';
 
 class Homescreen extends StatefulWidget {
   const Homescreen({super.key});
@@ -1115,62 +1116,107 @@ class _HomescreenState extends State<Homescreen> {
             itemBuilder: (context, index) {
               final supply = supplies[index];
               return Container(
-                width: 240,
+                width: 220,
                 margin: const EdgeInsets.only(right: 12, bottom: 4, top: 2),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.grey.shade100),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withOpacity(0.04),
                       blurRadius: 8,
-                      offset: const Offset(0, 3),
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(7),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.medical_services_outlined,
-                            color: Colors.red,
-                            size: 16,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(width: 4, color: const Color(0xFFFAC775)),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFAC775),
+                                      borderRadius: BorderRadius.circular(7),
+                                    ),
+                                    child: const Icon(
+                                      Icons.medical_services_outlined,
+                                      color: Color(0xFF854F0B),
+                                      size: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      supply.equipmentName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Icon(Icons.person_outline, size: 12, color: Colors.grey.shade500),
+                                  const SizedBox(width: 5),
+                                  Expanded(
+                                    child: Text(
+                                      supply.patientName ?? 'Unknown',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade700,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(Icons.calendar_today_outlined, size: 11, color: Colors.grey.shade400),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    () {
+                                      try {
+                                        final d = DateTime.parse(supply.supplyDate.toString());
+                                        return DateFormat('d MMM yyyy').format(d);
+                                      } catch (_) {
+                                        return supply.supplyDate.toString();
+                                      }
+                                    }(),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            supply.equipmentName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 16),
-                    _buildInfoRow(
-                      Icons.person_outline,
-                      supply.patientName ?? 'Unknown',
-                    ),
-                    const SizedBox(height: 6),
-                    _buildInfoRow(
-                      Icons.calendar_today_outlined,
-                      "Since: ${supply.supplyDate}",
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
