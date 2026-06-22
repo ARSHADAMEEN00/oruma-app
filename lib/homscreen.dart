@@ -765,13 +765,13 @@ class _HomescreenState extends State<Homescreen> {
       key: _scaffoldKey,
       drawer: _buildProfessionalDrawer(context),
       backgroundColor: Colors.white,
-      floatingActionButton: context.watch<AuthService>().canCreate
-          ? FloatingActionButton(
-              onPressed: _showQuickAddOptions,
-              backgroundColor: const Color(0xFF1A237E),
-              child: const Icon(Icons.add, color: Colors.white),
-            )
-          : null,
+      // floatingActionButton: context.watch<AuthService>().canCreate
+      //     ? FloatingActionButton(
+      //         onPressed: _showQuickAddOptions,
+      //         backgroundColor: const Color(0xFF1A237E),
+      //         child: const Icon(Icons.add, color: Colors.white),
+      //       )
+      //     : null,
       body: Column(
         children: [
           // Header Section
