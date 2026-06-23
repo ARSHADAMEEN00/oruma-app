@@ -9,7 +9,7 @@ class MedicineSupplyService {
   /// Get all medicine supplies from the API.
   static Future<List<MedicineSupply>> getAllMedicineSupplies() async {
     final result = await ApiService.get<List<dynamic>>(
-      ApiConfig.medicineSuppliesEndpoint,
+      ApiConfig.v2MedicineSuppliesEndpoint,
     );
 
     if (result.isSuccess && result.data != null) {
@@ -24,7 +24,7 @@ class MedicineSupplyService {
   /// Get a single medicine supply by ID.
   static Future<MedicineSupply> getMedicineSupplyById(String id) async {
     final result = await ApiService.get<Map<String, dynamic>>(
-      '${ApiConfig.medicineSuppliesEndpoint}/$id',
+      '${ApiConfig.v2MedicineSuppliesEndpoint}/$id',
     );
 
     if (result.isSuccess && result.data != null) {
@@ -39,7 +39,7 @@ class MedicineSupplyService {
     MedicineSupply supply,
   ) async {
     final result = await ApiService.post<Map<String, dynamic>>(
-      ApiConfig.medicineSuppliesEndpoint,
+      ApiConfig.v2MedicineSuppliesEndpoint,
       body: supply.toJson(),
     );
 
@@ -56,7 +56,7 @@ class MedicineSupplyService {
     MedicineSupply supply,
   ) async {
     final result = await ApiService.put<Map<String, dynamic>>(
-      '${ApiConfig.medicineSuppliesEndpoint}/$id',
+      '${ApiConfig.v2MedicineSuppliesEndpoint}/$id',
       body: supply.toJson(),
     );
 
@@ -70,7 +70,7 @@ class MedicineSupplyService {
   /// Delete a medicine supply.
   static Future<bool> deleteMedicineSupply(String id) async {
     final result = await ApiService.delete(
-      '${ApiConfig.medicineSuppliesEndpoint}/$id',
+      '${ApiConfig.v2MedicineSuppliesEndpoint}/$id',
     );
 
     if (result.isSuccess) {

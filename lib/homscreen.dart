@@ -5,6 +5,7 @@ import 'package:oruma_app/equipment_list_page.dart';
 import 'package:oruma_app/equipment_supply_list_page.dart';
 import 'package:oruma_app/home_visit_list_page.dart';
 import 'package:oruma_app/medicine_list_page.dart';
+import 'package:oruma_app/medicine_supply_list_page.dart';
 import 'package:oruma_app/pt_registration.dart' show patientrigister;
 import 'package:oruma_app/patient_list_page.dart';
 import 'package:oruma_app/deceased_patient_list_page.dart';
@@ -971,7 +972,7 @@ class _HomescreenState extends State<Homescreen> {
                         palette: ModulePalettes.medicineSupply,
                         page: const ModuleTheme(
                           palette: ModulePalettes.medicineSupply,
-                          child: MedicineListPage(),
+                          child: MedicineSupplyListPage(),
                         ),
                       ),
                     ],
