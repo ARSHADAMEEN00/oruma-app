@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:oruma_app/equipment_list_page.dart';
 import 'package:oruma_app/home_visit_list_page.dart';
 import 'package:oruma_app/medicine_list_page.dart';
+import 'package:oruma_app/medicine_supply_list_page.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
-
+import 'package:oruma_app/equipment_supply_list_page.dart';
 class AppBottomNavRouter {
   AppBottomNavRouter._();
 
@@ -22,7 +23,7 @@ class AppBottomNavRouter {
           context,
           const ModuleTheme(
             palette: ModulePalettes.medicineSupply,
-            child: MedicineListPage(),
+            child: MedicineSupplyListPage(),
           ),
         );
         return;
@@ -31,7 +32,7 @@ class AppBottomNavRouter {
           context,
           const ModuleTheme(
             palette: ModulePalettes.equipmentSupply,
-            child: EquipmentListPage(),
+            child: EquipmentSupplyListPage(),
           ),
         );
         return;
