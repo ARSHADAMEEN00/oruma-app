@@ -14,7 +14,7 @@ class VisitAssessmentService {
       if (homeVisitId?.isNotEmpty == true) 'homeVisitId': homeVisitId!,
     };
     final uri = Uri.parse(
-      ApiConfig.visitAssessmentsEndpoint,
+      ApiConfig.v2VisitAssessmentsEndpoint,
     ).replace(queryParameters: query.isEmpty ? null : query);
     final result = await ApiService.get<List<dynamic>>(uri.toString());
     if (result.isSuccess && result.data != null) {
@@ -30,8 +30,8 @@ class VisitAssessmentService {
 
   static Future<VisitAssessment> saveDraft(VisitAssessment assessment) async {
     final endpoint = assessment.id == null
-        ? ApiConfig.visitAssessmentsEndpoint
-        : '${ApiConfig.visitAssessmentsEndpoint}/${assessment.id}';
+        ? ApiConfig.v2VisitAssessmentsEndpoint
+        : '${ApiConfig.v2VisitAssessmentsEndpoint}/${assessment.id}';
     final result = assessment.id == null
         ? await ApiService.post<Map<String, dynamic>>(
             endpoint,
@@ -52,7 +52,7 @@ class VisitAssessmentService {
       throw StateError('Save the draft before submitting');
     }
     final result = await ApiService.post<Map<String, dynamic>>(
-      '${ApiConfig.visitAssessmentsEndpoint}/${assessment.id}/submit',
+      '${ApiConfig.v2VisitAssessmentsEndpoint}/${assessment.id}/submit',
       body: assessment.toJson(),
     );
     if (result.isSuccess && result.data != null) {

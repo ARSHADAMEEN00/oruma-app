@@ -33,7 +33,7 @@ class ApiConfig {
   static String get v2PatientsEndpoint => '$baseUrl/v2/patients';
   static String get v2MedicinesEndpoint => '$baseUrl/v2/medicines';
   static String get homeVisitsEndpoint => '$baseUrl/home-visits';
-  static String get visitAssessmentsEndpoint => '$baseUrl/v2/visit-assessments';
+  static String get v2VisitAssessmentsEndpoint => '$baseUrl/v2/visit-assessments';
   static String get equipmentEndpoint => '$baseUrl/equipment';
   static String get equipmentSuppliesEndpoint => '$baseUrl/equipment-supplies';
   static String get medicineSuppliesEndpoint => '$baseUrl/medicine-supplies';
