@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oruma_app/features/visit_assessment/domain/visit_assessment.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/providers/visit_assessment_controller.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_flow_screen.dart';
+import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 
 void main() {
   final assessment = VisitAssessment(
@@ -32,12 +33,40 @@ void main() {
     addTearDown(controller.dispose);
 
     await tester.pumpWidget(
-      MaterialApp(home: VisitAssessmentFlowScreen(controller: controller)),
+      MaterialApp(
+        theme: ThemeData.dark(),
+        home: VisitAssessmentFlowScreen(controller: controller),
+      ),
     );
 
+    expect(
+      tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
+      Colors.white,
+    );
     expect(find.text('Step 1 of 7'), findsOneWidget);
     expect(find.text('Visit Information'), findsOneWidget);
     expect(find.text('Muhammed Ali'), findsOneWidget);
+    expect(find.text('NHC'), findsWidgets);
+  });
+
+  testWidgets('compact app bar exposes the five requested destinations', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          bottomNavigationBar: CompactAppBottomBar(
+            current: AppBottomSection.home,
+            onSelected: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Medicine'), findsOneWidget);
+    expect(find.text('Equipment'), findsOneWidget);
+    expect(find.text('Home Visit'), findsOneWidget);
     expect(find.text('NHC'), findsOneWidget);
   });
 }

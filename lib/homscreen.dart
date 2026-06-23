@@ -16,6 +16,9 @@ import 'package:oruma_app/services/equipment_supply_service.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:oruma_app/config_page.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_visit_picker_screen.dart';
+import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
+import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:intl/intl.dart';
 
@@ -759,6 +762,21 @@ class _HomescreenState extends State<Homescreen> {
     );
   }
 
+  void _handleBottomNavigation(AppBottomSection section) {
+    AppBottomNavRouter.handle(
+      context,
+      section,
+      onNhc: () {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => const VisitAssessmentVisitPickerScreen(),
+          ),
+          (route) => route.isFirst,
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     debugPrint('User Role: ${context.read<AuthService>().role}');
@@ -766,6 +784,10 @@ class _HomescreenState extends State<Homescreen> {
       key: _scaffoldKey,
       drawer: _buildProfessionalDrawer(context),
       backgroundColor: Colors.white,
+      bottomNavigationBar: CompactAppBottomBar(
+        current: AppBottomSection.home,
+        onSelected: _handleBottomNavigation,
+      ),
       // floatingActionButton: context.watch<AuthService>().canCreate
       //     ? FloatingActionButton(
       //         onPressed: _showQuickAddOptions,

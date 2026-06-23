@@ -3,10 +3,14 @@ import 'package:intl/intl.dart';
 import 'package:oruma_app/features/visit_assessment/domain/visit_assessment.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/providers/visit_assessment_controller.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_flow_screen.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_visit_picker_screen.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_theme.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_widgets.dart';
 import 'package:oruma_app/models/home_visit.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/auth_service.dart';
+import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
+import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:provider/provider.dart';
 
 class VisitAssessmentModuleScreen extends StatefulWidget {
@@ -67,18 +71,22 @@ class _VisitAssessmentModuleScreenState
   @override
   Widget build(BuildContext context) {
     final controller = _controller;
-    if (controller == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
     return Theme(
-      data: _assessmentTheme(context),
-      child: AnimatedBuilder(
-        animation: controller,
-        builder: (context, _) => VisitAssessmentListScreen(
-          controller: controller,
-          patient: _patient,
-        ),
-      ),
+      data: visitAssessmentLightTheme(),
+      child: controller == null
+          ? const Scaffold(
+              backgroundColor: Colors.white,
+              body: Center(
+                child: CircularProgressIndicator(color: assessmentGreen),
+              ),
+            )
+          : AnimatedBuilder(
+              animation: controller,
+              builder: (context, _) => VisitAssessmentListScreen(
+                controller: controller,
+                patient: _patient,
+              ),
+            ),
     );
   }
 
@@ -177,7 +185,10 @@ class VisitAssessmentListScreen extends StatelessWidget {
                 ],
               ),
             ),
-      bottomNavigationBar: _referenceNavigation(context),
+      bottomNavigationBar: CompactAppBottomBar(
+        current: AppBottomSection.nhc,
+        onSelected: (section) => _handleBottomNavigation(context, section),
+      ),
     );
   }
 
@@ -332,72 +343,6 @@ class VisitAssessmentListScreen extends StatelessWidget {
     );
   }
 
-  Widget _referenceNavigation(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        height: 62,
-        padding: const EdgeInsets.symmetric(horizontal: 15),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: assessmentBorder)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _navItem(Icons.home_outlined, 'Home', () {
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            }),
-            _navItem(Icons.people_outline, 'Patients', () {}),
-            InkWell(
-              onTap: () => _openFlow(context),
-              child: Container(
-                width: 42,
-                height: 42,
-                decoration: const BoxDecoration(
-                  color: assessmentGreen,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0x3314865D),
-                      blurRadius: 9,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.add, color: Colors.white),
-              ),
-            ),
-            _navItem(Icons.calendar_today_outlined, 'Visits', () {
-              Navigator.maybePop(context);
-            }),
-            _navItem(Icons.menu, 'More', () {}),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _navItem(IconData icon, String label, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: SizedBox(
-        width: 48,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 18, color: assessmentMuted),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: const TextStyle(color: assessmentMuted, fontSize: 8),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _openFlow(BuildContext context) async {
     await Navigator.push(
       context,
@@ -411,28 +356,20 @@ class VisitAssessmentListScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-ThemeData _assessmentTheme(BuildContext context) {
-  final dark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
-  return ThemeData(
-    useMaterial3: true,
-    brightness: dark ? Brightness.dark : Brightness.light,
-    scaffoldBackgroundColor: dark ? const Color(0xFF0F1412) : Colors.white,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: assessmentGreen,
-      brightness: dark ? Brightness.dark : Brightness.light,
-      primary: assessmentGreen,
-      surface: dark ? const Color(0xFF171D1B) : Colors.white,
-    ),
-    fontFamily: 'sans-serif',
-    appBarTheme: AppBarTheme(
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      foregroundColor: dark ? Colors.white : assessmentText,
-    ),
-    inputDecorationTheme: const InputDecorationTheme(
-      floatingLabelBehavior: FloatingLabelBehavior.never,
-    ),
-  );
+  void _handleBottomNavigation(BuildContext context, AppBottomSection section) {
+    controller.saveDraft(silent: true);
+    AppBottomNavRouter.handle(
+      context,
+      section,
+      onNhc: () {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => const VisitAssessmentVisitPickerScreen(),
+          ),
+          (route) => route.isFirst,
+        );
+      },
+    );
+  }
 }

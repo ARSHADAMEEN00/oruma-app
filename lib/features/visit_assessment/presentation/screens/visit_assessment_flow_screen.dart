@@ -7,7 +7,11 @@ import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/p
 import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/review_submit_step.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/visit_header_step.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/vitals_step.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_visit_picker_screen.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_theme.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_widgets.dart';
+import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
+import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 
 class VisitAssessmentFlowScreen extends StatelessWidget {
   const VisitAssessmentFlowScreen({super.key, required this.controller});
@@ -16,46 +20,55 @@ class VisitAssessmentFlowScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        return PopScope(
-          onPopInvokedWithResult: (didPop, _) {
-            if (didPop) controller.saveDraft(silent: true);
-          },
-          child: Scaffold(
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            body: SafeArea(
-              child: Column(
-                children: [
-                  _header(context),
-                  Expanded(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 230),
-                      switchInCurve: Curves.easeOutCubic,
-                      transitionBuilder: (child, animation) => FadeTransition(
-                        opacity: animation,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0.025, 0),
-                            end: Offset.zero,
-                          ).animate(animation),
-                          child: child,
+    return Theme(
+      data: visitAssessmentLightTheme(),
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (context, _) {
+          return PopScope(
+            onPopInvokedWithResult: (didPop, _) {
+              if (didPop) controller.saveDraft(silent: true);
+            },
+            child: Scaffold(
+              backgroundColor: Colors.white,
+              bottomNavigationBar: CompactAppBottomBar(
+                current: AppBottomSection.nhc,
+                onSelected: (section) =>
+                    _handleBottomNavigation(context, section),
+              ),
+              body: SafeArea(
+                bottom: false,
+                child: Column(
+                  children: [
+                    _header(context),
+                    Expanded(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 230),
+                        switchInCurve: Curves.easeOutCubic,
+                        transitionBuilder: (child, animation) => FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0.025, 0),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: child,
+                          ),
+                        ),
+                        child: KeyedSubtree(
+                          key: ValueKey(controller.currentStep),
+                          child: _step(),
                         ),
                       ),
-                      child: KeyedSubtree(
-                        key: ValueKey(controller.currentStep),
-                        child: _step(),
-                      ),
                     ),
-                  ),
-                  _footer(context),
-                ],
+                    _footer(context),
+                  ],
+                ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -272,5 +285,21 @@ class VisitAssessmentFlowScreen extends StatelessWidget {
           backgroundColor: error ? assessmentDanger : assessmentGreenDark,
         ),
       );
+  }
+
+  void _handleBottomNavigation(BuildContext context, AppBottomSection section) {
+    controller.saveDraft(silent: true);
+    AppBottomNavRouter.handle(
+      context,
+      section,
+      onNhc: () {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => const VisitAssessmentVisitPickerScreen(),
+          ),
+          (route) => route.isFirst,
+        );
+      },
+    );
   }
 }
