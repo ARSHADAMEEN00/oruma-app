@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:oruma_app/features/visit_assessment/domain/visit_assessment.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/providers/visit_assessment_controller.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_flow_screen.dart';
-import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_visit_picker_screen.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_theme.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_widgets.dart';
 import 'package:oruma_app/models/home_visit.dart';
@@ -116,11 +115,11 @@ class VisitAssessmentListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final assessment = controller.assessment;
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Visit Assessments'),
         centerTitle: false,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         titleTextStyle: const TextStyle(
           color: assessmentText,
@@ -361,15 +360,8 @@ class VisitAssessmentListScreen extends StatelessWidget {
     controller.saveDraft(silent: true);
     AppBottomNavRouter.handle(
       context,
-      section,
-      onNhc: () {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (_) => const VisitAssessmentVisitPickerScreen(),
-          ),
-          (route) => route.isFirst,
-        );
-      },
+      current: AppBottomSection.nhc,
+      target: section,
     );
   }
 }

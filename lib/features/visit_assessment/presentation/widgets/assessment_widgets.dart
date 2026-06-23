@@ -32,22 +32,16 @@ class AssessmentCard extends StatelessWidget {
       duration: const Duration(milliseconds: 180),
       padding: padding,
       decoration: BoxDecoration(
-        color: color ?? Theme.of(context).colorScheme.surface,
+        color: color ?? Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white12
-              : assessmentBorder,
-        ),
-        boxShadow: Theme.of(context).brightness == Brightness.dark
-            ? null
-            : const [
-                BoxShadow(
-                  color: Color(0x08000000),
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
-                ),
-              ],
+        border: Border.all(color: assessmentBorder),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: child,
     );
@@ -145,9 +139,7 @@ class AssessmentTextField extends StatelessWidget {
         prefixIcon: prefixIcon,
         isDense: true,
         filled: true,
-        fillColor: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF171D1B)
-            : Colors.white,
+        fillColor: Colors.white,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 13,
@@ -203,7 +195,7 @@ class AssessmentSegment extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? selectedColor.withValues(alpha: 0.09)
-                      : Theme.of(context).colorScheme.surface,
+                      : Colors.white,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: isSelected ? selectedColor : assessmentBorder,
@@ -258,7 +250,7 @@ class AssessmentMultiSegment extends StatelessWidget {
             decoration: BoxDecoration(
               color: active
                   ? assessmentGreen.withValues(alpha: 0.09)
-                  : Theme.of(context).colorScheme.surface,
+                  : Colors.white,
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: active ? assessmentGreen : assessmentBorder,

@@ -16,11 +16,11 @@ import 'package:oruma_app/services/equipment_supply_service.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:oruma_app/config_page.dart';
-import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_visit_picker_screen.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:intl/intl.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_visit_picker_screen.dart';
 
 class Homescreen extends StatefulWidget {
   const Homescreen({super.key});
@@ -765,15 +765,8 @@ class _HomescreenState extends State<Homescreen> {
   void _handleBottomNavigation(AppBottomSection section) {
     AppBottomNavRouter.handle(
       context,
-      section,
-      onNhc: () {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (_) => const VisitAssessmentVisitPickerScreen(),
-          ),
-          (route) => route.isFirst,
-        );
-      },
+      current: AppBottomSection.home,
+      target: section,
     );
   }
 
@@ -1161,7 +1154,10 @@ class _HomescreenState extends State<Homescreen> {
                       Container(width: 4, color: const Color(0xFFFAC775)),
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -1197,7 +1193,11 @@ class _HomescreenState extends State<Homescreen> {
                               const SizedBox(height: 10),
                               Row(
                                 children: [
-                                  Icon(Icons.person_outline, size: 12, color: Colors.grey.shade500),
+                                  Icon(
+                                    Icons.person_outline,
+                                    size: 12,
+                                    color: Colors.grey.shade500,
+                                  ),
                                   const SizedBox(width: 5),
                                   Expanded(
                                     child: Text(
@@ -1216,13 +1216,21 @@ class _HomescreenState extends State<Homescreen> {
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  Icon(Icons.calendar_today_outlined, size: 11, color: Colors.grey.shade400),
+                                  Icon(
+                                    Icons.calendar_today_outlined,
+                                    size: 11,
+                                    color: Colors.grey.shade400,
+                                  ),
                                   const SizedBox(width: 5),
                                   Text(
                                     () {
                                       try {
-                                        final d = DateTime.parse(supply.supplyDate.toString());
-                                        return DateFormat('d MMM yyyy').format(d);
+                                        final d = DateTime.parse(
+                                          supply.supplyDate.toString(),
+                                        );
+                                        return DateFormat(
+                                          'd MMM yyyy',
+                                        ).format(d);
                                       } catch (_) {
                                         return supply.supplyDate.toString();
                                       }
@@ -1504,6 +1512,57 @@ class _HomescreenState extends State<Homescreen> {
                             palette: ModulePalettes.medicineSupply,
                             child: MedicineListPage(),
                           ),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.vaccines_outlined,
+                    title: "Medicine Supply",
+                    color: ModulePalettes.medicineSupply.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ModuleTheme(
+                            palette: ModulePalettes.medicineSupply,
+                            child: MedicineSupplyListPage(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.precision_manufacturing_outlined,
+                    title: "Equipments",
+                    color: ModulePalettes.equipmentSupply.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ModuleTheme(
+                            palette: ModulePalettes.equipmentSupply,
+                            child: EquipmentSupplyListPage(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.assignment_outlined,
+                    title: "Visit entry (NHC)",
+                    color: ModulePalettes.homeVisits.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const VisitAssessmentVisitPickerScreen(),
                         ),
                       );
                     },

@@ -7,7 +7,6 @@ import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/p
 import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/review_submit_step.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/visit_header_step.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/vitals_step.dart';
-import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_visit_picker_screen.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_theme.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_widgets.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
@@ -291,15 +290,8 @@ class VisitAssessmentFlowScreen extends StatelessWidget {
     controller.saveDraft(silent: true);
     AppBottomNavRouter.handle(
       context,
-      section,
-      onNhc: () {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (_) => const VisitAssessmentVisitPickerScreen(),
-          ),
-          (route) => route.isFirst,
-        );
-      },
+      current: AppBottomSection.nhc,
+      target: section,
     );
   }
 }

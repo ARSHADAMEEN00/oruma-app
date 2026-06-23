@@ -9,6 +9,8 @@ import 'package:oruma_app/services/equipment_supply_service.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
+import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
+import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 
 const _equipmentPrimary = Color(0xFF854F0B);
 const _equipmentSurface = Color(0xFFFAEEDA);
@@ -167,16 +169,21 @@ class _EquipmentListPageState extends State<EquipmentListPage>
 
   @override
   Widget build(BuildContext context) {
+    void _handleBottomNavigation(AppBottomSection section) {
+      AppBottomNavRouter.handle(
+        context,
+        current: AppBottomSection.equipment,
+        target: section,
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
         elevation: 1,
-        title: const Text(
-          'Equipment List',
-          style: TextStyle(fontSize: 18),
-        ),
+        title: const Text('Equipment List', style: TextStyle(fontSize: 18)),
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
@@ -232,6 +239,10 @@ class _EquipmentListPageState extends State<EquipmentListPage>
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: CompactAppBottomBar(
+        current: AppBottomSection.equipment,
+        onSelected: _handleBottomNavigation,
       ),
     );
   }

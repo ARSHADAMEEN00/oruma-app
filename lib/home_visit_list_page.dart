@@ -11,6 +11,8 @@ import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_list_screen.dart';
+import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
+import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 
 class HomeVisitListPage extends StatefulWidget {
   const HomeVisitListPage({super.key});
@@ -163,6 +165,14 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
     super.dispose();
   }
 
+  void _handleBottomNavigation(BuildContext context, AppBottomSection section) {
+    AppBottomNavRouter.handle(
+      context,
+      current: AppBottomSection.homeVisit,
+      target: section,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
@@ -172,10 +182,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text(
-          "Home Visits",
-          style: TextStyle(fontSize: 18),
-        ),
+        title: const Text("Home Visits", style: TextStyle(fontSize: 18)),
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -267,6 +274,10 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
               label: const Text("Schedule Visit"),
             )
           : null,
+      bottomNavigationBar: CompactAppBottomBar(
+        current: AppBottomSection.homeVisit,
+        onSelected: (section) => _handleBottomNavigation(context, section),
+      ),
     );
   }
 
@@ -884,10 +895,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
           const SizedBox(height: 20),
           Text(
             "No visits scheduled",
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 8),
           Text(

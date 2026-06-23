@@ -10,6 +10,8 @@ import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
+import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
+import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 
 const _equipmentSupplyPrimary = Color(0xFF854F0B);
 const _equipmentSupplySurface = Color(0xFFFAEEDA);
@@ -63,6 +65,14 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
     if (!_tabController.indexIsChanging && mounted) {
       setState(() {});
     }
+  }
+
+  void _handleBottomNavigation(BuildContext context, AppBottomSection section) {
+    AppBottomNavRouter.handle(
+      context,
+      current: AppBottomSection.equipment,
+      target: section,
+    );
   }
 
   void _loadData() {
@@ -322,10 +332,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
         surfaceTintColor: _equipmentSupplySurface,
         foregroundColor: _equipmentSupplyPrimary,
         elevation: 1,
-        title: const Text(
-          'Equipment Supplies',
-          style: TextStyle(fontSize: 18),
-        ),
+        title: const Text('Equipment Supplies', style: TextStyle(fontSize: 18)),
         centerTitle: false,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
@@ -432,6 +439,10 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: CompactAppBottomBar(
+        current: AppBottomSection.equipment,
+        onSelected: (section) => _handleBottomNavigation(context, section),
       ),
     );
   }

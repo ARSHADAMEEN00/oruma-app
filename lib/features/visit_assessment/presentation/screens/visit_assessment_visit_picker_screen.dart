@@ -320,11 +320,8 @@ class _VisitAssessmentVisitPickerScreenState
   void _handleBottomNavigation(AppBottomSection section) {
     AppBottomNavRouter.handle(
       context,
-      section,
-      onNhc: () {
-        _searchController.clear();
-        _loadVisits();
-      },
+      current: AppBottomSection.nhc,
+      target: section,
     );
   }
 }

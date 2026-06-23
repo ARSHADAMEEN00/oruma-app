@@ -17,7 +17,7 @@ class CompactAppBottomBar extends StatelessWidget {
     (AppBottomSection.medicine, Icons.medication_outlined, 'Medicine'),
     (AppBottomSection.equipment, Icons.inventory_2_outlined, 'Equipment'),
     (AppBottomSection.homeVisit, Icons.home_work_outlined, 'Home Visit'),
-    (AppBottomSection.nhc, Icons.assignment_outlined, 'NHC'),
+    (AppBottomSection.nhc, Icons.assignment_outlined, 'Visit (NHC)'),
   ];
 
   @override

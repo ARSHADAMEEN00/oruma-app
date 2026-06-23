@@ -6,6 +6,8 @@ import 'package:oruma_app/models/medicine.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/medicine_service.dart';
 import 'package:provider/provider.dart';
+import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
+import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 
 const _medicineGreen = Color(0xFF0F6E56);
 const _medicineDarkGreen = Color(0xFF0F6E56);
@@ -307,16 +309,21 @@ class _MedicineListPageState extends State<MedicineListPage> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
 
+    void _handleBottomNavigation(AppBottomSection section) {
+      AppBottomNavRouter.handle(
+        context,
+        current: AppBottomSection.medicine,
+        target: section,
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5FAF8),
       appBar: AppBar(
         foregroundColor: Colors.white,
         backgroundColor: _medicineDarkGreen,
         surfaceTintColor: _medicineDarkGreen,
-        title: const Text(
-          'Medicine Inventory',
-          style: TextStyle(fontSize: 18),
-        ),
+        title: const Text('Medicine Inventory', style: TextStyle(fontSize: 18)),
         actions: [
           IconButton(
             tooltip: 'Refresh',
@@ -366,6 +373,10 @@ class _MedicineListPageState extends State<MedicineListPage> {
           ),
           Expanded(child: _buildContent(auth)),
         ],
+      ),
+      bottomNavigationBar: CompactAppBottomBar(
+        current: AppBottomSection.medicine,
+        onSelected: _handleBottomNavigation,
       ),
     );
   }
@@ -640,7 +651,10 @@ class _MedicineListPageState extends State<MedicineListPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(value, style: const TextStyle(fontSize: 14, color: Colors.black87)),
+              Text(
+                value,
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
+              ),
               const SizedBox(height: 2),
               Text(
                 label,
@@ -1078,9 +1092,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                       contentPadding: EdgeInsets.zero,
                       value: _isActive,
                       activeThumbColor: _medicineGreen,
-                      title: const Text(
-                        'Active medicine',
-                      ),
+                      title: const Text('Active medicine'),
                       subtitle: const Text(
                         'Inactive medicines remain in history but are clearly marked.',
                       ),
@@ -1154,10 +1166,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
               children: [
                 Text(
                   'Medicine inventory',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 17),
                 ),
                 SizedBox(height: 4),
                 Text(
@@ -1206,12 +1215,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                      ),
-                    ),
+                    Text(title, style: const TextStyle(fontSize: 16)),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
