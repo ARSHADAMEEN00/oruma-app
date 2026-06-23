@@ -952,13 +952,10 @@ class _HomescreenState extends State<Homescreen> {
                     children: [
                       _buildModernActionCard(
                         context,
-                        title: "Patients",
-                        icon: Icons.people_alt_rounded,
-                        palette: ModulePalettes.patients,
-                        page: const ModuleTheme(
-                          palette: ModulePalettes.patients,
-                          child: PatientListPage(),
-                        ),
+                        title: "Visit Assessment\n(NHC)",
+                        icon: Icons.assignment_rounded,
+                        palette: ModulePalettes.patients, // Reusing patients palette or another suitable one
+                        page: const VisitAssessmentVisitPickerScreen(),
                       ),
                       _buildModernActionCard(
                         context,

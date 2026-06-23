@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum AppBottomSection { home, medicine, equipment, homeVisit, nhc }
+enum AppBottomSection { home, medicine, patients, homeVisit, nhc }
 
 class CompactAppBottomBar extends StatelessWidget {
   const CompactAppBottomBar({
@@ -15,7 +15,7 @@ class CompactAppBottomBar extends StatelessWidget {
   static const _items = <(AppBottomSection, IconData, String)>[
     (AppBottomSection.home, Icons.home_outlined, 'Home'),
     (AppBottomSection.medicine, Icons.medication_outlined, 'Medicine'),
-    (AppBottomSection.equipment, Icons.inventory_2_outlined, 'Equipment'),
+    (AppBottomSection.patients, Icons.people_outline, 'Patients'),
     (AppBottomSection.homeVisit, Icons.home_work_outlined, 'Home Visit'),
     (AppBottomSection.nhc, Icons.assignment_outlined, 'Visit (NHC)'),
   ];

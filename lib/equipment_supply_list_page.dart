@@ -67,14 +67,6 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
     }
   }
 
-  void _handleBottomNavigation(BuildContext context, AppBottomSection section) {
-    AppBottomNavRouter.handle(
-      context,
-      current: AppBottomSection.equipment,
-      target: section,
-    );
-  }
-
   void _loadData() {
     _fetchActiveSupplies();
     _fetchAllSupplies();
@@ -439,10 +431,6 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
             ),
           ),
         ],
-      ),
-      bottomNavigationBar: CompactAppBottomBar(
-        current: AppBottomSection.equipment,
-        onSelected: (section) => _handleBottomNavigation(context, section),
       ),
     );
   }

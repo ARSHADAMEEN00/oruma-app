@@ -9,6 +9,9 @@ import 'package:oruma_app/patient_details_page.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:oruma_app/services/config_service.dart';
 import 'package:oruma_app/models/config.dart';
+import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
+import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
+
 
 class PatientListPage extends StatefulWidget {
   const PatientListPage({super.key});
@@ -128,6 +131,14 @@ class _PatientListPageState extends State<PatientListPage> {
 
   @override
   Widget build(BuildContext context) {
+    void _handleBottomNavigation(AppBottomSection section) {
+      AppBottomNavRouter.handle(
+        context,
+        current: AppBottomSection.patients,
+        target: section,
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: _isSearching
@@ -163,6 +174,10 @@ class _PatientListPageState extends State<PatientListPage> {
               onPressed: _loadPatients,
             ),
         ],
+      ),
+      bottomNavigationBar: CompactAppBottomBar(
+        current: AppBottomSection.patients,
+        onSelected: _handleBottomNavigation,
       ),
       body: Column(
         children: [

@@ -169,14 +169,6 @@ class _EquipmentListPageState extends State<EquipmentListPage>
 
   @override
   Widget build(BuildContext context) {
-    void _handleBottomNavigation(AppBottomSection section) {
-      AppBottomNavRouter.handle(
-        context,
-        current: AppBottomSection.equipment,
-        target: section,
-      );
-    }
-
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -239,10 +231,6 @@ class _EquipmentListPageState extends State<EquipmentListPage>
             ),
           ),
         ],
-      ),
-      bottomNavigationBar: CompactAppBottomBar(
-        current: AppBottomSection.equipment,
-        onSelected: _handleBottomNavigation,
       ),
     );
   }
