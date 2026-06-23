@@ -20,6 +20,16 @@ class MedicineService {
     throw Exception(result.error ?? 'Failed to fetch medicines');
   }
 
+  static Future<Medicine> getMedicineById(String id) async {
+    final result = await ApiService.get<Map<String, dynamic>>(
+      '${ApiConfig.v2MedicinesEndpoint}/$id',
+    );
+    if (result.isSuccess && result.data != null) {
+      return Medicine.fromJson(result.data!);
+    }
+    throw Exception(result.error ?? 'Failed to fetch medicine');
+  }
+
   static Future<Medicine> createMedicine(Medicine medicine) async {
     final result = await ApiService.post<Map<String, dynamic>>(
       ApiConfig.v2MedicinesEndpoint,

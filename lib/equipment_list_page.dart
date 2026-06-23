@@ -175,7 +175,7 @@ class _EquipmentListPageState extends State<EquipmentListPage>
         elevation: 1,
         title: const Text(
           'Equipment List',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 18),
         ),
         centerTitle: true,
         bottom: PreferredSize(
@@ -1157,7 +1157,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
       appBar: AppBar(
         title: Text(
           _isEditing ? 'Edit Equipment' : 'Add Equipment',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: const TextStyle(fontSize: 18),
         ),
         elevation: 0,
         backgroundColor: Colors.white,

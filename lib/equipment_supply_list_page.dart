@@ -324,7 +324,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
         elevation: 1,
         title: const Text(
           'Equipment Supplies',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 18),
         ),
         centerTitle: false,
         bottom: PreferredSize(

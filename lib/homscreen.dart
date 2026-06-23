@@ -1597,7 +1597,7 @@ class _HomescreenState extends State<Homescreen> {
             style: TextStyle(
               color: const Color(0xFF20212A),
               fontSize: 14,
-              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
           onTap: onTap,

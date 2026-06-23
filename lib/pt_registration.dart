@@ -450,7 +450,7 @@ class _patientrigisterState extends State<patientrigister> {
         appBar: AppBar(
           title: Text(
             isEditing ? "Edit Patient" : "New Patient Registration",
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18),
           ),
           backgroundColor: _patientPrimary,
           foregroundColor: Colors.white,
@@ -470,7 +470,7 @@ class _patientrigisterState extends State<patientrigister> {
         appBar: AppBar(
           title: Text(
             isEditing ? "Edit Patient" : "New Patient Registration",
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18),
           ),
           backgroundColor: _patientPrimary,
           foregroundColor: Colors.white,
@@ -526,7 +526,7 @@ class _patientrigisterState extends State<patientrigister> {
       appBar: AppBar(
         title: Text(
           isEditing ? "Edit Patient" : "New Patient Registration",
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 18),
         ),
         backgroundColor: _patientPrimary,
         foregroundColor: Colors.white,

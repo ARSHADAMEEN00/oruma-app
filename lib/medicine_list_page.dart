@@ -315,7 +315,7 @@ class _MedicineListPageState extends State<MedicineListPage> {
         surfaceTintColor: _medicineDarkGreen,
         title: const Text(
           'Medicine Inventory',
-          style: TextStyle(fontWeight: FontWeight.w800),
+          style: TextStyle(fontSize: 18),
         ),
         actions: [
           IconButton(

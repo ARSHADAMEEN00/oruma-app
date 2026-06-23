@@ -173,7 +173,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
       appBar: AppBar(
         title: const Text(
           "Home Visits",
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 18),
         ),
         elevation: 0,
         backgroundColor: Colors.white,

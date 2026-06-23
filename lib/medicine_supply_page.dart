@@ -419,7 +419,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
         appBar: AppBar(
           backgroundColor: _medicineDarkGreen,
           foregroundColor: Colors.white,
-          title: const Text('New Supply', style: TextStyle(fontWeight: FontWeight.w800)),
+          title: const Text('New Supply', style: TextStyle(fontSize: 18)),
         ),
         body: const Center(child: CircularProgressIndicator(color: _medicineGreen)),
       );
@@ -432,7 +432,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
         foregroundColor: Colors.white,
         title: const Text(
           'New Supply',
-          style: TextStyle(fontWeight: FontWeight.w800),
+          style: TextStyle(fontSize: 18),
         ),
       ),
       body: Form(
@@ -501,7 +501,15 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                     if (textEditingValue.text.isEmpty) return const Iterable<Medicine>.empty();
                     return _medicines.where((m) => m.name.toLowerCase().contains(textEditingValue.text.toLowerCase()));
                   },
-                  onSelected: (selection) => setState(() => _selectedMedicine = selection),
+                  onSelected: (selection) => setState(() {
+                    _selectedMedicine = selection;
+                    if (selection.expiryDate != null) {
+                      final diff = selection.expiryDate!.difference(DateTime.now()).inDays;
+                      _supplyDaysController.text = (diff >= 0 ? diff : 0).toString();
+                    } else {
+                      _supplyDaysController.clear();
+                    }
+                  }),
                   fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
                     return TextFormField(
                       controller: controller,
