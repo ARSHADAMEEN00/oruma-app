@@ -187,8 +187,8 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(medicine.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black)),
-                      Text(medicine.code, style: const TextStyle(color: _medicineGreen, fontWeight: FontWeight.w600)),
+                      Text(medicine.name, style: const TextStyle(fontSize: 20, color: Colors.black)),
+                      Text(medicine.code, style: const TextStyle(color: _medicineGreen)),
                     ],
                   ),
                 ),
@@ -221,8 +221,8 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(flex: 2, child: Text(label, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500))),
-          Expanded(flex: 3, child: Text(value, style: const TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(flex: 2, child: Text(label, style: const TextStyle(color: Colors.grey))),
+          Expanded(flex: 3, child: Text(value)),
         ],
       ),
     );
@@ -258,7 +258,6 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 17,
-                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 SizedBox(height: 4),
@@ -312,7 +311,6 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                       title,
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -484,7 +482,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                         Expanded(
                           child: Text(
                             _selectedPatient!.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: _medicineDarkGreen),
+                            style: const TextStyle(color: _medicineDarkGreen),
                           ),
                         ),
                         InkWell(
@@ -544,7 +542,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                             children: [
                               Text(
                                 _selectedMedicine!.name,
-                                style: const TextStyle(fontWeight: FontWeight.bold, color: _medicineDarkGreen),
+                                style: const TextStyle(color: _medicineDarkGreen),
                               ),
                               Text(
                                 'Stock: ${_selectedMedicine!.qty}',
@@ -624,7 +622,6 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                             'More details',
                             style: TextStyle(
                               fontSize: 15,
-                              fontWeight: FontWeight.w800,
                               color: _medicineDarkGreen,
                             ),
                           ),
@@ -715,7 +712,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                       color: Colors.white,
                     ),
                   )
-                : const Text('Save Supply Record', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                : const Text('Save Supply Record', style: TextStyle(fontSize: 16)),
           ),
         ),
       ),

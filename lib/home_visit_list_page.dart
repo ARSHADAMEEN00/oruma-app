@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_list_screen.dart';
 
 class HomeVisitListPage extends StatefulWidget {
   const HomeVisitListPage({super.key});
@@ -886,7 +887,6 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
             style: TextStyle(
               fontSize: 18,
               color: Colors.grey.shade600,
-              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
@@ -994,7 +994,7 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
                         Text(
                           widget.visit.patientName,
                           style: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -1169,6 +1169,33 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
                   ),
                 ),
               const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: widget.visit.id == null
+                    ? null
+                    : () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => VisitAssessmentModuleScreen(
+                              visit: widget.visit,
+                              patient: patient,
+                            ),
+                          ),
+                        );
+                      },
+                icon: const Icon(Icons.assignment_outlined),
+                label: const Text('NHC / Visit Assessment'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF14865D),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(52),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   if (context.read<AuthService>().canDelete) ...[

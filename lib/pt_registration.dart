@@ -222,7 +222,7 @@ class _patientrigisterState extends State<patientrigister> {
         return StatefulBuilder(
           builder: (context, setStateBuilder) {
             return AlertDialog(
-              title: const Text('Add New Ward'),
+              title: const Text('Add New Ward', style: TextStyle(fontSize: 16)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -607,25 +607,27 @@ class _patientrigisterState extends State<patientrigister> {
                         val == null || val.isEmpty ? "Required" : null,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: ageController,
-                    keyboardType: TextInputType.number,
-                    decoration: _buildInputDecoration(
-                      "Age",
-                      Icons.calendar_today,
+                  SizedBox(
+                    width: 180,
+                    child: TextFormField(
+                      controller: ageController,
+                      keyboardType: TextInputType.number,
+                      decoration: _buildInputDecoration(
+                        "Age",
+                        Icons.calendar_today,
+                      ),
+                      validator: (val) {
+                        if (val == null || val.isEmpty) return "Required";
+                        if (int.tryParse(val) == null) return "Invalid";
+                        return null;
+                      },
                     ),
-                    validator: (val) {
-                      if (val == null || val.isEmpty) return "Required";
-                      if (int.tryParse(val) == null) return "Invalid";
-                      return null;
-                    },
                   ),
                   const SizedBox(height: 20),
                   const Text(
                     "Gender",
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.bold,
                       color: Colors.grey,
                     ),
                   ),
@@ -639,6 +641,7 @@ class _patientrigisterState extends State<patientrigister> {
                           label: Text(g),
                           selected: isSelected,
                           selectedColor: _patientPrimary,
+                          checkmarkColor: Colors.white,
                           labelStyle: TextStyle(
                             color: isSelected ? Colors.white : Colors.black,
                           ),
@@ -664,7 +667,6 @@ class _patientrigisterState extends State<patientrigister> {
                     "Diseases",
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.bold,
                       color: Colors.grey,
                     ),
                   ),
@@ -683,9 +685,6 @@ class _patientrigisterState extends State<patientrigister> {
                           checkmarkColor: Colors.white,
                           labelStyle: TextStyle(
                             color: isSelected ? Colors.white : Colors.black87,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.normal,
                           ),
                           onSelected: (selected) {
                             setState(() {
@@ -708,7 +707,6 @@ class _patientrigisterState extends State<patientrigister> {
                               'Other',
                               style: TextStyle(
                                 color: _patientPrimary,
-                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
@@ -874,7 +872,7 @@ class _patientrigisterState extends State<patientrigister> {
         ),
       ),
       bottomSheet: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
@@ -887,21 +885,21 @@ class _patientrigisterState extends State<patientrigister> {
         ),
         child: SizedBox(
           width: double.infinity,
-          height: 56,
+          height: 48,
           child: ElevatedButton(
             onPressed: _isLoading ? null : _handleSubmit,
             style: ElevatedButton.styleFrom(
               backgroundColor: _patientPrimary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
               ),
-              elevation: 2,
+              elevation: 1,
             ),
             child: _isLoading
                 ? const SizedBox(
-                    height: 24,
-                    width: 24,
+                    height: 20,
+                    width: 20,
                     child: CircularProgressIndicator(
                       color: Colors.white,
                       strokeWidth: 2,
@@ -910,9 +908,8 @@ class _patientrigisterState extends State<patientrigister> {
                 : Text(
                     isEditing ? "UPDATE PATIENT" : "REGISTER PATIENT",
                     style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
+                      fontSize: 14,
+                      letterSpacing: 1.0,
                     ),
                   ),
           ),
@@ -956,8 +953,7 @@ class _patientrigisterState extends State<patientrigister> {
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                   color: Color(0xFF333333),
                 ),
               ),

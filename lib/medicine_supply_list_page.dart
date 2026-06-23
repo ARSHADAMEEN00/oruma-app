@@ -423,8 +423,8 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(supply.medicineName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black)),
-                            Text(supply.patientName, style: const TextStyle(color: _medicineGreen, fontWeight: FontWeight.w600)),
+                            Text(supply.medicineName, style: const TextStyle(fontSize: 18, color: Colors.black)),
+                            Text(supply.patientName, style: const TextStyle(color: _medicineGreen)),
                           ],
                         ),
                       ),
@@ -436,7 +436,7 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
                   else if (error != null)
                     Center(child: Text('Error loading details: $error', style: const TextStyle(color: Colors.red)))
                   else ...[
-                    const Text('Supply Information', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _medicineGreen)),
+                    const Text('Supply Information', style: TextStyle(fontSize: 16, color: _medicineGreen)),
                     const SizedBox(height: 12),
                     _buildDetailRow('Status', supply.status?.toUpperCase() ?? 'GIVEN'),
                     _buildDetailRow('Quantity', '${supply.qtyGiven}'),
@@ -445,21 +445,24 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
                     if (supply.prescribedBy != null) _buildDetailRow('Prescribed By', supply.prescribedBy!),
                     if (supply.staffNote != null) _buildDetailRow('Staff Note', supply.staffNote!),
                     
-                    const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(height: 1)),
+                    Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Divider(height: 1, color: Colors.grey.withOpacity(0.2))),
                     
-                    const Text('Medicine Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _medicineGreen)),
+                    const Text('Medicine Details', style: TextStyle(fontSize: 16, color: _medicineGreen)),
                     const SizedBox(height: 12),
                     _buildDetailRow('Category', medicine!.category.split('_').map((e) => e[0].toUpperCase() + e.substring(1)).join(' ')),
                     _buildDetailRow('Code', medicine!.code),
                     if (medicine!.formulation != null) _buildDetailRow('Formulation', medicine!.formulation!),
                     
-                    const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Divider(height: 1)),
+                    Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Divider(height: 1, color: Colors.grey.withOpacity(0.2))),
                     
-                    const Text('Patient Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: _medicineGreen)),
+                    const Text('Patient Details', style: TextStyle(fontSize: 16, color: _medicineGreen)),
                     const SizedBox(height: 12),
                     _buildDetailRow('Phone', patient!.phone),
-                    _buildDetailRow('Age/Gender', '${patient!.age} yrs / ${patient!.gender}'),
-                    _buildDetailRow('Address', '${patient!.address}, ${patient!.place}'),
+                    _buildDetailRow('Age/Gender', [
+                      if (patient!.age > 0) '${patient!.age} yrs',
+                      if (patient!.gender.isNotEmpty) patient!.gender,
+                    ].join(' / ')),
+                    _buildDetailRow('Address', [patient!.address, patient!.place].where((e) => e.trim().isNotEmpty).join(', ')),
                     _buildDetailRow('Diagnosis', patient!.disease.join(', ')),
                   ],
                   const SizedBox(height: 32),
@@ -481,13 +484,14 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
   }
 
   Widget _buildDetailRow(String label, String value) {
+    if (value.trim().isEmpty || value == 'null') return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(flex: 2, child: Text(label, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500))),
-          Expanded(flex: 3, child: Text(value, style: const TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(flex: 2, child: Text(label, style: const TextStyle(color: Colors.grey))),
+          Expanded(flex: 3, child: Text(value, style: const TextStyle(color: Colors.black87))),
         ],
       ),
     );

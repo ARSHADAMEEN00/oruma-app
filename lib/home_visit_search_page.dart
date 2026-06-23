@@ -493,7 +493,7 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
                       Text(
                         visit.patientName,
                         style: const TextStyle(
-                          fontSize: 24,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

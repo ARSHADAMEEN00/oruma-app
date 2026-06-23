@@ -1,0 +1,123 @@
+import 'package:flutter/material.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/providers/visit_assessment_controller.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_widgets.dart';
+
+class ClinicalNotesStep extends StatefulWidget {
+  const ClinicalNotesStep({super.key, required this.controller});
+
+  final VisitAssessmentController controller;
+
+  @override
+  State<ClinicalNotesStep> createState() => _ClinicalNotesStepState();
+}
+
+class _ClinicalNotesStepState extends State<ClinicalNotesStep> {
+  late final TextEditingController _medicineRemarks;
+  late final TextEditingController _diagnosis;
+  late final TextEditingController _doctorNotes;
+  late final TextEditingController _managementPlan;
+
+  @override
+  void initState() {
+    super.initState();
+    final value = widget.controller.assessment;
+    _medicineRemarks = TextEditingController(text: value.medicineRemarks);
+    _diagnosis = TextEditingController(text: value.nursingDiagnosis);
+    _doctorNotes = TextEditingController(text: value.doctorConsultNotes);
+    _managementPlan = TextEditingController(text: value.nursingManagementPlan);
+  }
+
+  @override
+  void dispose() {
+    _medicineRemarks.dispose();
+    _diagnosis.dispose();
+    _doctorNotes.dispose();
+    _managementPlan.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 22),
+      children: [
+        const AssessmentSectionTitle('Clinical Notes'),
+        const SizedBox(height: 14),
+        _noteField(
+          label: 'Medicine Related Remarks',
+          controller: _medicineRemarks,
+          hint: 'Medicine adherence, reactions or special instructions',
+          onChanged: (value) => widget.controller.update(
+            (item) => item.copyWith(medicineRemarks: value),
+          ),
+        ),
+        const SizedBox(height: 13),
+        _noteField(
+          label: 'Nursing Diagnosis',
+          required: true,
+          controller: _diagnosis,
+          hint: 'Current nursing diagnosis',
+          onChanged: (value) => widget.controller.update(
+            (item) => item.copyWith(nursingDiagnosis: value),
+          ),
+        ),
+        const SizedBox(height: 13),
+        _noteField(
+          label: 'Doctor Consult Notes',
+          controller: _doctorNotes,
+          hint: 'Consultation notes and follow-up',
+          onChanged: (value) => widget.controller.update(
+            (item) => item.copyWith(doctorConsultNotes: value),
+          ),
+        ),
+        const SizedBox(height: 13),
+        _noteField(
+          label: 'Nursing Management Plan',
+          controller: _managementPlan,
+          hint: 'Care actions, monitoring and repositioning plan',
+          onChanged: (value) => widget.controller.update(
+            (item) => item.copyWith(nursingManagementPlan: value),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Center(
+          child: AssessmentVoiceButton(
+            onWords: (words) {
+              final text = _managementPlan.text.trim();
+              _managementPlan.text = text.isEmpty ? words : '$text $words';
+              _managementPlan.selection = TextSelection.collapsed(
+                offset: _managementPlan.text.length,
+              );
+              widget.controller.update(
+                (item) =>
+                    item.copyWith(nursingManagementPlan: _managementPlan.text),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _noteField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    required ValueChanged<String> onChanged,
+    bool required = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AssessmentLabel(label, required: required),
+        AssessmentTextField(
+          controller: controller,
+          hint: hint,
+          minLines: 2,
+          maxLines: 4,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+}

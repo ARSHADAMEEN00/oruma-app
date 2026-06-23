@@ -640,7 +640,7 @@ class _MedicineListPageState extends State<MedicineListPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(value, style: const TextStyle(fontSize: 14, color: Colors.black87)),
               const SizedBox(height: 2),
               Text(
                 label,
@@ -856,7 +856,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
         foregroundColor: Colors.white,
         title: Text(
           _editing ? 'Edit Medicine' : 'New Medicine',
-          style: const TextStyle(fontWeight: FontWeight.w800),
+          style: const TextStyle(fontSize: 18),
         ),
       ),
       body: Form(
@@ -963,7 +963,6 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                             'More details',
                             style: TextStyle(
                               fontSize: 15,
-                              fontWeight: FontWeight.w800,
                               color: _medicineDarkGreen,
                             ),
                           ),
@@ -1081,7 +1080,6 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                       activeThumbColor: _medicineGreen,
                       title: const Text(
                         'Active medicine',
-                        style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                       subtitle: const Text(
                         'Inactive medicines remain in history but are clearly marked.',
@@ -1159,7 +1157,6 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 17,
-                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 SizedBox(height: 4),
@@ -1213,7 +1210,6 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                       title,
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 2),

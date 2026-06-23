@@ -1,0 +1,276 @@
+import 'package:flutter/material.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/providers/visit_assessment_controller.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/care_plan_step.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/clinical_notes_step.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/medicines_step.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/physical_exam_step.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/review_submit_step.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/visit_header_step.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/vitals_step.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_widgets.dart';
+
+class VisitAssessmentFlowScreen extends StatelessWidget {
+  const VisitAssessmentFlowScreen({super.key, required this.controller});
+
+  final VisitAssessmentController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        return PopScope(
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) controller.saveDraft(silent: true);
+          },
+          child: Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  _header(context),
+                  Expanded(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 230),
+                      switchInCurve: Curves.easeOutCubic,
+                      transitionBuilder: (child, animation) => FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0.025, 0),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: child,
+                        ),
+                      ),
+                      child: KeyedSubtree(
+                        key: ValueKey(controller.currentStep),
+                        child: _step(),
+                      ),
+                    ),
+                  ),
+                  _footer(context),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _header(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 8, 16, 6),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              IconButton(
+                onPressed: () => Navigator.maybePop(context),
+                icon: const Icon(Icons.arrow_back, size: 20),
+                visualDensity: VisualDensity.compact,
+              ),
+              const SizedBox(width: 2),
+              Text(
+                'Step ${controller.currentStep + 1} of 7',
+                style: const TextStyle(
+                  color: assessmentText,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Spacer(),
+              if (controller.syncState == AssessmentSyncState.saving)
+                const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.6,
+                    color: assessmentGreen,
+                  ),
+                )
+              else if (controller.syncState == AssessmentSyncState.offline)
+                const Icon(
+                  Icons.cloud_off_outlined,
+                  size: 16,
+                  color: assessmentMuted,
+                ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 46),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                minHeight: 2.5,
+                value: (controller.currentStep + 1) / 7,
+                backgroundColor: assessmentBorder,
+                valueColor: const AlwaysStoppedAnimation(assessmentGreen),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _step() {
+    return switch (controller.currentStep) {
+      0 => VisitHeaderStep(controller: controller),
+      1 => VitalsStep(controller: controller),
+      2 => MedicinesStep(controller: controller),
+      3 => PhysicalExamStep(controller: controller),
+      4 => ClinicalNotesStep(controller: controller),
+      5 => CarePlanStep(controller: controller),
+      _ => ReviewSubmitStep(controller: controller),
+    };
+  }
+
+  Widget _footer(BuildContext context) {
+    final isLast = controller.currentStep == 6;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFF1F3F4))),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: isLast
+                ? OutlinedButton(
+                    onPressed: controller.isSubmitting
+                        ? null
+                        : () async {
+                            final saved = await controller.saveDraft();
+                            if (!context.mounted) return;
+                            _message(
+                              context,
+                              saved
+                                  ? 'Draft saved'
+                                  : 'Draft saved offline and will sync later',
+                            );
+                          },
+                    style: _secondaryStyle(),
+                    child: const Text('Save Draft'),
+                  )
+                : FilledButton(
+                    onPressed: controller.currentStep == 0
+                        ? () => Navigator.maybePop(context)
+                        : () => controller.setStep(controller.currentStep - 1),
+                    style: _backStyle(),
+                    child: const Text('Back'),
+                  ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: FilledButton(
+              onPressed: controller.isSubmitting
+                  ? null
+                  : () => isLast ? _submit(context) : _next(context),
+              style: FilledButton.styleFrom(
+                backgroundColor: assessmentGreen,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(43),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
+              child: controller.isSubmitting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(isLast ? 'Submit Assessment' : 'Next'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  ButtonStyle _secondaryStyle() => OutlinedButton.styleFrom(
+    foregroundColor: assessmentGreenDark,
+    minimumSize: const Size.fromHeight(43),
+    side: const BorderSide(color: Color(0xFFBBDDCF)),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+  );
+
+  ButtonStyle _backStyle() => FilledButton.styleFrom(
+    backgroundColor: const Color(0xFFF5F6F7),
+    foregroundColor: assessmentText,
+    minimumSize: const Size.fromHeight(43),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    elevation: 0,
+  );
+
+  void _next(BuildContext context) {
+    final error = controller.validateStep(controller.currentStep);
+    if (error != null) {
+      _message(context, error, error: true);
+      return;
+    }
+    controller.saveDraft(silent: true);
+    controller.setStep(controller.currentStep + 1);
+  }
+
+  Future<void> _submit(BuildContext context) async {
+    final error = controller.validateStep(6);
+    if (error != null) {
+      _message(context, error, error: true);
+      return;
+    }
+    final submitted = await controller.submit();
+    if (!context.mounted) return;
+    if (submitted) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          icon: const Icon(
+            Icons.check_circle,
+            color: assessmentGreen,
+            size: 42,
+          ),
+          title: const Text('Assessment submitted'),
+          content: const Text(
+            'The visit assessment has been securely saved.',
+            textAlign: TextAlign.center,
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(context),
+              style: FilledButton.styleFrom(backgroundColor: assessmentGreen),
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+      );
+      if (context.mounted) Navigator.pop(context, true);
+    } else {
+      _message(
+        context,
+        controller.syncMessage ?? 'Unable to submit assessment',
+        error: true,
+      );
+    }
+  }
+
+  void _message(BuildContext context, String message, {bool error = false}) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: error ? assessmentDanger : assessmentGreenDark,
+        ),
+      );
+  }
+}
