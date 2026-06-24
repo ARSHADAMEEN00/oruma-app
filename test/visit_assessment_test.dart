@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:oruma_app/features/visit_assessment/data/visit_assessment_pdf_generator.dart';
 import 'package:oruma_app/features/visit_assessment/domain/visit_assessment.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/providers/visit_assessment_controller.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_flow_screen.dart';
@@ -306,6 +309,61 @@ void main() {
     expect(find.text('Paracetamol, 500 mg'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
     expect(find.byType(TextFormField), findsNothing);
+  });
+
+  testWidgets('visit assessment PDF generator creates exactly two pages', (
+    tester,
+  ) async {
+    final value = assessment.copyWith(
+      patientAge: '54',
+      previousVisitConcerns: 'ശ്വാസ ബുദ്ധിമുട്ട് കുറഞ്ഞു. Appetite better.',
+      vitals: assessment.vitals.copyWith(
+        pulse: 72,
+        bpSystolic: 120,
+        bpDiastolic: 80,
+        respiratoryRate: 16,
+        temperature: 37,
+        spo2: 98,
+        grbs: 100,
+      ),
+      physicalExam: {
+        ...assessment.physicalExam,
+        'respiration': const ExamFinding(
+          status: 'normal',
+          notes: 'ശ്വാസം സാധാരണ നിലയിൽ.',
+        ),
+      },
+      medicines: const [
+        AssessmentMedicine(
+          medicineName: 'Paracetamol',
+          strength: '500 mg',
+          instructionSpecified: '1-0-1',
+          instructionUsage: 'After food',
+          routes: {'P'},
+          duration: '3 days',
+          remarks: 'Fever only',
+        ),
+      ],
+      medicineRemarks: 'No drug allergy reported.',
+      nursingDiagnosis: 'Routine palliative follow-up.',
+      doctorConsultNotes: 'Doctor consult if fever persists.',
+      nursingManagementPlan: 'Continue monitoring vitals.',
+      carePlan: assessment.carePlan.copyWith(
+        visitPlanNotes: const {'NHC': 'Next NHC visit planned.'},
+        services: const {'healthEducation', 'medicineSupport'},
+      ),
+      teamMeetingDiscussion: 'Family educated about medicine usage.',
+      nurseName: 'Nurse A',
+      status: 'submitted',
+      isComplete: true,
+    );
+
+    final bytes = await VisitAssessmentPdfGenerator.generate(value);
+    final header = ascii.decode(bytes.take(4).toList());
+    final pdfText = latin1.decode(bytes, allowInvalid: true);
+
+    expect(header, '%PDF');
+    expect(RegExp(r'/Type /Page\b').allMatches(pdfText), hasLength(2));
   });
 
   testWidgets('medicine step uses editable table inputs', (tester) async {

@@ -103,7 +103,10 @@ class VisitAssessmentPdfGenerator {
     canvas.drawColor(Colors.white, BlendMode.src);
     painter(canvas);
     final picture = recorder.endRecording();
-    final image = await picture.toImage(_pageWidth.toInt(), _pageHeight.toInt());
+    final image = await picture.toImage(
+      _pageWidth.toInt(),
+      _pageHeight.toInt(),
+    );
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
     image.dispose();
     picture.dispose();
@@ -361,7 +364,12 @@ class VisitAssessmentPdfGenerator {
       suffix: 'Mg/dl',
     );
 
-    _text(canvas, 'Activity :', const Rect.fromLTWH(105, 200, 95, 26), size: 18);
+    _text(
+      canvas,
+      'Activity :',
+      const Rect.fromLTWH(105, 200, 95, 26),
+      size: 18,
+    );
     var x = 200.0;
     for (final level in ['I', 'II', 'III', 'IV', 'V']) {
       final selected = vitals.activityLevel == level;
@@ -436,7 +444,11 @@ class VisitAssessmentPdfGenerator {
       tableX + tableW,
     ];
     for (final x in columns.skip(1).take(columns.length - 2)) {
-      canvas.drawLine(Offset(x, tableY), Offset(x, tableY + tableH - footerH), border);
+      canvas.drawLine(
+        Offset(x, tableY),
+        Offset(x, tableY + tableH - footerH),
+        border,
+      );
     }
     canvas.drawLine(
       Offset(tableX, tableY + headerOne),
@@ -453,17 +465,97 @@ class VisitAssessmentPdfGenerator {
       canvas.drawLine(Offset(tableX, y), Offset(tableX + tableW, y), border);
     }
 
-    _centerText(canvas, 'ക്രമ\nനമ്പർ', Rect.fromLTRB(columns[0], tableY, columns[1], tableY + headerOne + headerTwo), size: 14);
-    _centerText(canvas, 'മരുന്ന് Strength', Rect.fromLTRB(columns[1], tableY, columns[2], tableY + headerOne + headerTwo), size: 17);
-    _centerText(canvas, 'ഉപയോഗക്രമ', Rect.fromLTRB(columns[2], tableY, columns[4], tableY + headerOne), size: 13);
-    _centerText(canvas, 'നിർദിഷ്ടം', Rect.fromLTRB(columns[2], tableY + headerOne, columns[3], tableY + headerOne + headerTwo), size: 12);
-    _centerText(canvas, 'ഉപയോഗം', Rect.fromLTRB(columns[3], tableY + headerOne, columns[4], tableY + headerOne + headerTwo), size: 12);
-    _centerText(canvas, 'സ്രോതസ്സ്', Rect.fromLTRB(columns[4], tableY, columns[8], tableY + headerOne), size: 13);
+    _centerText(
+      canvas,
+      'ക്രമ\nനമ്പർ',
+      Rect.fromLTRB(
+        columns[0],
+        tableY,
+        columns[1],
+        tableY + headerOne + headerTwo,
+      ),
+      size: 14,
+    );
+    _centerText(
+      canvas,
+      'മരുന്ന് Strength',
+      Rect.fromLTRB(
+        columns[1],
+        tableY,
+        columns[2],
+        tableY + headerOne + headerTwo,
+      ),
+      size: 17,
+    );
+    _centerText(
+      canvas,
+      'ഉപയോഗക്രമ',
+      Rect.fromLTRB(columns[2], tableY, columns[4], tableY + headerOne),
+      size: 13,
+    );
+    _centerText(
+      canvas,
+      'നിർദിഷ്ടം',
+      Rect.fromLTRB(
+        columns[2],
+        tableY + headerOne,
+        columns[3],
+        tableY + headerOne + headerTwo,
+      ),
+      size: 12,
+    );
+    _centerText(
+      canvas,
+      'ഉപയോഗം',
+      Rect.fromLTRB(
+        columns[3],
+        tableY + headerOne,
+        columns[4],
+        tableY + headerOne + headerTwo,
+      ),
+      size: 12,
+    );
+    _centerText(
+      canvas,
+      'സ്രോതസ്സ്',
+      Rect.fromLTRB(columns[4], tableY, columns[8], tableY + headerOne),
+      size: 13,
+    );
     for (var i = 0; i < 4; i++) {
-      _centerText(canvas, ['P', 'G', 'S', 'O'][i], Rect.fromLTRB(columns[4 + i], tableY + headerOne, columns[5 + i], tableY + headerOne + headerTwo), size: 16);
+      _centerText(
+        canvas,
+        ['P', 'G', 'S', 'O'][i],
+        Rect.fromLTRB(
+          columns[4 + i],
+          tableY + headerOne,
+          columns[5 + i],
+          tableY + headerOne + headerTwo,
+        ),
+        size: 16,
+      );
     }
-    _centerText(canvas, 'കാലാവധി', Rect.fromLTRB(columns[8], tableY, columns[9], tableY + headerOne + headerTwo), size: 15);
-    _centerText(canvas, 'റിമാർക്സ്', Rect.fromLTRB(columns[9], tableY, columns[10], tableY + headerOne + headerTwo), size: 15);
+    _centerText(
+      canvas,
+      'കാലാവധി',
+      Rect.fromLTRB(
+        columns[8],
+        tableY,
+        columns[9],
+        tableY + headerOne + headerTwo,
+      ),
+      size: 15,
+    );
+    _centerText(
+      canvas,
+      'റിമാർക്സ്',
+      Rect.fromLTRB(
+        columns[9],
+        tableY,
+        columns[10],
+        tableY + headerOne + headerTwo,
+      ),
+      size: 15,
+    );
 
     final medicines = assessment.medicines;
     for (var index = 0; index < rowCount; index++) {
@@ -564,7 +656,7 @@ class VisitAssessmentPdfGenerator {
   static void _paintClinicalNotes(Canvas canvas, VisitAssessment assessment) {
     const x = 92.0;
     const tableBottom = 268.0 + 520.0;
-    final medY = tableBottom + 25;
+    final medY = tableBottom + 18;
     _text(
       canvas,
       'മരുന്ന് സംബന്ധിച്ച് മറ്റു കാര്യങ്ങൾ (മരുന്ന് ചികിൽസ, മരുന്നറിവ്, ഫലം, ഉപയോഗങ്ങൾ Etc.) :',
@@ -575,13 +667,13 @@ class VisitAssessmentPdfGenerator {
     _fitText(
       canvas,
       assessment.medicineRemarks,
-      Rect.fromLTWH(x + 20, medY + 40, 1030, 100),
+      Rect.fromLTWH(x + 20, medY + 38, 1030, 68),
       size: 17,
       color: _ink,
       lineHeight: 1.2,
     );
 
-    final nursingY = medY + 150;
+    final nursingY = medY + 122;
     _text(
       canvas,
       'Nursing Diagnosis/Doctor Consult/Nursing Management/Medications :',
@@ -600,7 +692,7 @@ class VisitAssessmentPdfGenerator {
     _fitText(
       canvas,
       combined,
-      Rect.fromLTWH(x + 20, nursingY + 50, 1030, 195),
+      Rect.fromLTWH(x + 20, nursingY + 48, 1030, 132),
       size: 18,
       color: _ink,
       lineHeight: 1.25,
@@ -628,7 +720,11 @@ class VisitAssessmentPdfGenerator {
     canvas.restore();
 
     canvas.drawRect(Rect.fromLTWH(planX, planY, planW, rowH * 4), border);
-    canvas.drawLine(Offset(planX + 112, planY), Offset(planX + 112, planY + rowH * 4), border);
+    canvas.drawLine(
+      Offset(planX + 112, planY),
+      Offset(planX + 112, planY + rowH * 4),
+      border,
+    );
     for (var i = 1; i < 4; i++) {
       final y = planY + rowH * i;
       canvas.drawLine(Offset(planX, y), Offset(planX + planW, y), border);
@@ -646,7 +742,11 @@ class VisitAssessmentPdfGenerator {
       );
       final selected = assessment.carePlan.visitPlans.contains(entry.key);
       final note = assessment.carePlan.visitPlanNotes[entry.key] ?? '';
-      final value = note.trim().isNotEmpty ? note : selected ? '✓' : '';
+      final value = note.trim().isNotEmpty
+          ? note
+          : selected
+          ? '✓'
+          : '';
       _fitText(
         canvas,
         value,
@@ -673,7 +773,11 @@ class VisitAssessmentPdfGenerator {
     );
     for (var i = 1; i < 3; i++) {
       final y = serviceY + serviceRowH * i;
-      canvas.drawLine(Offset(serviceX, y), Offset(serviceX + serviceW, y), border);
+      canvas.drawLine(
+        Offset(serviceX, y),
+        Offset(serviceX + serviceW, y),
+        border,
+      );
     }
     final serviceOrder = [
       'healthEducation',
@@ -703,7 +807,12 @@ class VisitAssessmentPdfGenerator {
       _centerText(
         canvas,
         _serviceLabels[serviceOrder[i]]!,
-        Rect.fromLTWH(rect.left + 26, rect.top + 5, rect.width - 34, rect.height - 10),
+        Rect.fromLTWH(
+          rect.left + 26,
+          rect.top + 5,
+          rect.width - 34,
+          rect.height - 10,
+        ),
         size: 15,
       );
     }
@@ -908,7 +1017,7 @@ class VisitAssessmentPdfGenerator {
         ),
       ),
       textAlign: align,
-      textDirection: TextDirection.ltr,
+      textDirection: ui.TextDirection.ltr,
       textScaler: TextScaler.noScaling,
     )..layout(maxWidth: rect.width);
     final dy = align == TextAlign.center
@@ -941,7 +1050,7 @@ class VisitAssessmentPdfGenerator {
             height: lineHeight,
           ),
         ),
-        textDirection: TextDirection.ltr,
+        textDirection: ui.TextDirection.ltr,
         textScaler: TextScaler.noScaling,
       )..layout(maxWidth: rect.width);
       if (painter.height <= rect.height || fontSize <= 7) break;
@@ -959,7 +1068,7 @@ class VisitAssessmentPdfGenerator {
         text: text,
         style: TextStyle(fontSize: size, fontWeight: FontWeight.w500),
       ),
-      textDirection: TextDirection.ltr,
+      textDirection: ui.TextDirection.ltr,
       textScaler: TextScaler.noScaling,
     )..layout();
     return painter.size;
@@ -1018,7 +1127,9 @@ class VisitAssessmentPdfGenerator {
       pieces.add(_labelFromToken(finding.status));
     }
     if (finding.notes.trim().isNotEmpty) pieces.add(finding.notes.trim());
-    if (finding.images.isNotEmpty) pieces.add('${finding.images.length} image(s)');
+    if (finding.images.isNotEmpty) {
+      pieces.add('${finding.images.length} image(s)');
+    }
     return pieces.join(' - ');
   }
 

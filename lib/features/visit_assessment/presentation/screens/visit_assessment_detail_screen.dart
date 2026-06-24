@@ -134,6 +134,7 @@ class VisitAssessmentDetailScreen extends StatelessWidget {
   }
 
   Future<void> _createPdf(BuildContext context) async {
+    var dialogOpen = true;
     showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -144,17 +145,22 @@ class VisitAssessmentDetailScreen extends StatelessWidget {
 
     try {
       final bytes = await VisitAssessmentPdfGenerator.generate(assessment);
-      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
+      if (context.mounted && dialogOpen) {
+        Navigator.of(context, rootNavigator: true).pop();
+        dialogOpen = false;
+      }
       await Printing.sharePdf(
         bytes: bytes,
         filename: VisitAssessmentPdfGenerator.fileName(assessment),
       );
     } catch (error) {
       if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not create PDF: $error')),
-        );
+        if (dialogOpen) {
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not create PDF: $error')));
       }
     }
   }
