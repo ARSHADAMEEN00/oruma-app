@@ -409,7 +409,7 @@ class VisitAssessmentPdfGenerator {
 
   static void _paintMedicines(Canvas canvas, VisitAssessment assessment) {
     const tableX = 92.0;
-    const tableY = 268.0;
+    const tableY = 285.0;
     const tableW = 1056.0;
     const headerOne = 47.0;
     const headerTwo = 39.0;
@@ -443,9 +443,12 @@ class VisitAssessmentPdfGenerator {
       tableX + 915,
       tableX + tableW,
     ];
-    for (final x in columns.skip(1).take(columns.length - 2)) {
+    for (var i = 1; i < columns.length - 1; i++) {
+      final x = columns[i];
+      final isSubColumn = i == 3 || i == 5 || i == 6 || i == 7;
+      final startY = isSubColumn ? tableY + headerOne : tableY;
       canvas.drawLine(
-        Offset(x, tableY),
+        Offset(x, startY),
         Offset(x, tableY + tableH - footerH),
         border,
       );
@@ -472,7 +475,7 @@ class VisitAssessmentPdfGenerator {
         columns[0],
         tableY,
         columns[1],
-        tableY + headerOne + headerTwo,
+        tableY + headerOne,
       ),
       size: 14,
     );
@@ -483,7 +486,7 @@ class VisitAssessmentPdfGenerator {
         columns[1],
         tableY,
         columns[2],
-        tableY + headerOne + headerTwo,
+        tableY + headerOne,
       ),
       size: 17,
     );
@@ -541,7 +544,7 @@ class VisitAssessmentPdfGenerator {
         columns[8],
         tableY,
         columns[9],
-        tableY + headerOne + headerTwo,
+        tableY + headerOne,
       ),
       size: 15,
     );
@@ -552,7 +555,7 @@ class VisitAssessmentPdfGenerator {
         columns[9],
         tableY,
         columns[10],
-        tableY + headerOne + headerTwo,
+        tableY + headerOne,
       ),
       size: 15,
     );
@@ -575,6 +578,7 @@ class VisitAssessmentPdfGenerator {
         Rect.fromLTRB(columns[1] + 6, y + 3, columns[2] - 6, y + rowH - 3),
         size: 14,
         color: _ink,
+        align: TextAlign.center,
       );
       _fitText(
         canvas,
@@ -582,6 +586,7 @@ class VisitAssessmentPdfGenerator {
         Rect.fromLTRB(columns[2] + 5, y + 3, columns[3] - 5, y + rowH - 3),
         size: 13,
         color: _ink,
+        align: TextAlign.center,
       );
       _fitText(
         canvas,
@@ -589,6 +594,7 @@ class VisitAssessmentPdfGenerator {
         Rect.fromLTRB(columns[3] + 5, y + 3, columns[4] - 5, y + rowH - 3),
         size: 13,
         color: _ink,
+        align: TextAlign.center,
       );
       for (var routeIndex = 0; routeIndex < 4; routeIndex++) {
         final route = ['P', 'G', 'S', 'O'][routeIndex];
@@ -613,6 +619,7 @@ class VisitAssessmentPdfGenerator {
         Rect.fromLTRB(columns[8] + 6, y + 3, columns[9] - 6, y + rowH - 3),
         size: 13,
         color: _ink,
+        align: TextAlign.center,
       );
       _fitText(
         canvas,
@@ -620,6 +627,7 @@ class VisitAssessmentPdfGenerator {
         Rect.fromLTRB(columns[9] + 6, y + 3, columns[10] - 6, y + rowH - 3),
         size: 13,
         color: _ink,
+        align: TextAlign.center,
       );
     }
 
@@ -655,7 +663,7 @@ class VisitAssessmentPdfGenerator {
 
   static void _paintClinicalNotes(Canvas canvas, VisitAssessment assessment) {
     const x = 92.0;
-    const tableBottom = 268.0 + 520.0;
+    const tableBottom = 285.0 + 520.0;
     final medY = tableBottom + 18;
     _text(
       canvas,
@@ -904,8 +912,8 @@ class VisitAssessmentPdfGenerator {
     double valueWidth = 120,
     double size = 19,
   }) {
-    _text(canvas, label, Rect.fromLTWH(x, y, 130, 28), size: size);
     final labelWidth = _measure(label, size: size).width + 8;
+    _text(canvas, label, Rect.fromLTWH(x, y, labelWidth, 28), size: size);
     final lineStart = x + labelWidth;
     final lineY = y + size + 4;
     canvas.drawLine(
@@ -937,8 +945,9 @@ class VisitAssessmentPdfGenerator {
     required double x,
     required double y,
   }) {
-    _text(canvas, label, Rect.fromLTWH(x, y, 100, 24), size: 18);
-    final box = Rect.fromLTWH(x + 88, y - 2, 23, 23);
+    final labelWidth = _measure(label, size: 18).width + 8;
+    _text(canvas, label, Rect.fromLTWH(x, y, labelWidth, 24), size: 18);
+    final box = Rect.fromLTWH(x + labelWidth, y - 2, 23, 23);
     canvas.drawRect(box, _stroke(1.2));
     if (checked) {
       _text(
@@ -981,7 +990,7 @@ class VisitAssessmentPdfGenerator {
     Color color = _blue,
     FontWeight weight = FontWeight.w600,
   }) {
-    _text(
+    _fitText(
       canvas,
       text,
       rect,
@@ -1019,7 +1028,7 @@ class VisitAssessmentPdfGenerator {
       textAlign: align,
       textDirection: ui.TextDirection.ltr,
       textScaler: TextScaler.noScaling,
-    )..layout(maxWidth: rect.width);
+    )..layout(minWidth: rect.width, maxWidth: rect.width);
     final dy = align == TextAlign.center
         ? rect.top + (rect.height - painter.height) / 2
         : rect.top;
@@ -1034,6 +1043,7 @@ class VisitAssessmentPdfGenerator {
     Color color = _blue,
     FontWeight weight = FontWeight.w500,
     double lineHeight = 1.18,
+    TextAlign align = TextAlign.left,
   }) {
     final clean = text.trim();
     if (clean.isEmpty) return;
@@ -1050,15 +1060,19 @@ class VisitAssessmentPdfGenerator {
             height: lineHeight,
           ),
         ),
+        textAlign: align,
         textDirection: ui.TextDirection.ltr,
         textScaler: TextScaler.noScaling,
-      )..layout(maxWidth: rect.width);
+      )..layout(minWidth: rect.width, maxWidth: rect.width);
       if (painter.height <= rect.height || fontSize <= 7) break;
       fontSize -= 0.5;
     }
     canvas.save();
     canvas.clipRect(rect);
-    painter.paint(canvas, rect.topLeft);
+    final dy = align == TextAlign.center
+        ? rect.top + (rect.height - painter.height) / 2
+        : rect.top;
+    painter.paint(canvas, Offset(rect.left, dy));
     canvas.restore();
   }
 

@@ -11,9 +11,11 @@ import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/patient_details_service.dart';
 import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/widgets/deceased_icon.dart';
+import 'package:oruma_app/features/visit_assessment/data/visit_assessment_pdf_generator.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:printing/printing.dart';
 
 enum _PatientAction { markDeceased, delete }
 
@@ -1188,6 +1190,38 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
                 _assessmentStatusLabel(assessment.status),
                 statusColor,
               ),
+              const SizedBox(width: 8),
+              StatefulBuilder(
+                builder: (context, setState) {
+                  var isDownloading = false;
+                  return isDownloading
+                      ? const Padding(
+                          padding: EdgeInsets.only(right: 8.0, left: 8.0),
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: _patientPrimary,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                        )
+                      : IconButton(
+                          onPressed: () async {
+                            setState(() => isDownloading = true);
+                            await _createAssessmentPdf(context, assessment);
+                            if (context.mounted) {
+                              setState(() => isDownloading = false);
+                            }
+                          },
+                          icon: const Icon(Icons.download_rounded),
+                          color: _patientPrimary,
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        );
+                },
+              ),
             ],
           ),
           const SizedBox(height: 15),
@@ -1339,6 +1373,22 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
         ],
       ),
     );
+  }
+
+  Future<void> _createAssessmentPdf(BuildContext context, VisitAssessment assessment) async {
+    try {
+      final bytes = await VisitAssessmentPdfGenerator.generate(assessment);
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: VisitAssessmentPdfGenerator.fileName(assessment),
+      );
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not create PDF: $error')));
+      }
+    }
   }
 
   Widget _infoRow(
