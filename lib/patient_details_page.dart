@@ -10,6 +10,7 @@ import 'package:oruma_app/pt_registration.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/patient_details_service.dart';
 import 'package:oruma_app/services/patient_service.dart';
+import 'package:oruma_app/services/patient_pdf_generator.dart';
 import 'package:oruma_app/widgets/deceased_icon.dart';
 import 'package:oruma_app/features/visit_assessment/data/visit_assessment_pdf_generator.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
@@ -40,6 +41,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
 
   bool _detailsLoading = true;
   bool _isMutating = false;
+  bool _isPdfGenerating = false;
   String? _detailsError;
 
   @override
@@ -393,6 +395,31 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
 
   List<Widget> _buildHeaderActions(AuthService auth, bool canShowMenu) {
     return [
+      // PDF download button
+      Padding(
+        padding: const EdgeInsets.only(right: 4),
+        child: _isPdfGenerating
+            ? const Padding(
+                padding: EdgeInsets.all(12),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2.5,
+                  ),
+                ),
+              )
+            : IconButton(
+                tooltip: 'Download patient report (PDF)',
+                onPressed: _isMutating ? null : _downloadPatientPdf,
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.14),
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.picture_as_pdf_outlined, size: 20),
+              ),
+      ),
       if (auth.canEdit)
         Padding(
           padding: const EdgeInsets.only(right: 4),
@@ -442,6 +469,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
 
   double _headerActionWidth(AuthService auth, bool canShowMenu) {
     var width = 16.0;
+    width += 52; // PDF download button (always visible)
     if (auth.canEdit) width += 52;
     if (canShowMenu) width += 48;
     return width;
@@ -1373,6 +1401,26 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
         ],
       ),
     );
+  }
+
+  Future<void> _downloadPatientPdf() async {
+    if (_isPdfGenerating) return;
+    setState(() => _isPdfGenerating = true);
+    try {
+      final bytes = await PatientPdfGenerator.generate(_details);
+      if (!mounted) return;
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: PatientPdfGenerator.fileName(_currentPatient),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not create PDF: $error')));
+    } finally {
+      if (mounted) setState(() => _isPdfGenerating = false);
+    }
   }
 
   Future<void> _createAssessmentPdf(BuildContext context, VisitAssessment assessment) async {
