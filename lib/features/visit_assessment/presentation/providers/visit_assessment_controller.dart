@@ -26,7 +26,7 @@ class VisitAssessmentController extends ChangeNotifier {
   bool isLoading = true;
   bool isSubmitting = false;
   int currentStep = 0;
-  String language = 'en';
+  String language = 'ml';
 
   bool get isMalayalam => language == 'ml';
 

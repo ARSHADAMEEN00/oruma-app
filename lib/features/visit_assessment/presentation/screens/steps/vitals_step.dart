@@ -134,10 +134,9 @@ class VitalsStep extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              flex: 2,
               child: _number(
                 'spo2',
                 'SpO₂ (%)',
@@ -152,7 +151,6 @@ class VitalsStep extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              flex: 2,
               child: _number(
                 'grbs',
                 'GRBS (mg/dl)',
@@ -165,10 +163,11 @@ class VitalsStep extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 14),
-            Expanded(flex: 3, child: _stabilityChecks(vitals)),
           ],
         ),
+        const SizedBox(height: 12),
+        const AssessmentLabel('Patient Stability'),
+        _stabilityChecks(vitals),
         const SizedBox(height: 12),
         _segment(
           'Activity Level',
@@ -358,7 +357,7 @@ class VitalsStep extends StatelessWidget {
     return SizedBox(
       height: 40,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           _stabilityCheck(
             label: 'Stable',
@@ -367,7 +366,7 @@ class VitalsStep extends StatelessWidget {
               (value) => value.copyWith(stability: 'stable'),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 24),
           _stabilityCheck(
             label: 'Unstable',
             selected: vitals.stability == 'unstable',
@@ -388,54 +387,39 @@ class VitalsStep extends StatelessWidget {
     bool danger = false,
   }) {
     final selectedColor = danger ? assessmentDanger : assessmentGreen;
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(7),
-        child: Container(
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected
-                ? selectedColor.withValues(alpha: 0.07)
-                : Colors.white,
-            borderRadius: BorderRadius.circular(7),
-            border: Border.all(
-              color: selected ? selectedColor : assessmentBorder,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? selectedColor : assessmentText,
+                fontSize: 14,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
             ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Flexible(
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: selected ? selectedColor : assessmentText,
-                    fontSize: 10,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  ),
+            const SizedBox(width: 8),
+            Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: selected ? selectedColor : Colors.white,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: selected ? selectedColor : assessmentMuted,
+                  width: 1.5,
                 ),
               ),
-              const SizedBox(width: 6),
-              Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: selected ? selectedColor : Colors.white,
-                  borderRadius: BorderRadius.circular(2),
-                  border: Border.all(
-                    color: selected ? selectedColor : assessmentMuted,
-                  ),
-                ),
-                child: selected
-                    ? const Icon(Icons.check, size: 10, color: Colors.white)
-                    : null,
-              ),
-            ],
-          ),
+              child: selected
+                  ? const Icon(Icons.check, size: 14, color: Colors.white)
+                  : null,
+            ),
+          ],
         ),
       ),
     );

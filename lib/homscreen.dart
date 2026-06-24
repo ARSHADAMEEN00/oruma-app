@@ -937,7 +937,7 @@ class _HomescreenState extends State<Homescreen> {
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1053,6 +1053,7 @@ class _HomescreenState extends State<Homescreen> {
         },
         borderRadius: BorderRadius.circular(20),
         child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: BoxDecoration(
             color: palette.cardBackground,
             borderRadius: BorderRadius.circular(20),
@@ -1062,22 +1063,23 @@ class _HomescreenState extends State<Homescreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 52,
-                height: 52,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: palette.iconBackground,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: palette.primary, size: 26),
+                child: Icon(icon, color: palette.primary, size: 24),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Text(
                 title,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: palette.primary,
+                  height: 1.2,
                 ),
               ),
             ],

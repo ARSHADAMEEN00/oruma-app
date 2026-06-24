@@ -130,15 +130,15 @@ class VisitAssessmentPdfGenerator {
     );
     canvas.drawRRect(header, paint);
     final visitTypeBox = RRect.fromRectAndRadius(
-      const Rect.fromLTWH(735, 113, 260, 36),
+      const Rect.fromLTWH(865, 90, 260, 36),
       const Radius.circular(14),
     );
     canvas.drawRRect(visitTypeBox, paint);
-    canvas.drawLine(const Offset(810, 113), const Offset(810, 149), paint);
+    canvas.drawLine(const Offset(940, 90), const Offset(940, 126), paint);
     _text(
       canvas,
       assessment.visitType.isEmpty ? 'NHC' : assessment.visitType,
-      const Rect.fromLTWH(745, 118, 58, 25),
+      const Rect.fromLTWH(875, 95, 58, 25),
       size: 25,
       weight: FontWeight.w800,
       align: TextAlign.center,
@@ -209,7 +209,7 @@ class VisitAssessmentPdfGenerator {
     );
 
     final body = RRect.fromRectAndRadius(
-      const Rect.fromLTWH(115, 292, 1025, 1320),
+      const Rect.fromLTWH(115, 292, 1025, 1445),
       const Radius.circular(16),
     );
     canvas.drawRRect(body, paint);
@@ -239,7 +239,7 @@ class VisitAssessmentPdfGenerator {
       'പ്രാഥമിക കാര്യങ്ങൾ',
       Offset(140, y),
       size: 24,
-      width: 175,
+      width: 230,
     );
     y += 48;
     y = _examRows(canvas, _primaryLabels, assessment, y, rowHeight: 69);
@@ -268,16 +268,16 @@ class VisitAssessmentPdfGenerator {
       _text(
         canvas,
         entry.value,
-        Rect.fromLTWH(140, y, 255, rowHeight - 8),
+        Rect.fromLTWH(140, y, 330, rowHeight - 8),
         size: entry.value.length > 30 ? 16 : 20,
         weight: FontWeight.w700,
         lineHeight: 1.18,
       );
-      _text(canvas, ':', Rect.fromLTWH(390, y, 18, 22), size: 20);
+      _text(canvas, ':', Rect.fromLTWH(480, y, 18, 22), size: 20);
       _fitText(
         canvas,
         _findingValue(finding),
-        Rect.fromLTWH(420, y - 3, 690, rowHeight - 6),
+        Rect.fromLTWH(510, y - 3, 600, rowHeight - 6),
         size: 19,
         color: _ink,
         lineHeight: 1.18,
@@ -700,14 +700,14 @@ class VisitAssessmentPdfGenerator {
   }
 
   static void _paintPlan(Canvas canvas, VisitAssessment assessment) {
-    const planX = 88.0;
+    const planX = 105.0;
     const planY = 1132.0;
-    const planW = 600.0;
+    const planW = 580.0;
     const rowH = 44.0;
     final border = _stroke(1.4);
 
     canvas.save();
-    canvas.translate(planX - 38, planY + 135);
+    canvas.translate(planX - 30, planY + 135);
     canvas.rotate(-1.5708);
     _text(
       canvas,

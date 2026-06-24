@@ -118,6 +118,10 @@ class VisitAssessmentListScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: assessmentText),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text('Visit Assessments'),
         centerTitle: false,
         backgroundColor: Colors.white,
