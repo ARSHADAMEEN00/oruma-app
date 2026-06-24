@@ -16,12 +16,14 @@ class PatientPdfGenerator {
 
   // ─── Layout constants ─────────────────────────────────────────────────────
   // Keep the drawing layout in 150 DPI A4 coordinates, then rasterise the
-  // recorded canvas at 2x so the PDF embeds 300 DPI A4 pages for printing.
+  // recorded canvas at 4x so the PDF embeds 600 DPI A4 pages for printing.
   static const double _pw = 1240.0;
   static const double _ph = 1754.0;
-  static const double _rasterScale = 2.0;
-  static const int _rasterW = 2480;
-  static const int _rasterH = 3508;
+  static const double _rasterScale = 4.0;
+  static int get _rasterW => (_pw * _rasterScale).round();
+  static int get _rasterH => (_ph * _rasterScale).round();
+  static const String _fontFamily = 'NotoSansMalayalam';
+  static const List<String> _fontFallbacks = <String>['Roboto', 'Arial'];
   static const double _marginL = 56.0;
   static const double _marginR = 56.0;
   static const double _contentW = 1128.0; // _pw - _marginL - _marginR
@@ -801,6 +803,8 @@ class PatientPdfGenerator {
               fontWeight: weight,
               color: color,
               height: lineHeight,
+              fontFamily: _fontFamily,
+              fontFamilyFallback: _fontFallbacks,
             ),
           )
           ..addText(text.isEmpty ? ' ' : text);
@@ -832,6 +836,8 @@ class PatientPdfGenerator {
               fontWeight: weight,
               color: color,
               height: 1.15,
+              fontFamily: _fontFamily,
+              fontFamilyFallback: _fontFallbacks,
             ),
           )
           ..addText(text.isEmpty ? ' ' : text);
