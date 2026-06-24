@@ -74,6 +74,14 @@ flutter:
     - assets/logo/
     - assets/QR.jpeg
 
+  fonts:
+    - family: NotoSansMalayalam
+      fonts:
+        - asset: assets/fonts/NotoSansMalayalam-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSansMalayalam-Bold.ttf
+          weight: 700
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

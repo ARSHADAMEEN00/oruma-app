@@ -10,8 +10,15 @@ import 'package:pdf/widgets.dart' as pw;
 class VisitAssessmentPdfGenerator {
   const VisitAssessmentPdfGenerator._();
 
+  // Keep the existing A4 layout coordinates, then render at 4x so the
+  // embedded PDF page images are 600 DPI for clearer printing and zooming.
   static const double _pageWidth = 1240;
   static const double _pageHeight = 1754;
+  static const double _rasterScale = 4;
+  static int get _rasterWidth => (_pageWidth * _rasterScale).round();
+  static int get _rasterHeight => (_pageHeight * _rasterScale).round();
+  static const String _fontFamily = 'NotoSansMalayalam';
+  static const List<String> _fontFallbacks = <String>['Roboto', 'Arial'];
   static const Color _blue = Color(0xFF083F88);
   static const Color _ink = Color(0xFF111827);
   static const Color _softBlue = Color(0x14083F88);
@@ -98,15 +105,13 @@ class VisitAssessmentPdfGenerator {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(
       recorder,
-      const Rect.fromLTWH(0, 0, _pageWidth, _pageHeight),
+      Rect.fromLTWH(0, 0, _rasterWidth.toDouble(), _rasterHeight.toDouble()),
     );
     canvas.drawColor(Colors.white, BlendMode.src);
+    canvas.scale(_rasterScale, _rasterScale);
     painter(canvas);
     final picture = recorder.endRecording();
-    final image = await picture.toImage(
-      _pageWidth.toInt(),
-      _pageHeight.toInt(),
-    );
+    final image = await picture.toImage(_rasterWidth, _rasterHeight);
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
     image.dispose();
     picture.dispose();
@@ -471,23 +476,13 @@ class VisitAssessmentPdfGenerator {
     _centerText(
       canvas,
       'ക്രമ\nനമ്പർ',
-      Rect.fromLTRB(
-        columns[0],
-        tableY,
-        columns[1],
-        tableY + headerOne,
-      ),
+      Rect.fromLTRB(columns[0], tableY, columns[1], tableY + headerOne),
       size: 14,
     );
     _centerText(
       canvas,
       'മരുന്ന് Strength',
-      Rect.fromLTRB(
-        columns[1],
-        tableY,
-        columns[2],
-        tableY + headerOne,
-      ),
+      Rect.fromLTRB(columns[1], tableY, columns[2], tableY + headerOne),
       size: 17,
     );
     _centerText(
@@ -540,23 +535,13 @@ class VisitAssessmentPdfGenerator {
     _centerText(
       canvas,
       'കാലാവധി',
-      Rect.fromLTRB(
-        columns[8],
-        tableY,
-        columns[9],
-        tableY + headerOne,
-      ),
+      Rect.fromLTRB(columns[8], tableY, columns[9], tableY + headerOne),
       size: 15,
     );
     _centerText(
       canvas,
       'റിമാർക്സ്',
-      Rect.fromLTRB(
-        columns[9],
-        tableY,
-        columns[10],
-        tableY + headerOne,
-      ),
+      Rect.fromLTRB(columns[9], tableY, columns[10], tableY + headerOne),
       size: 15,
     );
 
@@ -1023,6 +1008,8 @@ class VisitAssessmentPdfGenerator {
           fontWeight: weight,
           height: lineHeight,
           letterSpacing: letterSpacing,
+          fontFamily: _fontFamily,
+          fontFamilyFallback: _fontFallbacks,
         ),
       ),
       textAlign: align,
@@ -1058,6 +1045,8 @@ class VisitAssessmentPdfGenerator {
             fontSize: fontSize,
             fontWeight: weight,
             height: lineHeight,
+            fontFamily: _fontFamily,
+            fontFamilyFallback: _fontFallbacks,
           ),
         ),
         textAlign: align,
@@ -1080,7 +1069,12 @@ class VisitAssessmentPdfGenerator {
     final painter = TextPainter(
       text: TextSpan(
         text: text,
-        style: TextStyle(fontSize: size, fontWeight: FontWeight.w500),
+        style: TextStyle(
+          fontSize: size,
+          fontWeight: FontWeight.w500,
+          fontFamily: _fontFamily,
+          fontFamilyFallback: _fontFallbacks,
+        ),
       ),
       textDirection: ui.TextDirection.ltr,
       textScaler: TextScaler.noScaling,
