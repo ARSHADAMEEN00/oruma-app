@@ -11,6 +11,7 @@ class VitalsStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    controller.ensureVitalDefaults();
     final vitals = controller.assessment.vitals;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
@@ -21,6 +22,7 @@ class VitalsStep extends StatelessWidget {
           children: [
             Expanded(
               child: _number(
+                'pulse',
                 'Pulse (/min)',
                 vitals.pulse,
                 (value) => controller.updateVitals(
@@ -70,6 +72,7 @@ class VitalsStep extends StatelessWidget {
           children: [
             Expanded(
               child: _number(
+                'respiratory-rate',
                 'RR (/min)',
                 vitals.respiratoryRate,
                 (value) => controller.updateVitals(
@@ -82,60 +85,61 @@ class VitalsStep extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const AssessmentLabel('Temperature'),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _numericField(
-                          vitals.temperature?.toString() ?? '',
-                          (value) => controller.updateVitals(
-                            (vitals) => vitals.copyWith(
-                              temperature: double.tryParse(value),
-                              clearTemperature: value.isEmpty,
-                            ),
-                          ),
-                          decimal: true,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      SizedBox(
-                        width: 86,
-                        child: AssessmentSegment(
-                          compact: true,
-                          options: const ['C', 'F'],
-                          labels: const {'C': '°C', 'F': '°F'},
-                          selected: vitals.temperatureUnit,
-                          onSelected: (value) => controller.updateVitals(
-                            (vitals) => vitals.copyWith(temperatureUnit: value),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              child: _segment(
+                'RR Rhythm',
+                const ['R', 'IR'],
+                vitals.respiratoryRhythm,
+                const {'R': 'Regular', 'IR': 'Irregular'},
+                (value) => controller.updateVitals(
+                  (vitals) => vitals.copyWith(respiratoryRhythm: value),
+                ),
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        _segment(
-          'Method',
-          const ['O', 'A', 'R'],
-          vitals.temperatureMethod,
-          const {'O': 'Oral', 'A': 'Axillary', 'R': 'Rectal'},
-          (value) => controller.updateVitals(
-            (vitals) => vitals.copyWith(temperatureMethod: value),
-          ),
-        ),
-        const SizedBox(height: 12),
+        const AssessmentLabel('Temperature'),
         Row(
           children: [
             Expanded(
+              flex: 3,
+              child: _numericField(
+                'temperature',
+                vitals.temperature?.toString() ?? '',
+                (value) => controller.updateVitals(
+                  (vitals) => vitals.copyWith(
+                    temperature: double.tryParse(value),
+                    clearTemperature: value.isEmpty,
+                  ),
+                ),
+                decimal: true,
+              ),
+            ),
+            const SizedBox(width: 7),
+            Expanded(
+              flex: 2,
+              child: AssessmentSegment(
+                compact: true,
+                options: const ['C', 'F'],
+                labels: const {'C': '°C', 'F': '°F'},
+                selected: vitals.temperatureUnit,
+                onSelected: (value) => controller.updateVitals(
+                  (vitals) => vitals.copyWith(temperatureUnit: value),
+                ),
+              ),
+            ),
+            const SizedBox(width: 7),
+            Expanded(flex: 3, child: _temperatureMethod(vitals)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              flex: 2,
               child: _number(
+                'spo2',
                 'SpO₂ (%)',
                 vitals.spo2,
                 (value) => controller.updateVitals(
@@ -148,7 +152,9 @@ class VitalsStep extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
+              flex: 2,
               child: _number(
+                'grbs',
                 'GRBS (mg/dl)',
                 vitals.grbs,
                 (value) => controller.updateVitals(
@@ -159,6 +165,8 @@ class VitalsStep extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(width: 14),
+            Expanded(flex: 3, child: _stabilityChecks(vitals)),
           ],
         ),
         const SizedBox(height: 12),
@@ -171,38 +179,33 @@ class VitalsStep extends StatelessWidget {
             (vitals) => vitals.copyWith(activityLevel: value),
           ),
         ),
-        const SizedBox(height: 12),
-        _segment(
-          'Stability',
-          const ['stable', 'unstable'],
-          vitals.stability,
-          const {'stable': '◉ Stable', 'unstable': '◉ Unstable'},
-          (value) => controller.updateVitals(
-            (vitals) => vitals.copyWith(stability: value),
-          ),
-          dangerValue: 'unstable',
-        ),
       ],
     );
   }
 
-  Widget _number(String label, num? value, ValueChanged<String> onChanged) {
+  Widget _number(
+    String fieldId,
+    String label,
+    num? value,
+    ValueChanged<String> onChanged,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AssessmentLabel(label),
-        _numericField(value?.toString() ?? '', onChanged),
+        _numericField(fieldId, value?.toString() ?? '', onChanged),
       ],
     );
   }
 
   Widget _numericField(
+    String fieldId,
     String value,
     ValueChanged<String> onChanged, {
     bool decimal = false,
   }) {
     return TextFormField(
-      key: ValueKey('$value-$decimal'),
+      key: ValueKey('vitals-defaults-v2-$fieldId'),
       initialValue: value,
       onChanged: onChanged,
       keyboardType: TextInputType.numberWithOptions(decimal: decimal),
@@ -245,6 +248,7 @@ class VitalsStep extends StatelessWidget {
           children: [
             Expanded(
               child: _numericField(
+                'bp-systolic',
                 vitals.bpSystolic?.toString() ?? '',
                 (value) => controller.updateVitals(
                   (vitals) => vitals.copyWith(
@@ -260,6 +264,7 @@ class VitalsStep extends StatelessWidget {
             ),
             Expanded(
               child: _numericField(
+                'bp-diastolic',
                 vitals.bpDiastolic?.toString() ?? '',
                 (value) => controller.updateVitals(
                   (vitals) => vitals.copyWith(
@@ -296,6 +301,143 @@ class VitalsStep extends StatelessWidget {
           compact: true,
         ),
       ],
+    );
+  }
+
+  Widget _temperatureMethod(VisitVitals vitals) {
+    return SegmentedButton<String>(
+      showSelectedIcon: false,
+      segments: const [
+        ButtonSegment(value: 'O', label: Text('O'), tooltip: 'Oral'),
+        ButtonSegment(value: 'A', label: Text('A'), tooltip: 'Axillary'),
+        ButtonSegment(value: 'R', label: Text('R'), tooltip: 'Rectal'),
+      ],
+      selected: {vitals.temperatureMethod},
+      onSelectionChanged: (selected) => controller.updateVitals(
+        (value) => value.copyWith(temperatureMethod: selected.first),
+      ),
+      style: ButtonStyle(
+        visualDensity: VisualDensity.compact,
+        minimumSize: const WidgetStatePropertyAll(Size(0, 34)),
+        padding: const WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 5),
+        ),
+        side: WidgetStateProperty.resolveWith(
+          (states) => BorderSide(
+            color: states.contains(WidgetState.selected)
+                ? assessmentGreen
+                : assessmentBorder,
+          ),
+        ),
+        backgroundColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? assessmentMint
+              : Colors.white,
+        ),
+        foregroundColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? assessmentGreenDark
+              : assessmentText,
+        ),
+        textStyle: WidgetStateProperty.resolveWith(
+          (states) => TextStyle(
+            fontSize: 11,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w700
+                : FontWeight.w500,
+          ),
+        ),
+        shape: WidgetStatePropertyAll(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+    );
+  }
+
+  Widget _stabilityChecks(VisitVitals vitals) {
+    return SizedBox(
+      height: 40,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _stabilityCheck(
+            label: 'Stable',
+            selected: vitals.stability == 'stable',
+            onTap: () => controller.updateVitals(
+              (value) => value.copyWith(stability: 'stable'),
+            ),
+          ),
+          const SizedBox(width: 8),
+          _stabilityCheck(
+            label: 'Unstable',
+            selected: vitals.stability == 'unstable',
+            danger: true,
+            onTap: () => controller.updateVitals(
+              (value) => value.copyWith(stability: 'unstable'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _stabilityCheck({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+    bool danger = false,
+  }) {
+    final selectedColor = danger ? assessmentDanger : assessmentGreen;
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(7),
+        child: Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected
+                ? selectedColor.withValues(alpha: 0.07)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(
+              color: selected ? selectedColor : assessmentBorder,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: selected ? selectedColor : assessmentText,
+                    fontSize: 10,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: selected ? selectedColor : Colors.white,
+                  borderRadius: BorderRadius.circular(2),
+                  border: Border.all(
+                    color: selected ? selectedColor : assessmentMuted,
+                  ),
+                ),
+                child: selected
+                    ? const Icon(Icons.check, size: 10, color: Colors.white)
+                    : null,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

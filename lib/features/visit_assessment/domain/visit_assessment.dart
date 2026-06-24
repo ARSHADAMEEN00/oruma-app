@@ -5,6 +5,7 @@ class VisitVitals {
   final int? bpDiastolic;
   final String bpPosition;
   final int? respiratoryRate;
+  final String respiratoryRhythm;
   final double? temperature;
   final String temperatureUnit;
   final String temperatureMethod;
@@ -14,35 +15,55 @@ class VisitVitals {
   final String stability;
 
   const VisitVitals({
-    this.pulse,
+    this.pulse = 72,
     this.pulseRhythm = 'R',
-    this.bpSystolic,
-    this.bpDiastolic,
+    this.bpSystolic = 120,
+    this.bpDiastolic = 80,
     this.bpPosition = 'UL',
-    this.respiratoryRate,
-    this.temperature,
+    this.respiratoryRate = 16,
+    this.respiratoryRhythm = 'R',
+    this.temperature = 37,
     this.temperatureUnit = 'C',
     this.temperatureMethod = 'O',
-    this.spo2,
-    this.grbs,
+    this.spo2 = 98,
+    this.grbs = 100,
     this.activityLevel = 'III',
     this.stability = 'stable',
   });
 
-  factory VisitVitals.fromJson(Map<String, dynamic>? json) {
+  factory VisitVitals.fromJson(
+    Map<String, dynamic>? json, {
+    bool fillMissingWithDefaults = true,
+  }) {
     final value = json ?? const {};
+    const defaults = VisitVitals();
     return VisitVitals(
-      pulse: _toInt(value['pulse']),
+      pulse:
+          _toInt(value['pulse']) ??
+          (fillMissingWithDefaults ? defaults.pulse : null),
       pulseRhythm: value['pulseRhythm']?.toString() ?? 'R',
-      bpSystolic: _toInt(value['bpSystolic']),
-      bpDiastolic: _toInt(value['bpDiastolic']),
+      bpSystolic:
+          _toInt(value['bpSystolic']) ??
+          (fillMissingWithDefaults ? defaults.bpSystolic : null),
+      bpDiastolic:
+          _toInt(value['bpDiastolic']) ??
+          (fillMissingWithDefaults ? defaults.bpDiastolic : null),
       bpPosition: value['bpPosition']?.toString() ?? 'UL',
-      respiratoryRate: _toInt(value['rr']),
-      temperature: _toDouble(value['temp']),
+      respiratoryRate:
+          _toInt(value['rr']) ??
+          (fillMissingWithDefaults ? defaults.respiratoryRate : null),
+      respiratoryRhythm: value['rrRhythm']?.toString() ?? 'R',
+      temperature:
+          _toDouble(value['temp']) ??
+          (fillMissingWithDefaults ? defaults.temperature : null),
       temperatureUnit: value['tempUnit']?.toString() ?? 'C',
       temperatureMethod: value['tempMethod']?.toString() ?? 'O',
-      spo2: _toInt(value['spo2']),
-      grbs: _toInt(value['grbs']),
+      spo2:
+          _toInt(value['spo2']) ??
+          (fillMissingWithDefaults ? defaults.spo2 : null),
+      grbs:
+          _toInt(value['grbs']) ??
+          (fillMissingWithDefaults ? defaults.grbs : null),
       activityLevel: value['activityLevel']?.toString() ?? 'III',
       stability: value['stability']?.toString() ?? 'stable',
     );
@@ -55,6 +76,7 @@ class VisitVitals {
     'bpDiastolic': bpDiastolic,
     'bpPosition': bpPosition,
     'rr': respiratoryRate,
+    'rrRhythm': respiratoryRhythm,
     'temp': temperature,
     'tempUnit': temperatureUnit,
     'tempMethod': temperatureMethod,
@@ -63,6 +85,35 @@ class VisitVitals {
     'activityLevel': activityLevel,
     'stability': stability,
   };
+
+  bool get hasMissingMeasurements =>
+      pulse == null ||
+      bpSystolic == null ||
+      bpDiastolic == null ||
+      respiratoryRate == null ||
+      temperature == null ||
+      spo2 == null ||
+      grbs == null;
+
+  VisitVitals withBaselineDefaults() {
+    const defaults = VisitVitals();
+    return VisitVitals(
+      pulse: pulse ?? defaults.pulse,
+      pulseRhythm: pulseRhythm,
+      bpSystolic: bpSystolic ?? defaults.bpSystolic,
+      bpDiastolic: bpDiastolic ?? defaults.bpDiastolic,
+      bpPosition: bpPosition,
+      respiratoryRate: respiratoryRate ?? defaults.respiratoryRate,
+      respiratoryRhythm: respiratoryRhythm,
+      temperature: temperature ?? defaults.temperature,
+      temperatureUnit: temperatureUnit,
+      temperatureMethod: temperatureMethod,
+      spo2: spo2 ?? defaults.spo2,
+      grbs: grbs ?? defaults.grbs,
+      activityLevel: activityLevel,
+      stability: stability,
+    );
+  }
 
   VisitVitals copyWith({
     int? pulse,
@@ -75,6 +126,7 @@ class VisitVitals {
     String? bpPosition,
     int? respiratoryRate,
     bool clearRespiratoryRate = false,
+    String? respiratoryRhythm,
     double? temperature,
     bool clearTemperature = false,
     String? temperatureUnit,
@@ -95,6 +147,7 @@ class VisitVitals {
       respiratoryRate: clearRespiratoryRate
           ? null
           : respiratoryRate ?? this.respiratoryRate,
+      respiratoryRhythm: respiratoryRhythm ?? this.respiratoryRhythm,
       temperature: clearTemperature ? null : temperature ?? this.temperature,
       temperatureUnit: temperatureUnit ?? this.temperatureUnit,
       temperatureMethod: temperatureMethod ?? this.temperatureMethod,
@@ -111,6 +164,8 @@ class AssessmentMedicine {
   final String? medicineId;
   final String medicineName;
   final String strength;
+  final String instructionSpecified;
+  final String instructionUsage;
   final Set<String> routes;
   final String duration;
   final String remarks;
@@ -120,7 +175,9 @@ class AssessmentMedicine {
     this.medicineId,
     required this.medicineName,
     this.strength = '',
-    this.routes = const {'P'},
+    this.instructionSpecified = '',
+    this.instructionUsage = '',
+    this.routes = const {},
     this.duration = '',
     this.remarks = '',
   });
@@ -137,6 +194,11 @@ class AssessmentMedicine {
       medicineId: _idValue(json['medicineId']),
       medicineName: json['medicineName']?.toString() ?? '',
       strength: json['strength']?.toString() ?? '',
+      instructionSpecified:
+          json['instructionSpecified']?.toString() ??
+          json['dose']?.toString() ??
+          '',
+      instructionUsage: json['instructionUsage']?.toString() ?? '',
       routes: json['routes'] is List
           ? (json['routes'] as List).map((item) => item.toString()).toSet()
           : legacyRoutes.toSet(),
@@ -150,6 +212,8 @@ class AssessmentMedicine {
     'medicineId': medicineId,
     'medicineName': medicineName,
     'strength': strength,
+    'instructionSpecified': instructionSpecified,
+    'instructionUsage': instructionUsage,
     'routes': routes.toList(),
     'duration': duration,
     'remarks': remarks,
@@ -159,6 +223,8 @@ class AssessmentMedicine {
     String? medicineId,
     String? medicineName,
     String? strength,
+    String? instructionSpecified,
+    String? instructionUsage,
     Set<String>? routes,
     String? duration,
     String? remarks,
@@ -168,6 +234,8 @@ class AssessmentMedicine {
       medicineId: medicineId ?? this.medicineId,
       medicineName: medicineName ?? this.medicineName,
       strength: strength ?? this.strength,
+      instructionSpecified: instructionSpecified ?? this.instructionSpecified,
+      instructionUsage: instructionUsage ?? this.instructionUsage,
       routes: routes ?? this.routes,
       duration: duration ?? this.duration,
       remarks: remarks ?? this.remarks,
@@ -255,10 +323,12 @@ Map<String, ExamFinding> emptyPhysicalExam() => {
 
 class AssessmentCarePlan {
   final Set<String> visitPlans;
+  final Map<String, String> visitPlanNotes;
   final Set<String> services;
 
   const AssessmentCarePlan({
     this.visitPlans = const {'NHC'},
+    this.visitPlanNotes = const {},
     this.services = const {},
   });
 
@@ -279,10 +349,17 @@ class AssessmentCarePlan {
       ])
         if (value[option] == true) option,
     };
+    final notesValue = value['visitPlanNotes'];
     return AssessmentCarePlan(
       visitPlans: value['visitPlans'] is List
           ? (value['visitPlans'] as List).map((item) => item.toString()).toSet()
           : legacyVisitPlans,
+      visitPlanNotes: notesValue is Map
+          ? {
+              for (final entry in notesValue.entries)
+                entry.key.toString(): entry.value?.toString() ?? '',
+            }
+          : const {},
       services: value['services'] is List
           ? (value['services'] as List).map((item) => item.toString()).toSet()
           : legacyServices,
@@ -291,15 +368,18 @@ class AssessmentCarePlan {
 
   Map<String, dynamic> toJson() => {
     'visitPlans': visitPlans.toList(),
+    'visitPlanNotes': visitPlanNotes,
     'services': services.toList(),
   };
 
   AssessmentCarePlan copyWith({
     Set<String>? visitPlans,
+    Map<String, String>? visitPlanNotes,
     Set<String>? services,
   }) {
     return AssessmentCarePlan(
       visitPlans: visitPlans ?? this.visitPlans,
+      visitPlanNotes: visitPlanNotes ?? this.visitPlanNotes,
       services: services ?? this.services,
     );
   }
@@ -310,6 +390,7 @@ class VisitAssessment {
   final String homeVisitId;
   final String patientId;
   final String patientName;
+  final String patientAge;
   final String regNo;
   final DateTime visitDate;
   final String timeFrom;
@@ -319,6 +400,7 @@ class VisitAssessment {
   final VisitVitals vitals;
   final List<AssessmentMedicine> medicines;
   final Map<String, ExamFinding> physicalExam;
+  final String previousVisitConcerns;
   final String medicineRemarks;
   final String nursingDiagnosis;
   final String doctorConsultNotes;
@@ -341,6 +423,7 @@ class VisitAssessment {
     required this.homeVisitId,
     required this.patientId,
     required this.patientName,
+    this.patientAge = '',
     required this.regNo,
     required this.visitDate,
     this.timeFrom = '',
@@ -350,6 +433,7 @@ class VisitAssessment {
     this.vitals = const VisitVitals(),
     this.medicines = const [],
     Map<String, ExamFinding>? physicalExam,
+    this.previousVisitConcerns = '',
     this.medicineRemarks = '',
     this.nursingDiagnosis = '',
     this.doctorConsultNotes = '',
@@ -373,6 +457,9 @@ class VisitAssessment {
         ? json['physicalExam'] as Map<String, dynamic>
         : <String, dynamic>{};
     final patient = json['patientId'];
+    final status =
+        json['status']?.toString() ??
+        (json['isComplete'] == true ? 'submitted' : 'draft');
     return VisitAssessment(
       id: json['_id']?.toString() ?? json['id']?.toString(),
       homeVisitId: _idValue(json['homeVisitId']) ?? '',
@@ -380,6 +467,9 @@ class VisitAssessment {
       patientName: patient is Map
           ? patient['name']?.toString() ?? ''
           : json['patientName']?.toString() ?? '',
+      patientAge:
+          json['patientAge']?.toString() ??
+          (patient is Map ? patient['age']?.toString() ?? '' : ''),
       regNo:
           json['regNo']?.toString() ??
           (patient is Map ? patient['registerId']?.toString() ?? '' : ''),
@@ -390,7 +480,10 @@ class VisitAssessment {
       timeTo: json['timeTo']?.toString() ?? '',
       team: json['team']?.toString() ?? 'Team Oruma',
       visitType: json['visitType']?.toString() ?? 'NHC',
-      vitals: VisitVitals.fromJson(json['vitals'] as Map<String, dynamic>?),
+      vitals: VisitVitals.fromJson(
+        json['vitals'] as Map<String, dynamic>?,
+        fillMissingWithDefaults: status != 'submitted',
+      ),
       medicines: (json['medicines'] as List<dynamic>? ?? const [])
           .whereType<Map>()
           .map(
@@ -402,6 +495,7 @@ class VisitAssessment {
         for (final key in assessmentExamKeys)
           key: ExamFinding.fromJson(examJson[key]),
       },
+      previousVisitConcerns: json['previousVisitConcerns']?.toString() ?? '',
       medicineRemarks: json['medicineRemarks']?.toString() ?? '',
       nursingDiagnosis: json['nursingDiagnosis']?.toString() ?? '',
       doctorConsultNotes: json['doctorConsultNotes']?.toString() ?? '',
@@ -415,9 +509,7 @@ class VisitAssessment {
       nurseId: _idValue(json['nurseId']),
       signatureUrl: json['signatureUrl']?.toString() ?? '',
       confirmed: json['confirmed'] == true,
-      status:
-          json['status']?.toString() ??
-          (json['isComplete'] == true ? 'submitted' : 'draft'),
+      status: status,
       isComplete: json['isComplete'] == true,
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),
       updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? ''),
@@ -430,6 +522,7 @@ class VisitAssessment {
     'homeVisitId': homeVisitId,
     'patientId': patientId,
     'patientName': patientName,
+    'patientAge': patientAge,
     'regNo': regNo,
     'visitDate': visitDate.toIso8601String(),
     'timeFrom': timeFrom,
@@ -441,6 +534,7 @@ class VisitAssessment {
     'physicalExam': {
       for (final entry in physicalExam.entries) entry.key: entry.value.toJson(),
     },
+    'previousVisitConcerns': previousVisitConcerns,
     'medicineRemarks': medicineRemarks,
     'nursingDiagnosis': nursingDiagnosis,
     'doctorConsultNotes': doctorConsultNotes,
@@ -462,6 +556,7 @@ class VisitAssessment {
   VisitAssessment copyWith({
     String? id,
     String? patientName,
+    String? patientAge,
     String? regNo,
     DateTime? visitDate,
     String? timeFrom,
@@ -471,6 +566,7 @@ class VisitAssessment {
     VisitVitals? vitals,
     List<AssessmentMedicine>? medicines,
     Map<String, ExamFinding>? physicalExam,
+    String? previousVisitConcerns,
     String? medicineRemarks,
     String? nursingDiagnosis,
     String? doctorConsultNotes,
@@ -493,6 +589,7 @@ class VisitAssessment {
       homeVisitId: homeVisitId,
       patientId: patientId,
       patientName: patientName ?? this.patientName,
+      patientAge: patientAge ?? this.patientAge,
       regNo: regNo ?? this.regNo,
       visitDate: visitDate ?? this.visitDate,
       timeFrom: timeFrom ?? this.timeFrom,
@@ -502,6 +599,8 @@ class VisitAssessment {
       vitals: vitals ?? this.vitals,
       medicines: medicines ?? this.medicines,
       physicalExam: physicalExam ?? this.physicalExam,
+      previousVisitConcerns:
+          previousVisitConcerns ?? this.previousVisitConcerns,
       medicineRemarks: medicineRemarks ?? this.medicineRemarks,
       nursingDiagnosis: nursingDiagnosis ?? this.nursingDiagnosis,
       doctorConsultNotes: doctorConsultNotes ?? this.doctorConsultNotes,

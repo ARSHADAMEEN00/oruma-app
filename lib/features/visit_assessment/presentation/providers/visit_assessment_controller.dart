@@ -26,6 +26,9 @@ class VisitAssessmentController extends ChangeNotifier {
   bool isLoading = true;
   bool isSubmitting = false;
   int currentStep = 0;
+  String language = 'en';
+
+  bool get isMalayalam => language == 'ml';
 
   Future<void> initialize() async {
     isLoading = true;
@@ -50,17 +53,32 @@ class VisitAssessmentController extends ChangeNotifier {
       _assessment = local ?? remote ?? _assessment;
     }
 
-    previousAssessments = await _repository.getHistory(_assessment.patientId);
-    previousAssessments = previousAssessments
-        .where((item) => item.homeVisitId != _assessment.homeVisitId)
-        .toList();
+    _setHistory(await _repository.getHistory(_assessment.patientId));
     isLoading = false;
     _startAutoSave();
     _notify();
   }
 
+  void _setHistory(List<VisitAssessment> assessments) {
+    previousAssessments = assessments
+        .where(
+          (item) =>
+              item.homeVisitId != _assessment.homeVisitId ||
+              item.status == 'submitted',
+        )
+        .toList();
+  }
+
   void setStep(int step) {
+    if (step == 2) ensureVitalDefaults();
     currentStep = step.clamp(0, 6);
+    _notify();
+  }
+
+  void setLanguage(String value) {
+    if (value != 'en' && value != 'ml') return;
+    if (language == value) return;
+    language = value;
     _notify();
   }
 
@@ -75,7 +93,27 @@ class VisitAssessmentController extends ChangeNotifier {
   }
 
   void updateVitals(VisitVitals Function(VisitVitals value) transform) {
-    update((value) => value.copyWith(vitals: transform(value.vitals)));
+    update(
+      (value) => value.copyWith(
+        vitals: transform(
+          value.status == 'submitted'
+              ? value.vitals
+              : value.vitals.withBaselineDefaults(),
+        ),
+      ),
+    );
+  }
+
+  void ensureVitalDefaults() {
+    if (_assessment.status == 'submitted' ||
+        !_assessment.vitals.hasMissingMeasurements) {
+      return;
+    }
+    _assessment = _assessment.copyWith(
+      vitals: _assessment.vitals.withBaselineDefaults(),
+      updatedAt: DateTime.now(),
+    );
+    _scheduleLocalSave();
   }
 
   void addMedicine(AssessmentMedicine medicine) {
@@ -113,6 +151,8 @@ class VisitAssessmentController extends ChangeNotifier {
                 medicineId: item.medicineId,
                 medicineName: item.medicineName,
                 strength: item.strength,
+                instructionSpecified: item.instructionSpecified,
+                instructionUsage: item.instructionUsage,
                 routes: {...item.routes},
                 duration: item.duration,
                 remarks: item.remarks,
@@ -138,6 +178,24 @@ class VisitAssessmentController extends ChangeNotifier {
     update(
       (item) =>
           item.copyWith(carePlan: item.carePlan.copyWith(visitPlans: selected)),
+    );
+  }
+
+  void updateVisitPlanNote(String value, String note) {
+    final trimmed = note.trim();
+    final notes = {..._assessment.carePlan.visitPlanNotes};
+    trimmed.isEmpty ? notes.remove(value) : notes[value] = trimmed;
+
+    final selected = {..._assessment.carePlan.visitPlans};
+    trimmed.isEmpty ? selected.remove(value) : selected.add(value);
+
+    update(
+      (item) => item.copyWith(
+        carePlan: item.carePlan.copyWith(
+          visitPlans: selected,
+          visitPlanNotes: notes,
+        ),
+      ),
     );
   }
 
@@ -167,6 +225,9 @@ class VisitAssessmentController extends ChangeNotifier {
         }
         return null;
       case 1:
+        return null;
+      case 2:
+        ensureVitalDefaults();
         final vitals = _assessment.vitals;
         if (vitals.pulse == null ||
             vitals.bpSystolic == null ||
@@ -180,14 +241,12 @@ class VisitAssessmentController extends ChangeNotifier {
           return 'SpO₂ must be between 0 and 100.';
         }
         return null;
-      case 2:
+      case 3:
         if (_assessment.medicines.any(
           (medicine) => medicine.medicineName.trim().isEmpty,
         )) {
           return 'Every medicine needs a name.';
         }
-        return null;
-      case 3:
         return null;
       case 4:
         if (_assessment.nursingDiagnosis.trim().isEmpty) {
@@ -209,9 +268,6 @@ class VisitAssessmentController extends ChangeNotifier {
         }
         if (_assessment.nurseName.trim().isEmpty) {
           return 'Nurse name is required.';
-        }
-        if (_assessment.signatureUrl.isEmpty) {
-          return 'Add the nurse signature.';
         }
         if (!_assessment.confirmed) {
           return 'Confirm that the assessment information is correct.';
@@ -270,6 +326,7 @@ class VisitAssessmentController extends ChangeNotifier {
       );
       _assessment = submitted;
       await _repository.clearLocalDraft(submitted.homeVisitId);
+      _setHistory(await _repository.getHistory(submitted.patientId));
       syncState = AssessmentSyncState.saved;
       syncMessage = 'Assessment submitted';
       isSubmitting = false;

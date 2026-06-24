@@ -2,490 +2,779 @@ import 'package:flutter/material.dart';
 import 'package:oruma_app/features/visit_assessment/domain/visit_assessment.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/providers/visit_assessment_controller.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_widgets.dart';
-import 'package:oruma_app/models/medicine.dart';
-import 'package:oruma_app/services/medicine_service.dart';
 
-class MedicinesStep extends StatelessWidget {
+class MedicinesStep extends StatefulWidget {
   const MedicinesStep({super.key, required this.controller});
 
   final VisitAssessmentController controller;
 
   @override
-  Widget build(BuildContext context) {
-    final assessment = controller.assessment;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 22),
-      children: [
-        AssessmentSectionTitle(
-          'Medicines',
-          trailing: OutlinedButton.icon(
-            onPressed: () => _showEditor(context),
-            icon: const Icon(Icons.add, size: 16),
-            label: const Text('Add Medicine'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: assessmentGreenDark,
-              visualDensity: VisualDensity.compact,
-              side: const BorderSide(color: Color(0xFFBBDDCF)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ),
-        if (controller.previousAssessments.any(
-          (item) => item.medicines.isNotEmpty,
-        )) ...[
-          const SizedBox(height: 5),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: controller.copyMedicinesFromPrevious,
-              icon: const Icon(Icons.copy_all_outlined, size: 15),
-              label: const Text('Copy previous medicines'),
-              style: TextButton.styleFrom(
-                foregroundColor: assessmentGreenDark,
-                visualDensity: VisualDensity.compact,
-              ),
-            ),
-          ),
-        ],
-        const SizedBox(height: 8),
-        if (assessment.medicines.isEmpty)
-          const AssessmentEmptyState(
-            icon: Icons.medication_outlined,
-            title: 'No medicines added',
-            message:
-                'Add the medicines the patient is currently taking, or copy them from the previous assessment.',
-          )
-        else
-          ...List.generate(
-            assessment.medicines.length,
-            (index) => Padding(
-              padding: const EdgeInsets.only(bottom: 9),
-              child: _medicineCard(context, assessment.medicines[index], index),
-            ),
-          ),
-        const SizedBox(height: 10),
-        const AssessmentLabel('Complementary Medicine'),
-        AssessmentSegment(
-          compact: true,
-          options: const ['Nil', 'Ay', 'H', 'U', 'Sd', 'N', 'O'],
-          labels: const {
-            'Ay': 'Ayurveda',
-            'H': 'Homeopathy',
-            'U': 'Unani',
-            'Sd': 'Siddha',
-            'N': 'Naturopathy',
-            'O': 'Other',
-          },
-          selected: assessment.complementary,
-          onSelected: (value) =>
-              controller.update((item) => item.copyWith(complementary: value)),
-        ),
-      ],
-    );
-  }
-
-  Widget _medicineCard(
-    BuildContext context,
-    AssessmentMedicine medicine,
-    int index,
-  ) {
-    return AssessmentCard(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      medicine.medicineName,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    if (medicine.strength.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        medicine.strength,
-                        style: const TextStyle(
-                          color: assessmentMuted,
-                          fontSize: 9,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: () =>
-                    _showEditor(context, existing: medicine, index: index),
-                visualDensity: VisualDensity.compact,
-                icon: const Icon(Icons.edit_outlined, size: 16),
-              ),
-              IconButton(
-                onPressed: () => controller.removeMedicine(index),
-                visualDensity: VisualDensity.compact,
-                color: assessmentDanger,
-                icon: const Icon(Icons.delete_outline, size: 16),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Route',
-            style: TextStyle(fontSize: 9, color: assessmentMuted),
-          ),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 14,
-            children: ['P', 'G', 'S', 'O'].map((route) {
-              final active = medicine.routes.contains(route);
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 13,
-                    height: 13,
-                    decoration: BoxDecoration(
-                      color: active ? assessmentGreen : Colors.white,
-                      borderRadius: BorderRadius.circular(2),
-                      border: Border.all(
-                        color: active ? assessmentGreen : assessmentBorder,
-                      ),
-                    ),
-                    child: active
-                        ? const Icon(Icons.check, size: 10, color: Colors.white)
-                        : null,
-                  ),
-                  const SizedBox(width: 5),
-                  Text(route, style: const TextStyle(fontSize: 9)),
-                ],
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(child: _valueBox('Duration', medicine.duration)),
-              const SizedBox(width: 10),
-              Expanded(flex: 2, child: _valueBox('Remarks', medicine.remarks)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _valueBox(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 9, color: assessmentMuted),
-        ),
-        const SizedBox(height: 4),
-        Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(minHeight: 32),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          decoration: BoxDecoration(
-            border: Border.all(color: assessmentBorder),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Text(
-            value.isEmpty ? '—' : value,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 9),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _showEditor(
-    BuildContext context, {
-    AssessmentMedicine? existing,
-    int? index,
-  }) async {
-    final value = await showModalBottomSheet<AssessmentMedicine>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _MedicineEditorSheet(existing: existing),
-    );
-    if (value == null) return;
-    if (index == null) {
-      controller.addMedicine(value);
-    } else {
-      controller.replaceMedicine(index, value);
-    }
-  }
+  State<MedicinesStep> createState() => _MedicinesStepState();
 }
 
-class _MedicineEditorSheet extends StatefulWidget {
-  const _MedicineEditorSheet({this.existing});
+class _MedicinesStepState extends State<MedicinesStep> {
+  static const int _minimumRows = 8;
+  static const double _rowHeight = 42;
+  static const double _groupHeaderHeight = 25;
+  static const double _subHeaderHeight = 25;
+  static const double _noWidth = 38;
+  static const double _medicineStrengthWidth = 240;
+  static const double _instructionWidth = 86;
+  static const double _routeWidth = 38;
+  static const double _durationWidth = 74;
+  static const double _remarksWidth = 118;
+  static const double _clearWidth = 36;
+  static const double _tableWidth =
+      _noWidth +
+      _medicineStrengthWidth +
+      (_instructionWidth * 2) +
+      (_routeWidth * 4) +
+      _durationWidth +
+      _remarksWidth +
+      _clearWidth;
 
-  final AssessmentMedicine? existing;
-
-  @override
-  State<_MedicineEditorSheet> createState() => _MedicineEditorSheetState();
-}
-
-class _MedicineEditorSheetState extends State<_MedicineEditorSheet> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _name;
-  late final TextEditingController _strength;
-  late final TextEditingController _duration;
-  late final TextEditingController _remarks;
-  late Set<String> _routes;
-  String? _medicineId;
-  List<Medicine> _medicines = [];
-  bool _loading = true;
+  final List<_MedicineTableRow> _rows = [];
+  final ScrollController _tableScrollController = ScrollController();
+  int _nextLocalId = 0;
 
   @override
   void initState() {
     super.initState();
-    final value = widget.existing;
-    _name = TextEditingController(text: value?.medicineName ?? '');
-    _strength = TextEditingController(text: value?.strength ?? '');
-    _duration = TextEditingController(text: value?.duration ?? '');
-    _remarks = TextEditingController(text: value?.remarks ?? '');
-    _routes = {...?value?.routes};
-    if (_routes.isEmpty) _routes.add('P');
-    _medicineId = value?.medicineId;
-    _loadMedicines();
+    _replaceRows(widget.controller.assessment.medicines);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
   }
 
-  Future<void> _loadMedicines() async {
-    try {
-      final values = await MedicineService.getMedicines();
-      if (mounted) {
-        setState(() {
-          _medicines = values;
-          _loading = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
+  @override
+  void didUpdateWidget(covariant MedicinesStep oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      _replaceRows(widget.controller.assessment.medicines);
     }
   }
 
   @override
   void dispose() {
-    _name.dispose();
-    _strength.dispose();
-    _duration.dispose();
-    _remarks.dispose();
+    for (final row in _rows) {
+      row.dispose();
+    }
+    _tableScrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.viewInsetsOf(context).bottom;
-    return Container(
-      padding: EdgeInsets.fromLTRB(18, 12, 18, 18 + bottom),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 38,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: assessmentBorder,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+    final hasPrevious = widget.controller.previousAssessments.any(
+      (item) => item.medicines.isNotEmpty,
+    );
+    final isMalayalam = widget.controller.isMalayalam;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 22),
+      children: [
+        AssessmentSectionTitle(
+          'Medicines',
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (hasPrevious) ...[
+                TextButton.icon(
+                  onPressed: _copyPreviousMedicines,
+                  icon: const Icon(Icons.copy_all_outlined, size: 15),
+                  label: const Text('Copy Previous'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: assessmentGreenDark,
+                    visualDensity: VisualDensity.compact,
+                    textStyle: const TextStyle(fontSize: 10),
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  widget.existing == null ? 'Add Medicine' : 'Edit Medicine',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const AssessmentLabel('Search Medicine', required: true),
-                if (_loading)
-                  const LinearProgressIndicator(
-                    minHeight: 2,
-                    color: assessmentGreen,
-                  )
-                else
-                  Autocomplete<Medicine>(
-                    initialValue: TextEditingValue(text: _name.text),
-                    displayStringForOption: (option) => option.name,
-                    optionsBuilder: (value) {
-                      final query = value.text.trim().toLowerCase();
-                      if (query.isEmpty) return _medicines.take(20);
-                      return _medicines.where(
-                        (item) =>
-                            item.name.toLowerCase().contains(query) ||
-                            item.code.toLowerCase().contains(query) ||
-                            item.brandNames.any(
-                              (brand) => brand.toLowerCase().contains(query),
-                            ),
-                      );
-                    },
-                    onSelected: (medicine) {
-                      _medicineId = medicine.id;
-                      _name.text = medicine.name;
-                      if (_strength.text.isEmpty && medicine.strength != null) {
-                        final number = medicine.strength!;
-                        _strength.text =
-                            '${number == number.roundToDouble() ? number.toInt() : number}${medicine.strengthUnit ?? ''}';
-                      }
-                    },
-                    fieldViewBuilder:
-                        (context, textController, focusNode, onSubmitted) {
-                          if (textController.text != _name.text) {
-                            textController.text = _name.text;
-                          }
-                          textController.addListener(() {
-                            if (_name.text != textController.text) {
-                              _name.text = textController.text;
-                              _medicineId = null;
-                            }
-                          });
-                          return TextFormField(
-                            controller: textController,
-                            focusNode: focusNode,
-                            validator: (value) => value?.trim().isEmpty != false
-                                ? 'Medicine name is required'
-                                : null,
-                            decoration: _decoration('Type medicine name'),
-                          );
-                        },
-                  ),
-                if (_medicines.isEmpty && !_loading) ...[
-                  const SizedBox(height: 8),
-                  AssessmentTextField(
-                    controller: _name,
-                    hint: 'Enter medicine name',
-                  ),
-                ],
-                const SizedBox(height: 13),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const AssessmentLabel('Strength'),
-                          AssessmentTextField(
-                            controller: _strength,
-                            hint: 'e.g. 500 mg',
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const AssessmentLabel('Duration'),
-                          AssessmentTextField(
-                            controller: _duration,
-                            hint: 'e.g. 7 days',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 13),
-                const AssessmentLabel('Route'),
-                AssessmentMultiSegment(
-                  options: const ['P', 'G', 'S', 'O'],
-                  selected: _routes,
-                  onToggle: (value) {
-                    setState(() {
-                      _routes.contains(value)
-                          ? _routes.remove(value)
-                          : _routes.add(value);
-                    });
-                  },
-                ),
-                const SizedBox(height: 13),
-                const AssessmentLabel('Remarks'),
-                AssessmentTextField(
-                  controller: _remarks,
-                  hint: 'Dose timing or special instruction',
-                  minLines: 2,
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 18),
-                FilledButton(
-                  onPressed: _save,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: assessmentGreen,
-                    minimumSize: const Size.fromHeight(46),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(9),
-                    ),
-                  ),
-                  child: Text(
-                    widget.existing == null ? 'Add Medicine' : 'Save Changes',
-                  ),
-                ),
+                const SizedBox(width: 4),
               ],
+              OutlinedButton.icon(
+                onPressed: _addRow,
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Add Row'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: assessmentGreenDark,
+                  visualDensity: VisualDensity.compact,
+                  side: const BorderSide(color: Color(0xFFBBDDCF)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  textStyle: const TextStyle(fontSize: 10),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Type Medicine, Strength in one cell, like “Paracetamol, 500mg”. Any mark under P / G / S / O saves that source.',
+          style: TextStyle(color: assessmentMuted, fontSize: 10, height: 1.3),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          isMalayalam
+              ? 'സ്ഥിരമായി കഴിക്കുന്ന മരുന്നുകൾ (മരുന്ന് അലർജി)'
+              : 'Regular medications (Drug allergy)',
+          style: const TextStyle(
+            color: assessmentText,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 7),
+        _medicineTable(isMalayalam),
+        const SizedBox(height: 12),
+        _complementarySelector(isMalayalam),
+      ],
+    );
+  }
+
+  Widget _complementarySelector(bool isMalayalam) {
+    const options = ['Nil', 'Ay', 'H', 'U', 'Sd', 'N', 'O'];
+    final selected = widget.controller.assessment.complementary;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFD9E1E4)),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            Text(
+              isMalayalam ? 'കോംപ്ലിമെന്ററി മരുന്ന്' : 'Complementary Medicine',
+              style: const TextStyle(
+                color: assessmentText,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
             ),
+            const SizedBox(width: 10),
+            const Text(
+              'Rx:',
+              style: TextStyle(
+                color: assessmentGreenDark,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(width: 6),
+            for (var index = 0; index < options.length; index++) ...[
+              _complementaryOption(options[index], selected),
+              if (index != options.length - 1)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 5),
+                  child: Text(
+                    '/',
+                    style: TextStyle(
+                      color: assessmentMuted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _complementaryOption(String value, String selected) {
+    final active = selected == value;
+    return InkWell(
+      onTap: () => widget.controller.update(
+        (item) => item.copyWith(complementary: value),
+      ),
+      borderRadius: BorderRadius.circular(5),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        decoration: BoxDecoration(
+          color: active ? assessmentGreen.withValues(alpha: 0.1) : Colors.white,
+          borderRadius: BorderRadius.circular(5),
+          border: Border.all(
+            color: active ? assessmentGreen : Colors.transparent,
+          ),
+        ),
+        child: Text(
+          value,
+          style: TextStyle(
+            color: active ? assessmentGreenDark : assessmentText,
+            fontSize: 11,
+            fontWeight: active ? FontWeight.w800 : FontWeight.w600,
           ),
         ),
       ),
     );
   }
 
-  InputDecoration _decoration(String hint) => InputDecoration(
-    hintText: hint,
-    filled: true,
-    fillColor: Colors.white,
-    isDense: true,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: assessmentBorder),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: assessmentBorder),
-    ),
+  Widget _medicineTable(bool isMalayalam) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFD9E1E4)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SingleChildScrollView(
+              controller: _tableScrollController,
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: _tableWidth,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _tableHeader(isMalayalam),
+                    for (var index = 0; index < _rows.length; index++)
+                      _tableRow(_rows[index], index),
+                  ],
+                ),
+              ),
+            ),
+            _tableScrollHandle(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _tableScrollHandle() {
+    return AnimatedBuilder(
+      animation: _tableScrollController,
+      builder: (context, _) {
+        final hasScrollableTable =
+            _tableScrollController.hasClients &&
+            _tableScrollController.position.hasContentDimensions &&
+            _tableScrollController.position.maxScrollExtent > 0;
+        final max = hasScrollableTable
+            ? _tableScrollController.position.maxScrollExtent
+            : 1.0;
+        final value = hasScrollableTable
+            ? _tableScrollController.offset.clamp(0.0, max).toDouble()
+            : 0.0;
+
+        return Container(
+          height: 28,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xFFE7ECEE))),
+          ),
+          child: SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 4,
+              activeTrackColor: assessmentGreen.withValues(alpha: 0.55),
+              inactiveTrackColor: const Color(0xFFE2E8EA),
+              thumbColor: assessmentGreen,
+              overlayColor: assessmentGreen.withValues(alpha: 0.12),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 13),
+            ),
+            child: Slider(
+              value: value,
+              min: 0,
+              max: max,
+              onChanged: hasScrollableTable
+                  ? (next) => _tableScrollController.jumpTo(next)
+                  : null,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _tableHeader(bool isMalayalam) {
+    return Row(
+      children: [
+        _spanningHeaderCell(isMalayalam ? 'ക്രമനമ്പർ' : 'No', width: _noWidth),
+        _spanningHeaderCell(
+          isMalayalam ? 'മരുന്ന്, Strength' : 'Medicine, Strength',
+          width: _medicineStrengthWidth,
+        ),
+        _groupHeaderCell(
+          isMalayalam ? 'ഉപയോഗക്രമ' : 'Instructions',
+          children: [
+            (isMalayalam ? 'നിർദിഷ്ടം' : 'Specified', _instructionWidth),
+            (isMalayalam ? 'ഉപയോഗം' : 'Usage', _instructionWidth),
+          ],
+        ),
+        _groupHeaderCell(
+          isMalayalam ? 'സ്രോതസ്സ' : 'Source',
+          children: const [
+            ('P', _routeWidth),
+            ('G', _routeWidth),
+            ('S', _routeWidth),
+            ('O', _routeWidth),
+          ],
+        ),
+        _spanningHeaderCell(
+          isMalayalam ? 'കാലാവധി' : 'Duration',
+          width: _durationWidth,
+        ),
+        _spanningHeaderCell(
+          isMalayalam ? 'റിമാർക്സ്' : 'Remarks',
+          width: _remarksWidth,
+        ),
+        _spanningHeaderCell('', width: _clearWidth, isLast: true),
+      ],
+    );
+  }
+
+  Widget _tableRow(_MedicineTableRow row, int index) {
+    return Row(
+      children: [
+        _bodyCell(
+          width: _noWidth,
+          child: Center(
+            child: Text(
+              '${index + 1}',
+              style: const TextStyle(
+                color: assessmentMuted,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+        _textCell(
+          row.medicineStrength,
+          key: ValueKey('medicine-name-strength-$index'),
+          width: _medicineStrengthWidth,
+          hint: 'Medicine, 30mg',
+        ),
+        _textCell(
+          row.instructionSpecified,
+          key: ValueKey('medicine-instruction-specified-$index'),
+          width: _instructionWidth,
+          hint: 'Specified',
+        ),
+        _textCell(
+          row.instructionUsage,
+          key: ValueKey('medicine-instruction-usage-$index'),
+          width: _instructionWidth,
+          hint: 'Usage',
+        ),
+        _textCell(
+          row.routeP,
+          key: ValueKey('medicine-route-p-$index'),
+          width: _routeWidth,
+          center: true,
+        ),
+        _textCell(
+          row.routeG,
+          key: ValueKey('medicine-route-g-$index'),
+          width: _routeWidth,
+          center: true,
+        ),
+        _textCell(
+          row.routeS,
+          key: ValueKey('medicine-route-s-$index'),
+          width: _routeWidth,
+          center: true,
+        ),
+        _textCell(
+          row.routeO,
+          key: ValueKey('medicine-route-o-$index'),
+          width: _routeWidth,
+          center: true,
+        ),
+        _textCell(
+          row.duration,
+          key: ValueKey('medicine-duration-$index'),
+          width: _durationWidth,
+          hint: 'Days',
+        ),
+        _textCell(
+          row.remarks,
+          key: ValueKey('medicine-remarks-$index'),
+          width: _remarksWidth,
+          hint: 'Instruction',
+        ),
+        _bodyCell(
+          width: _clearWidth,
+          isLast: true,
+          child: IconButton(
+            tooltip: 'Clear row',
+            visualDensity: VisualDensity.compact,
+            onPressed: row.isEmpty ? null : () => _clearRow(index),
+            icon: Icon(
+              Icons.close,
+              size: 15,
+              color: row.isEmpty ? assessmentBorder : assessmentDanger,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _spanningHeaderCell(
+    String label, {
+    required double width,
+    bool isLast = false,
+  }) {
+    return Container(
+      width: width,
+      height: _groupHeaderHeight + _subHeaderHeight + 1,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F8F7),
+        border: Border(
+          right: isLast
+              ? BorderSide.none
+              : const BorderSide(color: Color(0xFFD9E1E4)),
+          bottom: const BorderSide(color: Color(0xFFD9E1E4)),
+        ),
+      ),
+      child: Text(
+        label,
+        textAlign: TextAlign.center,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: assessmentText,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+
+  Widget _groupHeaderCell(
+    String label, {
+    required List<(String, double)> children,
+  }) {
+    final width = children.fold<double>(0, (total, child) => total + child.$2);
+    return Container(
+      width: width,
+      height: _groupHeaderHeight + _subHeaderHeight + 1,
+      decoration: const BoxDecoration(
+        color: Color(0xFFF5F8F7),
+        border: Border(
+          right: BorderSide(color: Color(0xFFD9E1E4)),
+          bottom: BorderSide(color: Color(0xFFD9E1E4)),
+        ),
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            height: _groupHeaderHeight,
+            child: Center(child: _headerText(label)),
+          ),
+          Container(
+            height: _subHeaderHeight,
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: Color(0xFFD9E1E4))),
+            ),
+            child: Row(
+              children: [
+                for (var index = 0; index < children.length; index++)
+                  Expanded(
+                    flex: children[index].$2.round(),
+                    child: _subHeaderCell(
+                      children[index].$1,
+                      isLast: index == children.length - 1,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _subHeaderCell(String label, {bool isLast = false}) {
+    return Container(
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        border: Border(
+          right: isLast
+              ? BorderSide.none
+              : const BorderSide(color: Color(0xFFD9E1E4)),
+        ),
+      ),
+      child: _headerText(label, small: true),
+    );
+  }
+
+  Widget _headerText(String label, {bool small = false}) {
+    return Text(
+      label,
+      textAlign: TextAlign.center,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        color: assessmentText,
+        fontSize: small ? 9 : 10,
+        fontWeight: FontWeight.w800,
+      ),
+    );
+  }
+
+  Widget _textCell(
+    TextEditingController textController, {
+    required Key key,
+    required double width,
+    String? hint,
+    bool center = false,
+  }) {
+    return _bodyCell(
+      width: width,
+      child: TextField(
+        key: key,
+        controller: textController,
+        onChanged: (_) => _rowChanged(),
+        textAlign: center ? TextAlign.center : TextAlign.start,
+        textInputAction: TextInputAction.next,
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(
+            color: Color(0xFFA8B0B8),
+            fontSize: 9,
+            fontWeight: FontWeight.w400,
+          ),
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: center ? 2 : 6,
+            vertical: 11,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _bodyCell({
+    required double width,
+    required Widget child,
+    bool isLast = false,
+  }) {
+    return Container(
+      width: width,
+      height: _rowHeight,
+      decoration: BoxDecoration(
+        border: Border(
+          right: isLast
+              ? BorderSide.none
+              : const BorderSide(color: Color(0xFFD9E1E4)),
+          bottom: const BorderSide(color: Color(0xFFE7ECEE)),
+        ),
+      ),
+      child: child,
+    );
+  }
+
+  void _replaceRows(List<AssessmentMedicine> medicines) {
+    for (final row in _rows) {
+      row.dispose();
+    }
+    _rows
+      ..clear()
+      ..addAll(
+        medicines.map(
+          (medicine) =>
+              _MedicineTableRow.fromMedicine(medicine, localId: _nextLocalId++),
+        ),
+      );
+    _ensureMinimumRows();
+  }
+
+  void _ensureMinimumRows() {
+    while (_rows.length < _minimumRows || _rows.last.hasContent) {
+      _rows.add(_MedicineTableRow.blank(localId: _nextLocalId++));
+    }
+  }
+
+  void _rowChanged() {
+    final shouldAppendBlank = _rows.isNotEmpty && _rows.last.hasContent;
+    if (shouldAppendBlank) {
+      setState(_ensureMinimumRows);
+    }
+    _commitRows();
+  }
+
+  void _addRow() {
+    setState(() {
+      _rows.add(_MedicineTableRow.blank(localId: _nextLocalId++));
+    });
+  }
+
+  void _clearRow(int index) {
+    if (index < 0 || index >= _rows.length) return;
+    setState(() {
+      _rows[index].clear();
+    });
+    _commitRows();
+  }
+
+  void _copyPreviousMedicines() {
+    widget.controller.copyMedicinesFromPrevious();
+    setState(() => _replaceRows(widget.controller.assessment.medicines));
+  }
+
+  void _commitRows() {
+    final medicines = _rows
+        .where((row) => row.hasContent)
+        .map((row) => row.toMedicine())
+        .toList(growable: false);
+    widget.controller.update((item) => item.copyWith(medicines: medicines));
+  }
+}
+
+class _MedicineTableRow {
+  _MedicineTableRow({
+    required this.localId,
+    this.id,
+    this.medicineId,
+    this.originalMedicineName = '',
+    String medicineName = '',
+    String strength = '',
+    String instructionSpecified = '',
+    String instructionUsage = '',
+    Set<String> routes = const {},
+    String duration = '',
+    String remarks = '',
+  }) : medicineStrength = TextEditingController(
+         text: _formatMedicineStrength(medicineName, strength),
+       ),
+       instructionSpecified = TextEditingController(text: instructionSpecified),
+       instructionUsage = TextEditingController(text: instructionUsage),
+       routeP = TextEditingController(text: routes.contains('P') ? '✓' : ''),
+       routeG = TextEditingController(text: routes.contains('G') ? '✓' : ''),
+       routeS = TextEditingController(text: routes.contains('S') ? '✓' : ''),
+       routeO = TextEditingController(text: routes.contains('O') ? '✓' : ''),
+       duration = TextEditingController(text: duration),
+       remarks = TextEditingController(text: remarks);
+
+  factory _MedicineTableRow.blank({required int localId}) =>
+      _MedicineTableRow(localId: localId);
+
+  factory _MedicineTableRow.fromMedicine(
+    AssessmentMedicine medicine, {
+    required int localId,
+  }) => _MedicineTableRow(
+    localId: localId,
+    id: medicine.id,
+    medicineId: medicine.medicineId,
+    originalMedicineName: medicine.medicineName,
+    medicineName: medicine.medicineName,
+    strength: medicine.strength,
+    instructionSpecified: medicine.instructionSpecified,
+    instructionUsage: medicine.instructionUsage,
+    routes: medicine.routes,
+    duration: medicine.duration,
+    remarks: medicine.remarks,
   );
 
-  void _save() {
-    if (!_formKey.currentState!.validate() || _name.text.trim().isEmpty) return;
-    Navigator.pop(
-      context,
-      AssessmentMedicine(
-        id: widget.existing?.id,
-        medicineId: _medicineId,
-        medicineName: _name.text.trim(),
-        strength: _strength.text.trim(),
-        routes: _routes,
-        duration: _duration.text.trim(),
-        remarks: _remarks.text.trim(),
-      ),
+  final int localId;
+  final String? id;
+  final String? medicineId;
+  final String originalMedicineName;
+  final TextEditingController medicineStrength;
+  final TextEditingController instructionSpecified;
+  final TextEditingController instructionUsage;
+  final TextEditingController routeP;
+  final TextEditingController routeG;
+  final TextEditingController routeS;
+  final TextEditingController routeO;
+  final TextEditingController duration;
+  final TextEditingController remarks;
+
+  bool get hasContent =>
+      medicineStrength.text.trim().isNotEmpty ||
+      instructionSpecified.text.trim().isNotEmpty ||
+      instructionUsage.text.trim().isNotEmpty ||
+      routeP.text.trim().isNotEmpty ||
+      routeG.text.trim().isNotEmpty ||
+      routeS.text.trim().isNotEmpty ||
+      routeO.text.trim().isNotEmpty ||
+      duration.text.trim().isNotEmpty ||
+      remarks.text.trim().isNotEmpty;
+
+  bool get isEmpty => !hasContent;
+
+  AssessmentMedicine toMedicine() {
+    final parsed = _parseMedicineStrength(medicineStrength.text);
+    return AssessmentMedicine(
+      id: id,
+      medicineId: parsed.name == originalMedicineName ? medicineId : null,
+      medicineName: parsed.name,
+      strength: parsed.strength,
+      instructionSpecified: instructionSpecified.text.trim(),
+      instructionUsage: instructionUsage.text.trim(),
+      routes: {
+        if (routeP.text.trim().isNotEmpty) 'P',
+        if (routeG.text.trim().isNotEmpty) 'G',
+        if (routeS.text.trim().isNotEmpty) 'S',
+        if (routeO.text.trim().isNotEmpty) 'O',
+      },
+      duration: duration.text.trim(),
+      remarks: remarks.text.trim(),
+    );
+  }
+
+  void clear() {
+    medicineStrength.clear();
+    instructionSpecified.clear();
+    instructionUsage.clear();
+    routeP.clear();
+    routeG.clear();
+    routeS.clear();
+    routeO.clear();
+    duration.clear();
+    remarks.clear();
+  }
+
+  void dispose() {
+    medicineStrength.dispose();
+    instructionSpecified.dispose();
+    instructionUsage.dispose();
+    routeP.dispose();
+    routeG.dispose();
+    routeS.dispose();
+    routeO.dispose();
+    duration.dispose();
+    remarks.dispose();
+  }
+
+  static String _formatMedicineStrength(String medicineName, String strength) {
+    final trimmedName = medicineName.trim();
+    final trimmedStrength = strength.trim();
+    if (trimmedName.isEmpty) return trimmedStrength;
+    if (trimmedStrength.isEmpty) return trimmedName;
+    return '$trimmedName, $trimmedStrength';
+  }
+
+  static ({String name, String strength}) _parseMedicineStrength(String value) {
+    final trimmed = value.trim();
+    final commaIndex = trimmed.indexOf(',');
+    if (commaIndex < 0) return (name: trimmed, strength: '');
+    return (
+      name: trimmed.substring(0, commaIndex).trim(),
+      strength: trimmed.substring(commaIndex + 1).trim(),
     );
   }
 }

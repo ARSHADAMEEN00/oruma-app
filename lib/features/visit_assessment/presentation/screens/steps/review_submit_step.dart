@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/providers/visit_assessment_controller.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_widgets.dart';
-import 'package:oruma_app/features/visit_assessment/presentation/widgets/signature_pad.dart';
 
 class ReviewSubmitStep extends StatefulWidget {
   const ReviewSubmitStep({super.key, required this.controller});
@@ -34,9 +33,9 @@ class _ReviewSubmitStepState extends State<ReviewSubmitStep> {
     final assessment = widget.controller.assessment;
     final sections = <(String, int)>[
       ('Visit Information', 0),
-      ('Vitals', 1),
-      ('Medicines (${assessment.medicines.length})', 2),
-      ('Physical Examination', 3),
+      ('Physical Examination', 1),
+      ('Vitals', 2),
+      ('Medicines (${assessment.medicines.length})', 3),
       ('Clinical Notes', 4),
       ('Care Plan', 5),
       ('Team Discussion', 5),
@@ -106,14 +105,6 @@ class _ReviewSubmitStepState extends State<ReviewSubmitStep> {
           style: const TextStyle(fontSize: 11),
         ),
         const SizedBox(height: 13),
-        const AssessmentLabel('Signature', required: true),
-        AssessmentSignaturePad(
-          initialValue: assessment.signatureUrl,
-          onChanged: (value) => widget.controller.update(
-            (item) => item.copyWith(signatureUrl: value),
-          ),
-        ),
-        const SizedBox(height: 2),
         InkWell(
           onTap: () => widget.controller.update(
             (item) => item.copyWith(confirmed: !item.confirmed),

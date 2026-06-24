@@ -10,7 +10,7 @@ class PhysicalExamStep extends StatelessWidget {
 
   final VisitAssessmentController controller;
 
-  static const _primary = <String, String>{
+  static const _primaryEnglish = <String, String>{
     'respiration': 'Respiration',
     'foodWater': 'Food & Water Intake',
     'urine': 'Urine',
@@ -21,7 +21,18 @@ class PhysicalExamStep extends StatelessWidget {
     'sexuality': 'Sexuality',
   };
 
-  static const _headToFoot = <String, String>{
+  static const _primaryMalayalam = <String, String>{
+    'respiration': 'ശ്വസനം',
+    'foodWater': 'അന്നപാനീയങ്ങൾ',
+    'urine': 'മൂത്രം',
+    'defecation': 'ശോധന',
+    'sleep': 'ഉറക്കം',
+    'hygiene': 'ശുചിത്വം (ശരീരം, പരിസരം)',
+    'outdoorAccess': 'ഔട്ട് ഡോർ അവേഴ്സ്, വ്യായാമം',
+    'sexuality': 'ലൈംഗികത',
+  };
+
+  static const _headToFootEnglish = <String, String>{
     'scalpHair': 'Scalp & Hair',
     'skin': 'Skin',
     'eyeNoseMouth': 'Eye, Nose, Ear',
@@ -34,27 +45,86 @@ class PhysicalExamStep extends StatelessWidget {
     'specialAttention': 'Special Attention',
   };
 
+  static const _headToFootMalayalam = <String, String>{
+    'scalpHair': 'സ്കാൽപ്പ്, മുടി',
+    'skin': 'തൊലി',
+    'eyeNoseMouth': 'കണ്ണ്, മുഖ്, ചെവി',
+    'oral': 'വായ (പല്ല്, നാവ്, നാസി, അണ്ണാക്ക്, തൊണ്ട etc...)',
+    'nails': 'നഖം',
+    'perineum': 'പെരിനിയം',
+    'pressureArea': 'പ്രഷർ ഏരിയ',
+    'hiddenArea': 'ഹിഡൻ ഏരിയ',
+    'musclesJoints': 'പേശി - സന്ധികൾ',
+    'specialAttention': 'പ്രത്യേക ശ്രദ്ധ പതിയേണ്ട ഭാഗങ്ങൾ :',
+  };
+
+  static const _previousVisitPromptEnglish =
+      "The difficulties/problems noted during the previous visit and their current status, the patient's main complaints / major difficulties / general condition.";
+
+  static const _previousVisitPromptMalayalam =
+      'കഴിഞ്ഞ സന്ദർശനത്തിലെഴുതിയിരുന്ന ബുദ്ധിമുട്ടുകളും അതിന്റെ ഇപ്പോഴത്തെ അവസ്ഥയും, രോഗിയുടെ പ്രധാന പരാതികൾ / പ്രധാന ബുദ്ധിമുട്ട് / പൊതു അവസ്ഥ';
+
   @override
   Widget build(BuildContext context) {
+    final isMalayalam = controller.isMalayalam;
+    final primary = isMalayalam ? _primaryMalayalam : _primaryEnglish;
+    final headToFoot = isMalayalam ? _headToFootMalayalam : _headToFootEnglish;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
-        const AssessmentSectionTitle('Physical Examination'),
+        AssessmentSectionTitle(
+          isMalayalam ? 'ശാരീരിക പരിശോധന' : 'Physical Examination',
+        ),
         const SizedBox(height: 12),
+        AssessmentCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isMalayalam
+                    ? _previousVisitPromptMalayalam
+                    : _previousVisitPromptEnglish,
+                style: const TextStyle(
+                  color: assessmentText,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 10),
+              AssessmentTextField(
+                key: const ValueKey('previous-visit-concerns'),
+                initialValue: controller.assessment.previousVisitConcerns,
+                hint: isMalayalam
+                    ? 'വിശദാംശങ്ങൾ രേഖപ്പെടുത്തുക'
+                    : 'Enter the current status and main concerns',
+                minLines: 4,
+                maxLines: 7,
+                onChanged: (value) => controller.update(
+                  (assessment) =>
+                      assessment.copyWith(previousVisitConcerns: value),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 9),
         _group(
           context,
-          title: 'Primary Functions',
-          items: _primary,
+          title: isMalayalam ? 'പ്രാഥമിക കാര്യങ്ങൾ' : 'Primary Functions',
+          items: primary,
+          isMalayalam: isMalayalam,
           initiallyExpanded: true,
         ),
         const SizedBox(height: 9),
-        _group(context, title: 'Head to Foot Examination', items: _headToFoot),
-        const SizedBox(height: 9),
         _group(
           context,
-          title: 'Additional Observations',
-          items: const {},
-          emptyMessage: 'No additional observations added',
+          title: isMalayalam
+              ? 'ഹെഡ് ടു ഫൂട്ട് പരിശോധന'
+              : 'Head to Foot Examination',
+          items: headToFoot,
+          isMalayalam: isMalayalam,
         ),
       ],
     );
@@ -64,6 +134,7 @@ class PhysicalExamStep extends StatelessWidget {
     BuildContext context, {
     required String title,
     required Map<String, String> items,
+    required bool isMalayalam,
     bool initiallyExpanded = false,
     String? emptyMessage,
   }) {
@@ -84,7 +155,7 @@ class PhysicalExamStep extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '${items.length} items',
+                '${items.length} ${isMalayalam ? 'ഇനങ്ങൾ' : 'items'}',
                 style: const TextStyle(color: assessmentMuted, fontSize: 9),
               ),
               const SizedBox(width: 8),
@@ -113,17 +184,29 @@ class PhysicalExamStep extends StatelessWidget {
                   ),
                 ]
               : items.entries
-                    .map((entry) => _finding(context, entry.key, entry.value))
+                    .map(
+                      (entry) => _finding(
+                        context,
+                        entry.key,
+                        entry.value,
+                        isMalayalam,
+                      ),
+                    )
                     .toList(),
         ),
       ),
     );
   }
 
-  Widget _finding(BuildContext context, String key, String label) {
+  Widget _finding(
+    BuildContext context,
+    String key,
+    String label,
+    bool isMalayalam,
+  ) {
     final finding =
         controller.assessment.physicalExam[key] ?? const ExamFinding();
-    final options = _findingOptions(key);
+    final options = _findingOptions(key, isMalayalam);
     final normalizedValue = finding.value.toLowerCase().replaceAll(' ', '_');
     final selectedOption = options.$1.contains(normalizedValue)
         ? normalizedValue
@@ -135,12 +218,20 @@ class PhysicalExamStep extends StatelessWidget {
         : finding.status == 'normal'
         ? assessmentGreen
         : assessmentMuted;
-    final statusText = finding.value.isNotEmpty
+    final statusText = selectedOption.isNotEmpty
+        ? options.$2[selectedOption] ?? finding.value
+        : finding.value.isNotEmpty
         ? finding.value
         : finding.status == 'not_assessed'
-        ? 'Not assessed'
+        ? isMalayalam
+              ? 'പരിശോധിച്ചിട്ടില്ല'
+              : 'Not assessed'
         : finding.status == 'normal'
-        ? 'Normal'
+        ? isMalayalam
+              ? 'സാധാരണം'
+              : 'Normal'
+        : isMalayalam
+        ? 'അസാധാരണം'
         : 'Abnormal';
     final imageEnabled = const {
       'skin',
@@ -189,19 +280,17 @@ class PhysicalExamStep extends StatelessWidget {
                 key,
                 (value) => value.copyWith(
                   status: selection == options.$1.first ? 'normal' : 'abnormal',
-                  value: options.$2[selection] ?? selection,
+                  value: selection,
                 ),
               ),
             ),
             const SizedBox(height: 10),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: AssessmentLabel('Notes'),
-            ),
             AssessmentTextField(
-              key: ValueKey('$key-${finding.notes}'),
+              key: ValueKey('physical-exam-notes-$key'),
               initialValue: finding.notes,
-              hint: 'Optional clinical observation',
+              hint: isMalayalam
+                  ? 'ആവശ്യമെങ്കിൽ ക്ലിനിക്കൽ നിരീക്ഷണം'
+                  : 'Optional clinical observation',
               minLines: 2,
               maxLines: 3,
               onChanged: (notes) => controller.updateFinding(
@@ -213,9 +302,11 @@ class PhysicalExamStep extends StatelessWidget {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Expanded(child: AssessmentLabel('Photo')),
+                  Expanded(
+                    child: AssessmentLabel(isMalayalam ? 'ഫോട്ടോ' : 'Photo'),
+                  ),
                   IconButton(
-                    onPressed: () => _pickImage(context, key),
+                    onPressed: () => _pickImage(context, key, isMalayalam),
                     visualDensity: VisualDensity.compact,
                     icon: const Icon(
                       Icons.add_a_photo_outlined,
@@ -281,7 +372,11 @@ class PhysicalExamStep extends StatelessWidget {
     );
   }
 
-  Future<void> _pickImage(BuildContext context, String key) async {
+  Future<void> _pickImage(
+    BuildContext context,
+    String key,
+    bool isMalayalam,
+  ) async {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       builder: (context) => SafeArea(
@@ -289,12 +384,16 @@ class PhysicalExamStep extends StatelessWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Take photo'),
+              title: Text(isMalayalam ? 'ഫോട്ടോ എടുക്കുക' : 'Take photo'),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Choose from gallery'),
+              title: Text(
+                isMalayalam
+                    ? 'ഗാലറിയിൽ നിന്ന് തിരഞ്ഞെടുക്കുക'
+                    : 'Choose from gallery',
+              ),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
           ],
@@ -312,56 +411,87 @@ class PhysicalExamStep extends StatelessWidget {
     );
   }
 
-  (List<String>, Map<String, String>) _findingOptions(String key) {
+  (List<String>, Map<String, String>) _findingOptions(
+    String key,
+    bool isMalayalam,
+  ) {
     switch (key) {
       case 'foodWater':
         return (
           const ['good', 'reduced', 'poor'],
-          const {'good': 'Good', 'reduced': 'Reduced', 'poor': 'Poor'},
+          isMalayalam
+              ? const {'good': 'നല്ലത്', 'reduced': 'കുറഞ്ഞത്', 'poor': 'മോശം'}
+              : const {'good': 'Good', 'reduced': 'Reduced', 'poor': 'Poor'},
         );
       case 'urine':
         return (
           const ['normal', 'retention', 'catheter', 'incontinence'],
-          const {
-            'normal': 'Normal',
-            'retention': 'Retention',
-            'catheter': 'Catheter',
-            'incontinence': 'Incontinence',
-          },
+          isMalayalam
+              ? const {
+                  'normal': 'സാധാരണം',
+                  'retention': 'തടസ്സം',
+                  'catheter': 'കാത്തീറ്റർ',
+                  'incontinence': 'നിയന്ത്രണമില്ലായ്മ',
+                }
+              : const {
+                  'normal': 'Normal',
+                  'retention': 'Retention',
+                  'catheter': 'Catheter',
+                  'incontinence': 'Incontinence',
+                },
         );
       case 'defecation':
         return (
           const ['normal', 'constipation', 'diarrhea', 'incontinence'],
-          const {
-            'normal': 'Normal',
-            'constipation': 'Constipation',
-            'diarrhea': 'Diarrhea',
-            'incontinence': 'Incontinence',
-          },
+          isMalayalam
+              ? const {
+                  'normal': 'സാധാരണം',
+                  'constipation': 'മലബന്ധം',
+                  'diarrhea': 'വയറിളക്കം',
+                  'incontinence': 'നിയന്ത്രണമില്ലായ്മ',
+                }
+              : const {
+                  'normal': 'Normal',
+                  'constipation': 'Constipation',
+                  'diarrhea': 'Diarrhea',
+                  'incontinence': 'Incontinence',
+                },
         );
       case 'sleep':
         return (
           const ['good', 'disturbed', 'insomnia'],
-          const {
-            'good': 'Good',
-            'disturbed': 'Disturbed',
-            'insomnia': 'Insomnia',
-          },
+          isMalayalam
+              ? const {
+                  'good': 'നല്ലത്',
+                  'disturbed': 'തടസ്സപ്പെട്ടത്',
+                  'insomnia': 'ഉറക്കമില്ലായ്മ',
+                }
+              : const {
+                  'good': 'Good',
+                  'disturbed': 'Disturbed',
+                  'insomnia': 'Insomnia',
+                },
         );
       case 'hygiene':
         return (
           const ['good', 'fair', 'poor'],
-          const {'good': 'Good', 'fair': 'Fair', 'poor': 'Poor'},
+          isMalayalam
+              ? const {'good': 'നല്ലത്', 'fair': 'ശരാശരി', 'poor': 'മോശം'}
+              : const {'good': 'Good', 'fair': 'Fair', 'poor': 'Poor'},
         );
       case 'outdoorAccess':
         return (
           const ['yes', 'limited', 'no'],
-          const {'yes': 'Yes', 'limited': 'Limited', 'no': 'No'},
+          isMalayalam
+              ? const {'yes': 'ഉണ്ട്', 'limited': 'പരിമിതം', 'no': 'ഇല്ല'}
+              : const {'yes': 'Yes', 'limited': 'Limited', 'no': 'No'},
         );
       default:
         return (
           const ['normal', 'abnormal'],
-          const {'normal': 'Normal', 'abnormal': 'Abnormal'},
+          isMalayalam
+              ? const {'normal': 'സാധാരണം', 'abnormal': 'അസാധാരണം'}
+              : const {'normal': 'Normal', 'abnormal': 'Abnormal'},
         );
     }
   }

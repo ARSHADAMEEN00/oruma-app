@@ -12,6 +12,14 @@ class CarePlanStep extends StatefulWidget {
 }
 
 class _CarePlanStepState extends State<CarePlanStep> {
+  static const _visitTypeRows = <(String, String)>[
+    ('DHC', 'DHC'),
+    ('NHC', 'NHC'),
+    ('GVHC', 'GVHC'),
+    ('other', 'Other'),
+  ];
+
+  late final Map<String, TextEditingController> _visitPlanNotes;
   late final TextEditingController _discussion;
 
   static const _services = <String, (String, IconData)>{
@@ -26,6 +34,13 @@ class _CarePlanStepState extends State<CarePlanStep> {
   @override
   void initState() {
     super.initState();
+    final carePlan = widget.controller.assessment.carePlan;
+    _visitPlanNotes = {
+      for (final row in _visitTypeRows)
+        row.$1: TextEditingController(
+          text: carePlan.visitPlanNotes[row.$1] ?? '',
+        ),
+    };
     _discussion = TextEditingController(
       text: widget.controller.assessment.teamMeetingDiscussion,
     );
@@ -33,6 +48,9 @@ class _CarePlanStepState extends State<CarePlanStep> {
 
   @override
   void dispose() {
+    for (final controller in _visitPlanNotes.values) {
+      controller.dispose();
+    }
     _discussion.dispose();
     super.dispose();
   }
@@ -40,20 +58,21 @@ class _CarePlanStepState extends State<CarePlanStep> {
   @override
   Widget build(BuildContext context) {
     final plan = widget.controller.assessment.carePlan;
+    final isMalayalam = widget.controller.isMalayalam;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 22),
       children: [
         const AssessmentSectionTitle('Care Plan'),
         const SizedBox(height: 15),
         const AssessmentLabel('Visit Type Plan', required: true),
-        AssessmentMultiSegment(
-          options: const ['NHC', 'DHC', 'GVHC', 'other'],
-          labels: const {'other': 'Other'},
-          selected: plan.visitPlans,
-          onToggle: widget.controller.toggleVisitPlan,
-        ),
+        _visitTypePlanTable(),
         const SizedBox(height: 18),
-        const AssessmentLabel('Services Required', required: true),
+        AssessmentLabel(
+          isMalayalam
+              ? 'തുടർ പരിചരണത്തിന് ആവശ്യമുള്ളവ ടിക് ചെയ്യുക'
+              : 'Services Required',
+          required: true,
+        ),
         LayoutBuilder(
           builder: (context, constraints) {
             final width = (constraints.maxWidth - 9) / 2;
@@ -159,6 +178,93 @@ class _CarePlanStepState extends State<CarePlanStep> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _visitTypePlanTable() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: const Color(0xFFD9E1E4)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(9),
+        child: Column(
+          children: [
+            for (var index = 0; index < _visitTypeRows.length; index++)
+              _visitTypePlanRow(
+                value: _visitTypeRows[index].$1,
+                label: _visitTypeRows[index].$2,
+                isLast: index == _visitTypeRows.length - 1,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _visitTypePlanRow({
+    required String value,
+    required String label,
+    required bool isLast,
+  }) {
+    final controller = _visitPlanNotes[value]!;
+    return Container(
+      height: 46,
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: isLast
+              ? BorderSide.none
+              : const BorderSide(color: Color(0xFFD9E1E4)),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 74,
+            height: double.infinity,
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8FAFA),
+              border: Border(right: BorderSide(color: Color(0xFFD9E1E4))),
+            ),
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: assessmentText,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          Expanded(
+            child: TextField(
+              key: ValueKey('care-plan-visit-$value'),
+              controller: controller,
+              onChanged: (note) =>
+                  widget.controller.updateVisitPlanNote(value, note),
+              textInputAction: TextInputAction.next,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+              decoration: InputDecoration(
+                hintText: '$label plan',
+                hintStyle: const TextStyle(
+                  color: Color(0xFFA8B0B8),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
+                ),
+                isDense: true,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 13,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

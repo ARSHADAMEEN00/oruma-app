@@ -108,6 +108,8 @@ class VisitAssessmentFlowScreen extends StatelessWidget {
                   size: 16,
                   color: assessmentMuted,
                 ),
+              const SizedBox(width: 8),
+              _languageToggle(),
             ],
           ),
           Padding(
@@ -130,13 +132,54 @@ class VisitAssessmentFlowScreen extends StatelessWidget {
   Widget _step() {
     return switch (controller.currentStep) {
       0 => VisitHeaderStep(controller: controller),
-      1 => VitalsStep(controller: controller),
-      2 => MedicinesStep(controller: controller),
-      3 => PhysicalExamStep(controller: controller),
+      1 => PhysicalExamStep(controller: controller),
+      2 => VitalsStep(controller: controller),
+      3 => MedicinesStep(controller: controller),
       4 => ClinicalNotesStep(controller: controller),
       5 => CarePlanStep(controller: controller),
       _ => ReviewSubmitStep(controller: controller),
     };
+  }
+
+  Widget _languageToggle() {
+    return Container(
+      height: 27,
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2F5F4),
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: assessmentBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [_languageOption('EN', 'en'), _languageOption('ML', 'ml')],
+      ),
+    );
+  }
+
+  Widget _languageOption(String label, String value) {
+    final selected = controller.language == value;
+    return InkWell(
+      onTap: () => controller.setLanguage(value),
+      borderRadius: BorderRadius.circular(5),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          color: selected ? assessmentGreen : Colors.transparent,
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : assessmentMuted,
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _footer(BuildContext context) {

@@ -38,6 +38,8 @@ void main() {
     expect(find.text('Medical'), findsOneWidget);
     expect(find.text('Home Visits (0)'), findsOneWidget);
     expect(find.text('Equipment (0)'), findsOneWidget);
+    expect(find.text('Assessment (0)'), findsOneWidget);
+    expect(find.text('Medicines (0)'), findsOneWidget);
 
     await tester.drag(find.byType(NestedScrollView), const Offset(0, -220));
     await tester.pumpAndSettle();

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:oruma_app/features/visit_assessment/domain/visit_assessment.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:oruma_app/models/home_visit.dart';
+import 'package:oruma_app/models/medicine_supply.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/models/patient_details.dart';
 import 'package:oruma_app/pt_registration.dart';
@@ -43,7 +45,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
     super.initState();
     _currentPatient = widget.patient;
     _details = PatientDetails(patient: widget.patient);
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
     _loadDetails();
   }
 
@@ -286,6 +288,8 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
                 _buildMedicalTab(),
                 _buildHomeVisitsTab(),
                 _buildEquipmentTab(),
+                _buildAssessmentsTab(),
+                _buildMedicineSuppliesTab(),
               ],
             ),
           ),
@@ -608,6 +612,8 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
   Widget _buildTabs() {
     final visitCount = _details.homeVisits.length;
     final equipmentCount = _details.equipmentSupplies.length;
+    final assessmentCount = _details.visitAssessments.length;
+    final medicineSupplyCount = _details.medicineSupplies.length;
 
     return Container(
       height: 52,
@@ -647,6 +653,8 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
           const Tab(text: 'Medical'),
           Tab(text: 'Home Visits ($visitCount)'),
           Tab(text: 'Equipment ($equipmentCount)'),
+          Tab(text: 'Assessment ($assessmentCount)'),
+          Tab(text: 'Medicines ($medicineSupplyCount)'),
         ],
       ),
     );
@@ -880,6 +888,65 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
     );
   }
 
+  Widget _buildAssessmentsTab() {
+    if (_detailsLoading && _details.visitAssessments.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_detailsError != null && _details.visitAssessments.isEmpty) {
+      return _recordsError('Could not load assessment history');
+    }
+    if (_details.visitAssessments.isEmpty) {
+      return _emptyState(
+        icon: Icons.assignment_turned_in_outlined,
+        title: 'No assessments yet',
+        message:
+            'Submitted visit assessments for this patient will appear here.',
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => _loadDetails(showLoader: false),
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        itemCount: _details.visitAssessments.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          return _assessmentCard(_details.visitAssessments[index]);
+        },
+      ),
+    );
+  }
+
+  Widget _buildMedicineSuppliesTab() {
+    if (_detailsLoading && _details.medicineSupplies.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_detailsError != null && _details.medicineSupplies.isEmpty) {
+      return _recordsError('Could not load medicine supply history');
+    }
+    if (_details.medicineSupplies.isEmpty) {
+      return _emptyState(
+        icon: Icons.medication_outlined,
+        title: 'No medicine supplies yet',
+        message: 'Medicine supplies issued to this patient will appear here.',
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => _loadDetails(showLoader: false),
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        itemCount: _details.medicineSupplies.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          return _medicineSupplyCard(_details.medicineSupplies[index]);
+        },
+      ),
+    );
+  }
+
   Widget _homeVisitCard(HomeVisit visit, int index) {
     final modeColor = _visitModeColor(visit.visitMode);
 
@@ -1050,6 +1117,192 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
               'Return note',
               supply.returnNote!,
             ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _assessmentCard(VisitAssessment assessment) {
+    final statusColor = assessment.status == 'submitted'
+        ? Colors.green.shade700
+        : Colors.orange.shade700;
+    final vitalSummary = [
+      if (assessment.vitals.pulse != null) 'P ${assessment.vitals.pulse}',
+      if (assessment.vitals.bpSystolic != null &&
+          assessment.vitals.bpDiastolic != null)
+        'BP ${assessment.vitals.bpSystolic}/${assessment.vitals.bpDiastolic}',
+      if (assessment.vitals.respiratoryRate != null)
+        'RR ${assessment.vitals.respiratoryRate}',
+      if (assessment.vitals.spo2 != null) 'SpO₂ ${assessment.vitals.spo2}%',
+    ].join(' • ');
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  Icons.assignment_turned_in_outlined,
+                  color: statusColor,
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _formatDate(assessment.visitDate),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF202333),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${assessment.visitType} assessment',
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _statusPill(
+                _assessmentStatusLabel(assessment.status),
+                statusColor,
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          if (vitalSummary.isNotEmpty)
+            _detailLine(Icons.monitor_heart_outlined, 'Vitals', vitalSummary),
+          if (assessment.medicines.isNotEmpty) ...[
+            if (vitalSummary.isNotEmpty) const SizedBox(height: 10),
+            _detailLine(
+              Icons.medication_outlined,
+              'Medicines noted',
+              '${assessment.medicines.length}',
+            ),
+          ],
+          if (assessment.nurseName.trim().isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _detailLine(Icons.person_outline, 'Nurse', assessment.nurseName),
+          ],
+          if (assessment.team.trim().isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _detailLine(Icons.groups_outlined, 'Team', assessment.team),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _medicineSupplyCard(MedicineSupply supply) {
+    final statusColor = _medicineSupplyStatusColor(supply.status);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  Icons.medication_outlined,
+                  color: statusColor,
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _value(supply.medicineName),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF202333),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Qty ${supply.qtyGiven} • ${_formatDate(supply.givenAt)}',
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              _statusPill(
+                _medicineSupplyStatusLabel(supply.status),
+                statusColor,
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          _detailLine(
+            Icons.person_outline,
+            'Given by',
+            _value(supply.staffName),
+          ),
+          if (supply.supplyDays != null) ...[
+            const SizedBox(height: 10),
+            _detailLine(
+              Icons.calendar_month_outlined,
+              'Supply days',
+              '${supply.supplyDays}',
+            ),
+          ],
+          if (supply.prescribedBy?.trim().isNotEmpty == true) ...[
+            const SizedBox(height: 10),
+            _detailLine(
+              Icons.badge_outlined,
+              'Prescribed by',
+              supply.prescribedBy!,
+            ),
+          ],
+          if (supply.doctorPrescription?.trim().isNotEmpty == true) ...[
+            const SizedBox(height: 10),
+            _detailLine(
+              Icons.description_outlined,
+              'Prescription',
+              supply.doctorPrescription!,
+            ),
+          ],
+          if (supply.staffNote?.trim().isNotEmpty == true) ...[
+            const SizedBox(height: 10),
+            _detailLine(Icons.notes_outlined, 'Notes', supply.staffNote!),
           ],
         ],
       ),
@@ -1289,6 +1542,29 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
         ],
       ),
     );
+  }
+
+  String _assessmentStatusLabel(String status) {
+    return status == 'submitted' ? 'Submitted' : 'Draft';
+  }
+
+  String _medicineSupplyStatusLabel(String? status) {
+    return switch (status) {
+      'partially_given' => 'Partial',
+      'returned' => 'Returned',
+      'cancelled' => 'Cancelled',
+      'given' || null || '' => 'Given',
+      _ => status,
+    };
+  }
+
+  Color _medicineSupplyStatusColor(String? status) {
+    return switch (status) {
+      'returned' => Colors.blueGrey.shade700,
+      'cancelled' => Colors.red.shade700,
+      'partially_given' => Colors.orange.shade700,
+      _ => Colors.green.shade700,
+    };
   }
 
   Widget _buildSyncError() {

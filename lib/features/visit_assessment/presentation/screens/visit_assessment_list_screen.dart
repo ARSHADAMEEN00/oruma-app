@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:oruma_app/features/visit_assessment/domain/visit_assessment.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/providers/visit_assessment_controller.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_detail_screen.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_flow_screen.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_theme.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_widgets.dart';
@@ -38,7 +39,6 @@ class _VisitAssessmentModuleScreenState
     super.didChangeDependencies();
     if (_controller != null) return;
     final auth = context.read<AuthService>();
-    final now = DateTime.now();
     final visitDate =
         DateTime.tryParse(widget.visit.visitDate) ?? DateTime.now();
     final patient = _patient;
@@ -46,10 +46,11 @@ class _VisitAssessmentModuleScreenState
       homeVisitId: widget.visit.id ?? '',
       patientId: widget.visit.patientId ?? patient?.id ?? '',
       patientName: widget.visit.patientName,
+      patientAge: patient?.age.toString() ?? '',
       regNo: patient?.registerId ?? '',
       visitDate: visitDate,
-      timeFrom: DateFormat('HH:mm').format(now),
-      timeTo: DateFormat('HH:mm').format(now.add(const Duration(minutes: 90))),
+      timeFrom: '',
+      timeTo: '',
       team: widget.visit.team?.trim().isNotEmpty == true
           ? widget.visit.team!
           : 'Team Oruma',
@@ -180,7 +181,9 @@ class VisitAssessmentListScreen extends StatelessWidget {
                           'Completed and draft assessments for this patient will appear here.',
                     )
                   else
-                    ...controller.previousAssessments.map(_historyRow),
+                    ...controller.previousAssessments.map(
+                      (item) => _historyRow(context, item),
+                    ),
                 ],
               ),
             ),
@@ -307,13 +310,14 @@ class VisitAssessmentListScreen extends StatelessWidget {
     );
   }
 
-  Widget _historyRow(VisitAssessment item) {
+  Widget _historyRow(BuildContext context, VisitAssessment item) {
     final statusColor = item.isComplete
         ? assessmentMuted
         : const Color(0xFFE48B16);
     return Padding(
       padding: const EdgeInsets.only(bottom: 7),
       child: AssessmentCard(
+        onTap: () => _openAssessmentDetails(context, item),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           children: [
@@ -342,7 +346,31 @@ class VisitAssessmentListScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _openAssessmentDetails(
+    BuildContext context,
+    VisitAssessment item,
+  ) {
+    return Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => VisitAssessmentDetailScreen(assessment: item),
+      ),
+    );
+  }
+
   Future<void> _openFlow(BuildContext context) async {
+    if (controller.assessment.timeFrom.isEmpty) {
+      final now = DateTime.now();
+      controller.update(
+        (item) => item.copyWith(
+          timeFrom: DateFormat('HH:mm').format(now),
+          timeTo: DateFormat(
+            'HH:mm',
+          ).format(now.add(const Duration(minutes: 90))),
+        ),
+      );
+    }
+
     await Navigator.push(
       context,
       PageRouteBuilder<void>(

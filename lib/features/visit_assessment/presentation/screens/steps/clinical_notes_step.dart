@@ -38,13 +38,16 @@ class _ClinicalNotesStepState extends State<ClinicalNotesStep> {
 
   @override
   Widget build(BuildContext context) {
+    final isMalayalam = widget.controller.isMalayalam;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 22),
       children: [
         const AssessmentSectionTitle('Clinical Notes'),
         const SizedBox(height: 14),
         _noteField(
-          label: 'Medicine Related Remarks',
+          label: isMalayalam
+              ? 'മരുന്ന് സംബന്ധിച്ച് മറ്റു കാര്യങ്ങൾ (മറ്റു ചികിത്സ, മരുന്നറിവ്, ഫലം, ഉപയോഗം Etc )'
+              : 'Other matters related to medicine (Other treatment, Medicine knowledge, Effect, Use Etc.) :',
           controller: _medicineRemarks,
           hint: 'Medicine adherence, reactions or special instructions',
           onChanged: (value) => widget.controller.update(
@@ -53,7 +56,8 @@ class _ClinicalNotesStepState extends State<ClinicalNotesStep> {
         ),
         const SizedBox(height: 13),
         _noteField(
-          label: 'Nursing Diagnosis',
+          label:
+              'Nursing Diagnosis/Doctor Consult/Nursing Management/Medications :',
           required: true,
           controller: _diagnosis,
           hint: 'Current nursing diagnosis',

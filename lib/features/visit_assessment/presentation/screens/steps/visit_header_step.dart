@@ -20,7 +20,7 @@ class VisitHeaderStep extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              flex: 3,
+              flex: 4,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -36,6 +36,22 @@ class VisitHeaderStep extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const AssessmentLabel('Age'),
+                  AssessmentTextField(
+                    initialValue: assessment.patientAge,
+                    onChanged: (value) => controller.update(
+                      (item) => item.copyWith(patientAge: value),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              flex: 3,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
