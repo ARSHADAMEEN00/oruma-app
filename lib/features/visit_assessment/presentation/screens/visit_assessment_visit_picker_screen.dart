@@ -307,7 +307,7 @@ class _VisitAssessmentVisitPickerScreenState
       );
       return;
     }
-    Navigator.of(context).pushReplacement(
+    Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => VisitAssessmentModuleScreen(
           visit: visit,
