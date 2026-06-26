@@ -1134,6 +1134,9 @@ class VisitAssessmentPdfGenerator {
     } else if (finding.status != 'not_assessed') {
       pieces.add(_labelFromToken(finding.status));
     }
+    for (final value in finding.extraValues.values) {
+      if (value.trim().isNotEmpty) pieces.add(_labelFromToken(value));
+    }
     if (finding.notes.trim().isNotEmpty) pieces.add(finding.notes.trim());
     if (finding.images.isNotEmpty) {
       pieces.add('${finding.images.length} image(s)');

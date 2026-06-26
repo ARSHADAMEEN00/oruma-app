@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/providers/visit_assessment_controller.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_widgets.dart';
 
@@ -164,6 +165,7 @@ class _CarePlanStepState extends State<CarePlanStep> {
           alignment: Alignment.centerRight,
           child: AssessmentVoiceButton(
             label: 'Add by voice',
+            localeId: widget.controller.isMalayalam ? 'ml-IN' : null,
             onWords: (words) {
               final current = _discussion.text.trim();
               _discussion.text = current.isEmpty ? words : '$current $words';
@@ -243,16 +245,20 @@ class _CarePlanStepState extends State<CarePlanStep> {
             child: TextField(
               key: ValueKey('care-plan-visit-$value'),
               controller: controller,
-              onChanged: (note) =>
-                  widget.controller.updateVisitPlanNote(value, note),
-              textInputAction: TextInputAction.next,
+              readOnly: true,
+              onTap: () => _pickVisitPlanDate(value, controller),
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
               decoration: InputDecoration(
-                hintText: '$label plan',
+                hintText: '$label date',
                 hintStyle: const TextStyle(
                   color: Color(0xFFA8B0B8),
                   fontSize: 11,
                   fontWeight: FontWeight.w400,
+                ),
+                suffixIcon: const Icon(Icons.calendar_today_outlined, size: 16),
+                suffixIconConstraints: const BoxConstraints(
+                  minWidth: 34,
+                  minHeight: 34,
                 ),
                 isDense: true,
                 border: InputBorder.none,
@@ -266,5 +272,38 @@ class _CarePlanStepState extends State<CarePlanStep> {
         ],
       ),
     );
+  }
+
+  Future<void> _pickVisitPlanDate(
+    String value,
+    TextEditingController controller,
+  ) async {
+    final today = DateUtils.dateOnly(DateTime.now());
+    final parsed = _parseVisitPlanDate(controller.text);
+    final initial = parsed != null && !parsed.isBefore(today) ? parsed : today;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: today,
+      lastDate: DateTime(today.year + 5, today.month, today.day),
+    );
+    if (picked == null) return;
+    final formatted = DateFormat('dd MMM yyyy').format(picked);
+    setState(() => controller.text = formatted);
+    widget.controller.updateVisitPlanNote(value, formatted);
+  }
+
+  DateTime? _parseVisitPlanDate(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    return DateTime.tryParse(trimmed) ?? _parseDisplayDate(trimmed);
+  }
+
+  DateTime? _parseDisplayDate(String value) {
+    try {
+      return DateFormat('dd MMM yyyy').parseStrict(value);
+    } catch (_) {
+      return null;
+    }
   }
 }

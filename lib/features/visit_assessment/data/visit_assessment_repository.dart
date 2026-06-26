@@ -2,36 +2,72 @@ import 'dart:convert';
 
 import 'package:oruma_app/features/visit_assessment/data/visit_assessment_service.dart';
 import 'package:oruma_app/features/visit_assessment/domain/visit_assessment.dart';
+import 'package:oruma_app/models/home_visit.dart';
+import 'package:oruma_app/services/home_visit_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class VisitAssessmentRepository {
   static const _draftPrefix = 'visit_assessment_draft_';
   static const _historyPrefix = 'visit_assessment_history_';
 
-  Future<VisitAssessment?> loadLocalDraft(String homeVisitId) async {
+  static String draftKeyFor(VisitAssessment assessment) {
+    if (assessment.homeVisitId.trim().isNotEmpty) {
+      return assessment.homeVisitId;
+    }
+    return patientDateDraftKeyFor(assessment);
+  }
+
+  static String patientDateDraftKeyFor(VisitAssessment assessment) {
+    final dateKey = assessment.visitDate.toIso8601String().split('T').first;
+    return 'patient_${assessment.patientId}_$dateKey';
+  }
+
+  Future<VisitAssessment?> loadLocalDraft(String draftKey) async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString('$_draftPrefix$homeVisitId');
+    final raw = prefs.getString('$_draftPrefix$draftKey');
     if (raw == null || raw.isEmpty) return null;
     try {
-      return VisitAssessment.fromJson(
+      final assessment = VisitAssessment.fromJson(
         Map<String, dynamic>.from(jsonDecode(raw) as Map),
       );
+      final canonicalKey = draftKeyFor(assessment);
+      final patientDateKey = patientDateDraftKeyFor(assessment);
+      if ((canonicalKey != draftKey && patientDateKey != draftKey) ||
+          assessment.status == 'submitted' ||
+          assessment.isComplete) {
+        await clearLocalDraft(draftKey);
+        return null;
+      }
+      return assessment;
     } catch (_) {
       return null;
     }
   }
 
   Future<void> saveLocalDraft(VisitAssessment assessment) async {
+    if (assessment.status == 'submitted' || assessment.isComplete) {
+      await clearLocalDraft(draftKeyFor(assessment));
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      '$_draftPrefix${assessment.homeVisitId}',
-      jsonEncode(assessment.toJson()),
-    );
+    await _saveLocalDraftForKey(prefs, draftKeyFor(assessment), assessment);
   }
 
-  Future<void> clearLocalDraft(String homeVisitId) async {
+  Future<void> saveLocalDraftForKey(
+    String draftKey,
+    VisitAssessment assessment,
+  ) async {
+    if (assessment.status == 'submitted' || assessment.isComplete) {
+      await clearLocalDraft(draftKey);
+      return;
+    }
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('$_draftPrefix$homeVisitId');
+    await _saveLocalDraftForKey(prefs, draftKey, assessment);
+  }
+
+  Future<void> clearLocalDraft(String draftKey) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('$_draftPrefix$draftKey');
   }
 
   Future<List<VisitAssessment>> loadCachedHistory(String patientId) async {
@@ -61,13 +97,24 @@ class VisitAssessmentRepository {
     );
   }
 
+  Future<void> cacheAssessmentInHistory(VisitAssessment assessment) async {
+    if (assessment.patientId.isEmpty) return;
+    final history = await loadCachedHistory(assessment.patientId);
+    await cacheHistory(
+      assessment.patientId,
+      _mergeHistory(history, assessment),
+    );
+  }
+
   Future<List<VisitAssessment>> getHistory(String patientId) async {
     try {
       final remote = await VisitAssessmentService.getAssessments(
         patientId: patientId,
       );
-      await cacheHistory(patientId, remote);
-      return remote;
+      final cached = await loadCachedHistory(patientId);
+      final merged = _mergeHistories(remote, cached);
+      await cacheHistory(patientId, merged);
+      return merged;
     } catch (_) {
       return loadCachedHistory(patientId);
     }
@@ -85,4 +132,69 @@ class VisitAssessmentRepository {
 
   Future<VisitAssessment> submit(VisitAssessment assessment) =>
       VisitAssessmentService.submit(assessment);
+
+  Future<HomeVisit> createHomeVisitForAssessment(VisitAssessment assessment) {
+    final visit = HomeVisit(
+      patientId: assessment.patientId,
+      patientName: assessment.patientName,
+      address: assessment.patientAddress.trim().isNotEmpty
+          ? assessment.patientAddress.trim()
+          : 'Address not recorded',
+      visitDate: assessment.visitDate.toIso8601String(),
+      visitMode: 'new',
+      team: assessment.team.trim().isNotEmpty ? assessment.team.trim() : null,
+      notes: 'Created from Visit (NHC) assessment',
+    );
+    return HomeVisitService.createHomeVisit(visit);
+  }
+
+  Future<void> _saveLocalDraftForKey(
+    SharedPreferences prefs,
+    String draftKey,
+    VisitAssessment assessment,
+  ) {
+    return prefs.setString(
+      '$_draftPrefix$draftKey',
+      jsonEncode(assessment.toJson()),
+    );
+  }
+
+  List<VisitAssessment> _mergeHistory(
+    List<VisitAssessment> history,
+    VisitAssessment assessment,
+  ) {
+    final merged = [...history];
+    final index = merged.indexWhere((item) {
+      if (assessment.id != null && item.id == assessment.id) return true;
+      return item.homeVisitId == assessment.homeVisitId;
+    });
+    if (index >= 0) {
+      merged[index] = assessment;
+    } else {
+      merged.add(assessment);
+    }
+    merged.sort((a, b) {
+      final dateCompare = b.visitDate.compareTo(a.visitDate);
+      if (dateCompare != 0) return dateCompare;
+      final aUpdated = a.updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bUpdated = b.updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return bUpdated.compareTo(aUpdated);
+    });
+    return merged;
+  }
+
+  List<VisitAssessment> _mergeHistories(
+    List<VisitAssessment> primary,
+    List<VisitAssessment> secondary,
+  ) {
+    var merged = [...primary];
+    for (final assessment in secondary) {
+      final exists = merged.any((item) {
+        if (assessment.id != null && item.id == assessment.id) return true;
+        return item.homeVisitId == assessment.homeVisitId;
+      });
+      if (!exists) merged = _mergeHistory(merged, assessment);
+    }
+    return merged;
+  }
 }

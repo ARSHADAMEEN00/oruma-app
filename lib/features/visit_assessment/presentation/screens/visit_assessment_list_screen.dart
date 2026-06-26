@@ -14,13 +14,10 @@ import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:provider/provider.dart';
 
 class VisitAssessmentModuleScreen extends StatefulWidget {
-  const VisitAssessmentModuleScreen({
-    super.key,
-    required this.visit,
-    this.patient,
-  });
+  const VisitAssessmentModuleScreen({super.key, this.visit, this.patient})
+    : assert(visit != null || patient != null);
 
-  final HomeVisit visit;
+  final HomeVisit? visit;
   final Patient? patient;
 
   @override
@@ -32,29 +29,42 @@ class _VisitAssessmentModuleScreenState
     extends State<VisitAssessmentModuleScreen> {
   VisitAssessmentController? _controller;
 
-  Patient? get _patient => widget.patient ?? widget.visit.patientDetails;
+  Patient? get _patient => widget.patient ?? widget.visit?.patientDetails;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_controller != null) return;
     final auth = context.read<AuthService>();
-    final visitDate =
-        DateTime.tryParse(widget.visit.visitDate) ?? DateTime.now();
+    final visit = widget.visit;
+    final now = DateTime.now();
+    final visitDate = visit == null
+        ? DateTime(now.year, now.month, now.day)
+        : DateTime.tryParse(visit.visitDate) ??
+              DateTime(now.year, now.month, now.day);
     final patient = _patient;
+    final visitPatientName = visit?.patientName.trim() ?? '';
+    final visitAddress = visit?.address.trim() ?? '';
     final initial = VisitAssessment(
-      homeVisitId: widget.visit.id ?? '',
-      patientId: widget.visit.patientId ?? patient?.id ?? '',
-      patientName: widget.visit.patientName,
-      patientAge: patient?.age.toString() ?? '',
+      homeVisitId: visit?.id ?? '',
+      patientId: visit?.patientId ?? patient?.id ?? '',
+      patientName: visitPatientName.isNotEmpty
+          ? visitPatientName
+          : patient?.name ?? '',
+      patientAge: patient != null && patient.age > 0
+          ? patient.age.toString()
+          : '',
+      patientAddress: visitAddress.isNotEmpty
+          ? visitAddress
+          : patient?.address ?? '',
       regNo: patient?.registerId ?? '',
       visitDate: visitDate,
       timeFrom: '',
       timeTo: '',
-      team: widget.visit.team?.trim().isNotEmpty == true
-          ? widget.visit.team!
+      team: visit?.team?.trim().isNotEmpty == true
+          ? visit!.team!
           : 'Team Oruma',
-      visitType: _visitTypeFromMode(widget.visit.visitMode),
+      visitType: visit == null ? 'NHC' : _visitTypeFromMode(visit.visitMode),
       nurseName: auth.user?['name']?.toString() ?? '',
       nurseId: auth.user?['_id']?.toString() ?? auth.user?['id']?.toString(),
     );
@@ -150,16 +160,14 @@ class VisitAssessmentListScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 8),
-                  if (!assessment.isComplete) _draftCard(context),
-                  if (!assessment.isComplete) const SizedBox(height: 9),
+                  if (controller.hasDraftInProgress) _draftCard(context),
+                  if (controller.hasDraftInProgress) const SizedBox(height: 9),
                   OutlinedButton.icon(
                     onPressed: () => _openFlow(context),
                     icon: const Icon(Icons.add, size: 18),
                     label: Text(
-                      assessment.id == null
-                          ? 'Start New Assessment'
-                          : assessment.isComplete
-                          ? 'View Assessment'
+                      assessment.isComplete || !controller.hasDraftInProgress
+                          ? 'New Assessment'
                           : 'Open Assessment',
                     ),
                     style: OutlinedButton.styleFrom(
@@ -254,6 +262,20 @@ class VisitAssessmentListScreen extends StatelessWidget {
                   'Reg No.   ${assessment.regNo.isEmpty ? '—' : assessment.regNo}',
                   style: const TextStyle(color: assessmentMuted, fontSize: 10),
                 ),
+                if ((patient?.address ?? assessment.patientAddress)
+                    .trim()
+                    .isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    (patient?.address ?? assessment.patientAddress).trim(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: assessmentMuted,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -353,19 +375,38 @@ class VisitAssessmentListScreen extends StatelessWidget {
   Future<void> _openAssessmentDetails(
     BuildContext context,
     VisitAssessment item,
-  ) {
-    return Navigator.push(
+  ) async {
+    final action = await Navigator.push<String>(
       context,
-      MaterialPageRoute<void>(
-        builder: (_) => VisitAssessmentDetailScreen(assessment: item),
+      MaterialPageRoute<String>(
+        builder: (_) => VisitAssessmentDetailScreen(
+          assessment: item,
+          onEdit: () => Navigator.pop(context, 'edit'),
+        ),
       ),
     );
+    if (action == 'edit' && context.mounted) {
+      await _openEditFlow(context, item);
+    }
   }
 
   Future<void> _openFlow(BuildContext context) async {
-    if (controller.assessment.timeFrom.isEmpty) {
+    if (controller.assessment.isComplete ||
+        controller.assessment.status == 'submitted') {
+      await _openAssessmentDetails(context, controller.assessment);
+      return;
+    }
+
+    await _openDraftFlow(context, controller);
+  }
+
+  Future<void> _openDraftFlow(
+    BuildContext context,
+    VisitAssessmentController targetController,
+  ) async {
+    if (targetController.assessment.timeFrom.isEmpty) {
       final now = DateTime.now();
-      controller.update(
+      targetController.update(
         (item) => item.copyWith(
           timeFrom: DateFormat('HH:mm').format(now),
           timeTo: DateFormat(
@@ -375,17 +416,45 @@ class VisitAssessmentListScreen extends StatelessWidget {
       );
     }
 
-    await Navigator.push(
+    targetController.setStep(0);
+    final submitted = await Navigator.push<bool>(
       context,
-      PageRouteBuilder<void>(
+      PageRouteBuilder<bool>(
         transitionDuration: const Duration(milliseconds: 260),
         reverseTransitionDuration: const Duration(milliseconds: 220),
         pageBuilder: (_, animation, _) => FadeTransition(
           opacity: animation,
-          child: VisitAssessmentFlowScreen(controller: controller),
+          child: VisitAssessmentFlowScreen(controller: targetController),
         ),
       ),
     );
+    if (submitted == true && context.mounted) {
+      await controller.initialize();
+    }
+  }
+
+  Future<void> _openEditFlow(BuildContext context, VisitAssessment item) async {
+    final usesCurrentController =
+        item.homeVisitId == controller.assessment.homeVisitId;
+    final editController = usesCurrentController
+        ? controller
+        : VisitAssessmentController(initialAssessment: item);
+    if (!usesCurrentController) {
+      await editController.initialize();
+    }
+
+    if (!context.mounted) {
+      if (!usesCurrentController) editController.dispose();
+      return;
+    }
+
+    await _openDraftFlow(context, editController);
+    if (!usesCurrentController) {
+      editController.dispose();
+    }
+    if (context.mounted) {
+      await controller.initialize();
+    }
   }
 
   void _handleBottomNavigation(BuildContext context, AppBottomSection section) {

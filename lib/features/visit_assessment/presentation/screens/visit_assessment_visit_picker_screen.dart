@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_list_screen.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_theme.dart';
-import 'package:oruma_app/models/home_visit.dart';
-import 'package:oruma_app/services/home_visit_service.dart';
+import 'package:oruma_app/models/patient.dart';
+import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 
@@ -18,7 +17,7 @@ class VisitAssessmentVisitPickerScreen extends StatefulWidget {
 class _VisitAssessmentVisitPickerScreenState
     extends State<VisitAssessmentVisitPickerScreen> {
   final _searchController = TextEditingController();
-  List<HomeVisit> _visits = [];
+  List<Patient> _patients = [];
   bool _loading = true;
   String? _error;
 
@@ -26,7 +25,7 @@ class _VisitAssessmentVisitPickerScreenState
   void initState() {
     super.initState();
     _searchController.addListener(_refreshFilter);
-    _loadVisits();
+    _loadPatients();
   }
 
   @override
@@ -37,19 +36,21 @@ class _VisitAssessmentVisitPickerScreenState
     super.dispose();
   }
 
-  List<HomeVisit> get _filteredVisits {
+  List<Patient> get _filteredPatients {
     final query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) return _visits;
-    return _visits.where((visit) {
-      final patient = visit.patientDetails;
-      return visit.patientName.toLowerCase().contains(query) ||
-          visit.address.toLowerCase().contains(query) ||
-          (patient?.registerId?.toLowerCase().contains(query) ?? false) ||
-          (visit.team?.toLowerCase().contains(query) ?? false);
+    if (query.isEmpty) return _patients;
+    return _patients.where((patient) {
+      return patient.name.toLowerCase().contains(query) ||
+          patient.address.toLowerCase().contains(query) ||
+          patient.phone.toLowerCase().contains(query) ||
+          (patient.phone2?.toLowerCase().contains(query) ?? false) ||
+          (patient.registerId?.toLowerCase().contains(query) ?? false) ||
+          patient.place.toLowerCase().contains(query) ||
+          patient.village.toLowerCase().contains(query);
     }).toList();
   }
 
-  Future<void> _loadVisits() async {
+  Future<void> _loadPatients() async {
     if (mounted) {
       setState(() {
         _loading = true;
@@ -57,16 +58,13 @@ class _VisitAssessmentVisitPickerScreenState
       });
     }
     try {
-      final visits = await HomeVisitService.getAllHomeVisits();
-      visits.sort((a, b) {
-        final aDate = DateTime.tryParse(a.visitDate);
-        final bDate = DateTime.tryParse(b.visitDate);
-        if (aDate == null || bDate == null) return 0;
-        return bDate.compareTo(aDate);
-      });
+      final patients = await PatientService.getAllPatients(isDead: false);
+      patients.sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
       if (!mounted) return;
       setState(() {
-        _visits = visits;
+        _patients = patients;
         _loading = false;
       });
     } catch (error) {
@@ -88,7 +86,7 @@ class _VisitAssessmentVisitPickerScreenState
         backgroundColor: Colors.white,
         appBar: AppBar(
           title: const Text(
-            'Select Home Visit',
+            'Select Patient',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           centerTitle: false,
@@ -103,7 +101,7 @@ class _VisitAssessmentVisitPickerScreenState
                 controller: _searchController,
                 style: const TextStyle(fontSize: 13),
                 decoration: InputDecoration(
-                  hintText: 'Search patient, register no. or team',
+                  hintText: 'Search patient, register no. or phone',
                   hintStyle: const TextStyle(fontSize: 12),
                   prefixIcon: const Icon(Icons.search, size: 19),
                   suffixIcon: _searchController.text.isEmpty
@@ -143,43 +141,45 @@ class _VisitAssessmentVisitPickerScreenState
     if (_error != null) {
       return _messageState(
         icon: Icons.cloud_off_outlined,
-        title: 'Could not load home visits',
+        title: 'Could not load patients',
         message: _error!,
         action: TextButton.icon(
-          onPressed: _loadVisits,
+          onPressed: _loadPatients,
           icon: const Icon(Icons.refresh, size: 17),
           label: const Text('Retry'),
         ),
       );
     }
-    final visits = _filteredVisits;
-    if (visits.isEmpty) {
+    final patients = _filteredPatients;
+    if (patients.isEmpty) {
       return _messageState(
-        icon: Icons.home_work_outlined,
-        title: 'No home visits found',
+        icon: Icons.people_outline,
+        title: 'No patients found',
         message: _searchController.text.isEmpty
-            ? 'Schedule a home visit before starting an NHC assessment.'
+            ? 'Add a patient before starting an NHC assessment.'
             : 'Try another patient name or register number.',
       );
     }
     return RefreshIndicator(
-      onRefresh: _loadVisits,
+      onRefresh: _loadPatients,
       color: const Color(0xFF14865D),
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(14, 2, 14, 18),
-        itemCount: visits.length,
+        itemCount: patients.length,
         separatorBuilder: (_, _) => const SizedBox(height: 8),
-        itemBuilder: (context, index) => _visitCard(visits[index]),
+        itemBuilder: (context, index) => _patientCard(patients[index]),
       ),
     );
   }
 
-  Widget _visitCard(HomeVisit visit) {
-    final patient = visit.patientDetails;
-    final date = DateTime.tryParse(visit.visitDate);
-    final hasPatientLink =
-        (visit.patientId?.isNotEmpty ?? false) || patient?.id != null;
+  Widget _patientCard(Patient patient) {
+    final details = [
+      if (patient.age > 0) '${patient.age} Years',
+      if (patient.gender.trim().isNotEmpty) patient.gender,
+      if (patient.registerId?.trim().isNotEmpty == true)
+        'Reg ${patient.registerId}',
+    ].join('  •  ');
     return Material(
       color: Colors.white,
       shape: RoundedRectangleBorder(
@@ -187,7 +187,7 @@ class _VisitAssessmentVisitPickerScreenState
         side: const BorderSide(color: Color(0xFFE3E8EA)),
       ),
       child: InkWell(
-        onTap: () => _selectVisit(visit),
+        onTap: () => _selectPatient(patient),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -198,19 +198,18 @@ class _VisitAssessmentVisitPickerScreenState
                 height: 40,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: hasPatientLink
-                      ? const Color(0xFFE7F5EF)
-                      : const Color(0xFFFFF3E2),
+                  color: const Color(0xFFE7F5EF),
                   borderRadius: BorderRadius.circular(11),
                 ),
-                child: Icon(
-                  hasPatientLink
-                      ? Icons.home_work_outlined
-                      : Icons.link_off_outlined,
-                  color: hasPatientLink
-                      ? const Color(0xFF0F7A55)
-                      : const Color(0xFFC87912),
-                  size: 20,
+                child: Text(
+                  patient.name.trim().isEmpty
+                      ? '?'
+                      : patient.name.trim()[0].toUpperCase(),
+                  style: const TextStyle(
+                    color: Color(0xFF0F7A55),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               const SizedBox(width: 11),
@@ -219,7 +218,7 @@ class _VisitAssessmentVisitPickerScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      visit.patientName,
+                      patient.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -229,21 +228,28 @@ class _VisitAssessmentVisitPickerScreenState
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      [
-                        if (date != null)
-                          DateFormat('dd MMM yyyy').format(date),
-                        if (patient?.registerId?.isNotEmpty == true)
-                          'Reg ${patient!.registerId}',
-                        if (visit.team?.isNotEmpty == true) visit.team!,
-                      ].join('  •  '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFF6B7680),
+                    if (details.isNotEmpty)
+                      Text(
+                        details,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF6B7680),
+                        ),
                       ),
-                    ),
+                    if (patient.address.trim().isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        patient.address,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF6B7680),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -296,23 +302,18 @@ class _VisitAssessmentVisitPickerScreenState
     );
   }
 
-  void _selectVisit(HomeVisit visit) {
-    if (visit.id == null ||
-        ((visit.patientId?.isEmpty ?? true) &&
-            visit.patientDetails?.id == null)) {
+  void _selectPatient(Patient patient) {
+    if (patient.id == null || patient.id!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('This home visit is not linked to a patient record.'),
+          content: Text('This patient is missing a patient record id.'),
         ),
       );
       return;
     }
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => VisitAssessmentModuleScreen(
-          visit: visit,
-          patient: visit.patientDetails,
-        ),
+        builder: (_) => VisitAssessmentModuleScreen(patient: patient),
       ),
     );
   }

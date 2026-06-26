@@ -7,9 +7,14 @@ import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessm
 import 'package:printing/printing.dart';
 
 class VisitAssessmentDetailScreen extends StatelessWidget {
-  const VisitAssessmentDetailScreen({super.key, required this.assessment});
+  const VisitAssessmentDetailScreen({
+    super.key,
+    required this.assessment,
+    this.onEdit,
+  });
 
   final VisitAssessment assessment;
+  final VoidCallback? onEdit;
 
   static const _primaryLabels = <String, String>{
     'respiration': 'Respiration',
@@ -66,6 +71,12 @@ class VisitAssessmentDetailScreen extends StatelessWidget {
             fontWeight: FontWeight.w800,
           ),
           actions: [
+            if (onEdit != null)
+              IconButton(
+                tooltip: 'Edit assessment',
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined),
+              ),
             IconButton(
               tooltip: 'Create PDF',
               onPressed: () => _createPdf(context),
@@ -472,13 +483,16 @@ class VisitAssessmentDetailScreen extends StatelessWidget {
       finding.status != 'not_assessed' ||
       finding.value.trim().isNotEmpty ||
       finding.notes.trim().isNotEmpty ||
-      finding.images.isNotEmpty;
+      finding.images.isNotEmpty ||
+      finding.extraValues.values.any((value) => value.trim().isNotEmpty);
 
   String _findingValue(ExamFinding finding) {
     final values = <String>[
       if (finding.value.trim().isNotEmpty) _labelFromToken(finding.value),
       if (finding.value.trim().isEmpty && finding.status != 'not_assessed')
         _labelFromToken(finding.status),
+      for (final value in finding.extraValues.values)
+        if (value.trim().isNotEmpty) _labelFromToken(value),
       if (finding.notes.trim().isNotEmpty) finding.notes.trim(),
       if (finding.images.isNotEmpty) '${finding.images.length} image(s)',
     ];

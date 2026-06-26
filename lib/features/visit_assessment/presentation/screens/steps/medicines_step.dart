@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:oruma_app/features/visit_assessment/domain/visit_assessment.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/providers/visit_assessment_controller.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_widgets.dart';
@@ -19,11 +20,13 @@ class _MedicinesStepState extends State<MedicinesStep> {
   static const double _subHeaderHeight = 25;
   static const double _noWidth = 38;
   static const double _medicineStrengthWidth = 240;
-  static const double _instructionWidth = 86;
+  static const double _instructionWidth = 92;
   static const double _routeWidth = 38;
-  static const double _durationWidth = 74;
+  static const double _durationWidth = 108;
   static const double _remarksWidth = 118;
   static const double _clearWidth = 36;
+  static const _specifiedOptions = ['Yes', 'No'];
+  static const _usageOptions = ['1-1-1', '1-0-1', '0-0-1', '1-0-0', 'SoS'];
   static const double _tableWidth =
       _noWidth +
       _medicineStrengthWidth +
@@ -361,48 +364,41 @@ class _MedicinesStepState extends State<MedicinesStep> {
           width: _medicineStrengthWidth,
           hint: 'Medicine, 30mg',
         ),
-        _textCell(
+        _dropdownCell(
           row.instructionSpecified,
           key: ValueKey('medicine-instruction-specified-$index'),
           width: _instructionWidth,
           hint: 'Specified',
+          options: _specifiedOptions,
         ),
-        _textCell(
+        _dropdownCell(
           row.instructionUsage,
           key: ValueKey('medicine-instruction-usage-$index'),
           width: _instructionWidth,
           hint: 'Usage',
+          options: _usageOptions,
         ),
-        _textCell(
+        _tickCell(
           row.routeP,
           key: ValueKey('medicine-route-p-$index'),
           width: _routeWidth,
-          center: true,
         ),
-        _textCell(
+        _tickCell(
           row.routeG,
           key: ValueKey('medicine-route-g-$index'),
           width: _routeWidth,
-          center: true,
         ),
-        _textCell(
+        _tickCell(
           row.routeS,
           key: ValueKey('medicine-route-s-$index'),
           width: _routeWidth,
-          center: true,
         ),
-        _textCell(
+        _tickCell(
           row.routeO,
           key: ValueKey('medicine-route-o-$index'),
           width: _routeWidth,
-          center: true,
         ),
-        _textCell(
-          row.duration,
-          key: ValueKey('medicine-duration-$index'),
-          width: _durationWidth,
-          hint: 'Days',
-        ),
+        _monthCell(row, index),
         _textCell(
           row.remarks,
           key: ValueKey('medicine-remarks-$index'),
@@ -567,6 +563,123 @@ class _MedicinesStepState extends State<MedicinesStep> {
     );
   }
 
+  Widget _dropdownCell(
+    TextEditingController textController, {
+    required Key key,
+    required double width,
+    required String hint,
+    required List<String> options,
+  }) {
+    final current = textController.text.trim();
+    final selected = options.contains(current) ? current : null;
+    return _bodyCell(
+      width: width,
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          key: key,
+          value: selected,
+          hint: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Text(
+              hint,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFFA8B0B8),
+                fontSize: 9,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+          isExpanded: true,
+          icon: const Icon(Icons.keyboard_arrow_down, size: 15),
+          style: const TextStyle(
+            color: assessmentText,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+          items: options
+              .map(
+                (option) => DropdownMenuItem(
+                  value: option,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Text(option, overflow: TextOverflow.ellipsis),
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() => textController.text = value);
+            _rowChanged();
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _tickCell(
+    TextEditingController textController, {
+    required Key key,
+    required double width,
+  }) {
+    final active = textController.text.trim().isNotEmpty;
+    return _bodyCell(
+      width: width,
+      child: InkWell(
+        key: key,
+        onTap: () {
+          setState(() => textController.text = active ? '' : '✓');
+          _rowChanged();
+        },
+        child: Center(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: active ? assessmentGreen : Colors.white,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: active ? assessmentGreen : assessmentBorder,
+                width: 1.4,
+              ),
+            ),
+            child: active
+                ? const Icon(Icons.check, size: 14, color: Colors.white)
+                : null,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _monthCell(_MedicineTableRow row, int index) {
+    return _bodyCell(
+      width: _durationWidth,
+      child: TextField(
+        key: ValueKey('medicine-duration-$index'),
+        controller: row.duration,
+        readOnly: true,
+        onTap: () => _pickDurationMonth(row),
+        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+        decoration: const InputDecoration(
+          hintText: 'Month',
+          hintStyle: TextStyle(
+            color: Color(0xFFA8B0B8),
+            fontSize: 9,
+            fontWeight: FontWeight.w400,
+          ),
+          border: InputBorder.none,
+          isDense: true,
+          suffixIcon: Icon(Icons.calendar_month_outlined, size: 15),
+          suffixIconConstraints: BoxConstraints(minWidth: 22, minHeight: 22),
+          contentPadding: EdgeInsets.fromLTRB(6, 11, 3, 10),
+        ),
+      ),
+    );
+  }
+
   Widget _bodyCell({
     required double width,
     required Widget child,
@@ -586,6 +699,114 @@ class _MedicinesStepState extends State<MedicinesStep> {
       child: child,
     );
   }
+
+  Future<void> _pickDurationMonth(_MedicineTableRow row) async {
+    final now = DateTime.now();
+    final initial = _parseMonth(row.duration.text) ?? now;
+    var visibleYear = initial.year;
+    final picked = await showDialog<DateTime>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              titlePadding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              title: Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Previous year',
+                    onPressed: () => setDialogState(() => visibleYear -= 1),
+                    icon: const Icon(Icons.chevron_left),
+                  ),
+                  Expanded(
+                    child: Text(
+                      visibleYear.toString(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Next year',
+                    onPressed: () => setDialogState(() => visibleYear += 1),
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                ],
+              ),
+              content: SizedBox(
+                width: 320,
+                child: GridView.count(
+                  shrinkWrap: true,
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 2.35,
+                  children: List.generate(12, (index) {
+                    final month = index + 1;
+                    final isSelected =
+                        visibleYear == initial.year && month == initial.month;
+                    return OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: isSelected
+                            ? assessmentGreenDark
+                            : assessmentText,
+                        backgroundColor: isSelected
+                            ? assessmentMint
+                            : Colors.white,
+                        side: BorderSide(
+                          color: isSelected
+                              ? assessmentGreen
+                              : assessmentBorder,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () => Navigator.pop(
+                        dialogContext,
+                        DateTime(visibleYear, month),
+                      ),
+                      child: Text(
+                        DateFormat('MMM').format(DateTime(2020, month)),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (picked == null) return;
+    setState(() => row.duration.text = _formatMonth(picked));
+    _rowChanged();
+  }
+
+  DateTime? _parseMonth(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    try {
+      return DateFormat('MMMM yyyy').parseStrict(trimmed);
+    } catch (_) {
+      try {
+        return DateFormat('MMM yyyy').parseStrict(trimmed);
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
+  String _formatMonth(DateTime value) => DateFormat('MMMM yyyy').format(value);
 
   void _replaceRows(List<AssessmentMedicine> medicines) {
     for (final row in _rows) {
@@ -660,13 +881,17 @@ class _MedicineTableRow {
   }) : medicineStrength = TextEditingController(
          text: _formatMedicineStrength(medicineName, strength),
        ),
-       instructionSpecified = TextEditingController(text: instructionSpecified),
-       instructionUsage = TextEditingController(text: instructionUsage),
+       instructionSpecified = TextEditingController(
+         text: _sanitizeSpecified(instructionSpecified),
+       ),
+       instructionUsage = TextEditingController(
+         text: _sanitizeUsage(instructionUsage),
+       ),
        routeP = TextEditingController(text: routes.contains('P') ? '✓' : ''),
        routeG = TextEditingController(text: routes.contains('G') ? '✓' : ''),
        routeS = TextEditingController(text: routes.contains('S') ? '✓' : ''),
        routeO = TextEditingController(text: routes.contains('O') ? '✓' : ''),
-       duration = TextEditingController(text: duration),
+       duration = TextEditingController(text: _sanitizeDuration(duration)),
        remarks = TextEditingController(text: remarks);
 
   factory _MedicineTableRow.blank({required int localId}) =>
@@ -723,15 +948,15 @@ class _MedicineTableRow {
       medicineId: parsed.name == originalMedicineName ? medicineId : null,
       medicineName: parsed.name,
       strength: parsed.strength,
-      instructionSpecified: instructionSpecified.text.trim(),
-      instructionUsage: instructionUsage.text.trim(),
+      instructionSpecified: _sanitizeSpecified(instructionSpecified.text),
+      instructionUsage: _sanitizeUsage(instructionUsage.text),
       routes: {
         if (routeP.text.trim().isNotEmpty) 'P',
         if (routeG.text.trim().isNotEmpty) 'G',
         if (routeS.text.trim().isNotEmpty) 'S',
         if (routeO.text.trim().isNotEmpty) 'O',
       },
-      duration: duration.text.trim(),
+      duration: _sanitizeDuration(duration.text),
       remarks: remarks.text.trim(),
     );
   }
@@ -766,6 +991,32 @@ class _MedicineTableRow {
     if (trimmedName.isEmpty) return trimmedStrength;
     if (trimmedStrength.isEmpty) return trimmedName;
     return '$trimmedName, $trimmedStrength';
+  }
+
+  static String _sanitizeSpecified(String value) {
+    final trimmed = value.trim();
+    return const {'Yes', 'No'}.contains(trimmed) ? trimmed : '';
+  }
+
+  static String _sanitizeUsage(String value) {
+    final trimmed = value.trim();
+    return const {'1-1-1', '1-0-1', '0-0-1', '1-0-0', 'SoS'}.contains(trimmed)
+        ? trimmed
+        : '';
+  }
+
+  static String _sanitizeDuration(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return '';
+    for (final pattern in const ['MMMM yyyy', 'MMM yyyy']) {
+      try {
+        final date = DateFormat(pattern).parseStrict(trimmed);
+        return DateFormat('MMMM yyyy').format(date);
+      } catch (_) {
+        continue;
+      }
+    }
+    return '';
   }
 
   static ({String name, String strength}) _parseMedicineStrength(String value) {

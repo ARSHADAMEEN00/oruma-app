@@ -2,11 +2,14 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:oruma_app/features/visit_assessment/data/visit_assessment_pdf_generator.dart';
+import 'package:oruma_app/features/visit_assessment/data/visit_assessment_repository.dart';
 import 'package:oruma_app/features/visit_assessment/domain/visit_assessment.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/providers/visit_assessment_controller.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_flow_screen.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_list_screen.dart';
+import 'package:oruma_app/models/home_visit.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -36,10 +39,10 @@ void main() {
         AssessmentMedicine(
           medicineName: 'Paracetamol',
           strength: '500 mg',
-          instructionSpecified: '1-0-1',
-          instructionUsage: 'As needed',
+          instructionSpecified: 'Yes',
+          instructionUsage: '1-0-1',
           routes: {'P'},
-          duration: '3 days',
+          duration: 'June 2026',
           remarks: 'After food',
         ),
       ],
@@ -51,8 +54,8 @@ void main() {
     expect(decoded.visitType, 'NHC');
     expect(decoded.previousVisitConcerns, value.previousVisitConcerns);
     expect(decoded.vitals.respiratoryRhythm, 'IR');
-    expect(decoded.medicines.single.instructionSpecified, '1-0-1');
-    expect(decoded.medicines.single.instructionUsage, 'As needed');
+    expect(decoded.medicines.single.instructionSpecified, 'Yes');
+    expect(decoded.medicines.single.instructionUsage, '1-0-1');
     expect(decoded.carePlan.visitPlanNotes['DHC'], 'Weekly day care follow-up');
     expect(decoded.physicalExam.length, 18);
     expect(decoded.carePlan.visitPlans, contains('NHC'));
@@ -63,9 +66,23 @@ void main() {
     expect(assessment.vitals.bpSystolic, 120);
     expect(assessment.vitals.bpDiastolic, 80);
     expect(assessment.vitals.respiratoryRate, 16);
-    expect(assessment.vitals.temperature, 37);
+    expect(assessment.vitals.temperature, 98);
+    expect(assessment.vitals.temperatureUnit, 'F');
     expect(assessment.vitals.spo2, 98);
-    expect(assessment.vitals.grbs, 100);
+    expect(assessment.vitals.grbs, 145);
+    expect(assessment.vitals.activityLevel, 'IV');
+  });
+
+  test('new NHC assessments start with requested physical exam defaults', () {
+    expect(assessment.physicalExam['respiration']?.value, 'normal');
+    expect(assessment.physicalExam['foodWater']?.value, 'self_feeding');
+    expect(
+      assessment.physicalExam['urine']?.value,
+      'uses_toilet_independently',
+    );
+    expect(assessment.physicalExam['defecation']?.value, 'normal');
+    expect(assessment.physicalExam['sleep']?.value, 'normal');
+    expect(assessment.physicalExam['scalpHair']?.value, 'clean');
   });
 
   test('older blank drafts receive baseline vitals when loaded', () {
@@ -87,9 +104,11 @@ void main() {
     expect(decoded.vitals.bpSystolic, 120);
     expect(decoded.vitals.bpDiastolic, 80);
     expect(decoded.vitals.respiratoryRate, 16);
-    expect(decoded.vitals.temperature, 37);
+    expect(decoded.vitals.temperature, 98);
+    expect(decoded.vitals.temperatureUnit, 'F');
     expect(decoded.vitals.spo2, 98);
-    expect(decoded.vitals.grbs, 100);
+    expect(decoded.vitals.grbs, 145);
+    expect(decoded.vitals.activityLevel, 'IV');
     expect(decoded.vitals.bpPosition, 'LL');
   });
 
@@ -114,6 +133,124 @@ void main() {
     expect(decoded.vitals.respiratoryRate, isNull);
     expect(decoded.vitals.temperature, isNull);
   });
+
+  test('submitted remote assessment wins over stale local draft', () async {
+    final staleDraft = assessment.copyWith(
+      previousVisitConcerns: 'stale draft data',
+      status: 'draft',
+      isComplete: false,
+      updatedAt: DateTime(2026, 6, 26, 10),
+    );
+    final submitted = assessment.copyWith(
+      id: 'submitted-id',
+      previousVisitConcerns: 'submitted data',
+      status: 'submitted',
+      isComplete: true,
+      updatedAt: DateTime(2026, 6, 25, 10),
+      submittedAt: DateTime(2026, 6, 25, 10),
+    );
+    final repository = _FakeVisitAssessmentRepository(
+      localDraft: staleDraft,
+      remoteForVisit: submitted,
+      history: [submitted],
+    );
+    final controller = VisitAssessmentController(
+      initialAssessment: assessment,
+      repository: repository,
+    );
+    addTearDown(controller.dispose);
+
+    await controller.initialize();
+
+    expect(controller.assessment.previousVisitConcerns, 'submitted data');
+    expect(controller.assessment.isComplete, isTrue);
+    expect(repository.clearedDrafts, contains(assessment.homeVisitId));
+  });
+
+  test(
+    'submit clears draft storage and keeps submitted item in history',
+    () async {
+      final ready = assessment.copyWith(
+        id: 'draft-id',
+        nursingDiagnosis: 'Routine follow-up.',
+        carePlan: assessment.carePlan.copyWith(
+          services: const {'healthEducation'},
+        ),
+        nurseName: 'Nurse A',
+        confirmed: true,
+      );
+      final repository = _FakeVisitAssessmentRepository(history: const []);
+      final controller = VisitAssessmentController(
+        initialAssessment: ready,
+        repository: repository,
+      );
+      addTearDown(controller.dispose);
+
+      final ok = await controller.submit();
+
+      expect(ok, isTrue);
+      expect(controller.assessment.status, 'submitted');
+      expect(controller.assessment.isComplete, isTrue);
+      expect(repository.clearedDrafts, contains(assessment.homeVisitId));
+      expect(controller.previousAssessments, hasLength(1));
+      expect(controller.previousAssessments.single.id, 'draft-id');
+    },
+  );
+
+  test(
+    'patient-first submit creates home visit and resets current form',
+    () async {
+      final patientFirst = assessment.copyWith(
+        homeVisitId: '',
+        patientAddress: 'Kadakkadan House, Nelloliparamba',
+        visitDate: DateTime(2026, 6, 26),
+        nursingDiagnosis: 'Routine follow-up.',
+        carePlan: assessment.carePlan.copyWith(
+          services: const {'healthEducation'},
+        ),
+        nurseName: 'Nurse A',
+        confirmed: true,
+      );
+      final repository = _FakeVisitAssessmentRepository(history: const []);
+      final controller = VisitAssessmentController(
+        initialAssessment: patientFirst,
+        repository: repository,
+      );
+      addTearDown(controller.dispose);
+
+      final ok = await controller.submit();
+
+      expect(ok, isTrue);
+      expect(repository.createdHomeVisits, hasLength(1));
+      final createdVisit = repository.createdHomeVisits.single;
+      expect(createdVisit.patientId, patientFirst.patientId);
+      expect(createdVisit.patientName, patientFirst.patientName);
+      expect(createdVisit.address, patientFirst.patientAddress);
+      expect(createdVisit.team, patientFirst.team);
+      expect(DateTime.parse(createdVisit.visitDate), DateTime(2026, 6, 26));
+      expect(repository.clearedDrafts, contains('created-home-1'));
+      expect(
+        repository.clearedDrafts,
+        contains(
+          VisitAssessmentRepository.patientDateDraftKeyFor(patientFirst),
+        ),
+      );
+      expect(controller.previousAssessments, hasLength(1));
+      expect(
+        controller.previousAssessments.single.homeVisitId,
+        'created-home-1',
+      );
+      expect(controller.previousAssessments.single.status, 'submitted');
+      expect(controller.assessment.homeVisitId, isEmpty);
+      expect(controller.assessment.id, isNull);
+      expect(controller.assessment.status, 'draft');
+      expect(controller.assessment.isComplete, isFalse);
+      expect(controller.assessment.nursingDiagnosis, isEmpty);
+      expect(controller.assessment.medicines, isEmpty);
+      expect(controller.assessment.patientId, patientFirst.patientId);
+      expect(controller.hasDraftInProgress, isFalse);
+    },
+  );
 
   testWidgets('visit assessment opens with reference step header', (
     tester,
@@ -142,6 +279,7 @@ void main() {
     tester,
   ) async {
     final controller = VisitAssessmentController(initialAssessment: assessment);
+    controller.setLanguage('en');
     addTearDown(controller.dispose);
 
     await tester.pumpWidget(
@@ -171,6 +309,7 @@ void main() {
     tester,
   ) async {
     final controller = VisitAssessmentController(initialAssessment: assessment);
+    controller.setLanguage('en');
     addTearDown(controller.dispose);
 
     await tester.pumpWidget(
@@ -231,8 +370,9 @@ void main() {
     );
 
     expect(find.text('Stability'), findsNothing);
+    await tester.drag(find.byType(ListView).last, const Offset(0, -360));
+    await tester.pump(const Duration(milliseconds: 300));
     final unstable = find.text('Unstable');
-    await tester.ensureVisible(unstable);
     await tester.tap(unstable);
     await tester.pump();
     expect(controller.assessment.vitals.stability, 'unstable');
@@ -278,10 +418,10 @@ void main() {
           AssessmentMedicine(
             medicineName: 'Paracetamol',
             strength: '500 mg',
-            instructionSpecified: '1-0-1',
-            instructionUsage: 'After food',
+            instructionSpecified: 'Yes',
+            instructionUsage: '1-0-1',
             routes: {'P'},
-            duration: '3 days',
+            duration: 'June 2026',
           ),
         ],
         nursingDiagnosis: 'Continue routine care.',
@@ -307,6 +447,34 @@ void main() {
       scrollable: find.byType(Scrollable).last,
     );
     expect(find.text('Paracetamol, 500 mg'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+    expect(find.byType(TextFormField), findsNothing);
+  });
+
+  testWidgets('completed current assessment opens details with edit action', (
+    tester,
+  ) async {
+    final submitted = assessment.copyWith(
+      id: '507f1f77bcf86cd799439099',
+      status: 'submitted',
+      isComplete: true,
+      submittedAt: DateTime(2026, 6, 23, 12, 10),
+      nursingDiagnosis: 'Routine care completed.',
+    );
+    final controller = VisitAssessmentController(initialAssessment: submitted);
+    controller.isLoading = false;
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(home: VisitAssessmentListScreen(controller: controller)),
+    );
+
+    expect(find.text('New Assessment'), findsOneWidget);
+    await tester.tap(find.text('New Assessment'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Assessment Details'), findsOneWidget);
+    expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
     expect(find.byType(TextFormField), findsNothing);
   });
@@ -337,10 +505,10 @@ void main() {
         AssessmentMedicine(
           medicineName: 'Paracetamol',
           strength: '500 mg',
-          instructionSpecified: '1-0-1',
-          instructionUsage: 'After food',
+          instructionSpecified: 'Yes',
+          instructionUsage: '1-0-1',
           routes: {'P'},
-          duration: '3 days',
+          duration: 'June 2026',
           remarks: 'Fever only',
         ),
       ],
@@ -385,40 +553,41 @@ void main() {
       'Paracetamol, 500 mg',
     );
     await tester.pump();
-    await tester.enterText(
+    await tester.tap(
       find.byKey(const ValueKey('medicine-instruction-specified-0')),
-      '1-0-1',
     );
-    await tester.pump();
-    await tester.enterText(
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Yes').last);
+    await tester.pumpAndSettle();
+    await tester.tap(
       find.byKey(const ValueKey('medicine-instruction-usage-0')),
-      'As needed',
     );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('1-0-1').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('medicine-route-p-0')));
     await tester.pump();
-    await tester.enterText(
-      find.byKey(const ValueKey('medicine-route-p-0')),
-      'x',
-    );
-    await tester.pump();
-    await tester.enterText(
-      find.byKey(const ValueKey('medicine-duration-0')),
-      '3 days',
-    );
-    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('medicine-duration-0')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Jun').last);
+    await tester.pumpAndSettle();
 
     expect(controller.assessment.medicines, hasLength(1));
     final medicine = controller.assessment.medicines.single;
+    final selectedMonth = DateFormat(
+      'MMMM yyyy',
+    ).format(DateTime(DateTime.now().year, 6));
     expect(medicine.medicineName, 'Paracetamol');
     expect(medicine.strength, '500 mg');
-    expect(medicine.instructionSpecified, '1-0-1');
-    expect(medicine.instructionUsage, 'As needed');
+    expect(medicine.instructionSpecified, 'Yes');
+    expect(medicine.instructionUsage, '1-0-1');
     expect(medicine.routes, contains('P'));
-    expect(medicine.duration, '3 days');
+    expect(medicine.duration, selectedMonth);
 
     await tester.pump(const Duration(milliseconds: 700));
   });
 
-  testWidgets('care plan captures visit type row notes', (tester) async {
+  testWidgets('care plan captures visit type row dates', (tester) async {
     final controller = VisitAssessmentController(initialAssessment: assessment);
     addTearDown(controller.dispose);
 
@@ -429,18 +598,115 @@ void main() {
     controller.setStep(5);
     await tester.pump(const Duration(milliseconds: 300));
 
-    await tester.enterText(
-      find.byKey(const ValueKey('care-plan-visit-DHC')),
-      'Weekly day care follow-up',
-    );
-    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('care-plan-visit-DHC')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('OK').last);
+    await tester.pumpAndSettle();
+
+    final today = DateFormat('dd MMM yyyy').format(DateTime.now());
 
     expect(controller.assessment.carePlan.visitPlans, contains('DHC'));
-    expect(
-      controller.assessment.carePlan.visitPlanNotes['DHC'],
-      'Weekly day care follow-up',
-    );
+    expect(controller.assessment.carePlan.visitPlanNotes['DHC'], today);
 
     await tester.pump(const Duration(milliseconds: 700));
   });
+}
+
+class _FakeVisitAssessmentRepository extends VisitAssessmentRepository {
+  _FakeVisitAssessmentRepository({
+    this.localDraft,
+    this.remoteForVisit,
+    List<VisitAssessment> history = const [],
+  }) : history = [...history];
+
+  VisitAssessment? localDraft;
+  VisitAssessment? remoteForVisit;
+  List<VisitAssessment> history;
+  final clearedDrafts = <String>[];
+  final savedLocalDrafts = <VisitAssessment>[];
+  final savedDraftAliases = <String, VisitAssessment>{};
+  final createdHomeVisits = <HomeVisit>[];
+
+  @override
+  Future<VisitAssessment?> loadLocalDraft(String draftKey) async =>
+      savedDraftAliases[draftKey] ?? localDraft;
+
+  @override
+  Future<void> saveLocalDraft(VisitAssessment assessment) async {
+    savedLocalDrafts.add(assessment);
+    savedDraftAliases[VisitAssessmentRepository.draftKeyFor(assessment)] =
+        assessment;
+    localDraft = assessment;
+  }
+
+  @override
+  Future<void> saveLocalDraftForKey(
+    String draftKey,
+    VisitAssessment assessment,
+  ) async {
+    savedDraftAliases[draftKey] = assessment;
+    localDraft = assessment;
+  }
+
+  @override
+  Future<void> clearLocalDraft(String draftKey) async {
+    clearedDrafts.add(draftKey);
+    savedDraftAliases.remove(draftKey);
+    if (localDraft != null &&
+        (VisitAssessmentRepository.draftKeyFor(localDraft!) == draftKey ||
+            VisitAssessmentRepository.patientDateDraftKeyFor(localDraft!) ==
+                draftKey)) {
+      localDraft = null;
+    }
+  }
+
+  @override
+  Future<List<VisitAssessment>> getHistory(String patientId) async => history;
+
+  @override
+  Future<void> cacheAssessmentInHistory(VisitAssessment assessment) async {
+    final index = history.indexWhere((item) {
+      if (assessment.id != null && item.id == assessment.id) return true;
+      return item.homeVisitId == assessment.homeVisitId;
+    });
+    if (index >= 0) {
+      history[index] = assessment;
+    } else {
+      history.add(assessment);
+    }
+  }
+
+  @override
+  Future<VisitAssessment?> getRemoteForVisit(String homeVisitId) async =>
+      remoteForVisit;
+
+  @override
+  Future<VisitAssessment> syncDraft(VisitAssessment assessment) async =>
+      assessment.id == null ? assessment.copyWith(id: 'draft-id') : assessment;
+
+  @override
+  Future<HomeVisit> createHomeVisitForAssessment(
+    VisitAssessment assessment,
+  ) async {
+    final visit = HomeVisit(
+      id: 'created-home-${createdHomeVisits.length + 1}',
+      patientId: assessment.patientId,
+      patientName: assessment.patientName,
+      address: assessment.patientAddress,
+      visitDate: assessment.visitDate.toIso8601String(),
+      visitMode: 'new',
+      team: assessment.team,
+      notes: 'Created from Visit (NHC) assessment',
+    );
+    createdHomeVisits.add(visit);
+    return visit;
+  }
+
+  @override
+  Future<VisitAssessment> submit(VisitAssessment assessment) async =>
+      assessment.copyWith(
+        status: 'submitted',
+        isComplete: true,
+        submittedAt: DateTime(2026, 6, 26, 10),
+      );
 }

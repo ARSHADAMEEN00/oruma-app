@@ -22,12 +22,12 @@ class VisitVitals {
     this.bpPosition = 'UL',
     this.respiratoryRate = 16,
     this.respiratoryRhythm = 'R',
-    this.temperature = 37,
-    this.temperatureUnit = 'C',
+    this.temperature = 98,
+    this.temperatureUnit = 'F',
     this.temperatureMethod = 'O',
     this.spo2 = 98,
-    this.grbs = 100,
-    this.activityLevel = 'III',
+    this.grbs = 145,
+    this.activityLevel = 'IV',
     this.stability = 'stable',
   });
 
@@ -56,7 +56,8 @@ class VisitVitals {
       temperature:
           _toDouble(value['temp']) ??
           (fillMissingWithDefaults ? defaults.temperature : null),
-      temperatureUnit: value['tempUnit']?.toString() ?? 'C',
+      temperatureUnit:
+          value['tempUnit']?.toString() ?? defaults.temperatureUnit,
       temperatureMethod: value['tempMethod']?.toString() ?? 'O',
       spo2:
           _toInt(value['spo2']) ??
@@ -64,7 +65,8 @@ class VisitVitals {
       grbs:
           _toInt(value['grbs']) ??
           (fillMissingWithDefaults ? defaults.grbs : null),
-      activityLevel: value['activityLevel']?.toString() ?? 'III',
+      activityLevel:
+          value['activityLevel']?.toString() ?? defaults.activityLevel,
       stability: value['stability']?.toString() ?? 'stable',
     );
   }
@@ -248,12 +250,14 @@ class ExamFinding {
   final String value;
   final String notes;
   final List<String> images;
+  final Map<String, String> extraValues;
 
   const ExamFinding({
     this.status = 'not_assessed',
     this.value = '',
     this.notes = '',
     this.images = const [],
+    this.extraValues = const {},
   });
 
   factory ExamFinding.fromJson(dynamic json) {
@@ -271,6 +275,12 @@ class ExamFinding {
       images: (json['images'] as List<dynamic>? ?? const [])
           .map((item) => item.toString())
           .toList(),
+      extraValues: json['extraValues'] is Map
+          ? {
+              for (final entry in (json['extraValues'] as Map).entries)
+                entry.key.toString(): entry.value?.toString() ?? '',
+            }
+          : const {},
     );
   }
 
@@ -279,6 +289,7 @@ class ExamFinding {
     'value': value,
     'notes': notes,
     'images': images,
+    'extraValues': extraValues,
   };
 
   ExamFinding copyWith({
@@ -286,12 +297,14 @@ class ExamFinding {
     String? value,
     String? notes,
     List<String>? images,
+    Map<String, String>? extraValues,
   }) {
     return ExamFinding(
       status: status ?? this.status,
       value: value ?? this.value,
       notes: notes ?? this.notes,
       images: images ?? this.images,
+      extraValues: extraValues ?? this.extraValues,
     );
   }
 }
@@ -318,8 +331,42 @@ const assessmentExamKeys = <String>[
 ];
 
 Map<String, ExamFinding> emptyPhysicalExam() => {
-  for (final key in assessmentExamKeys) key: const ExamFinding(),
+  for (final key in assessmentExamKeys) key: defaultExamFinding(key),
 };
+
+ExamFinding defaultExamFinding(String key) {
+  switch (key) {
+    case 'respiration':
+      return const ExamFinding(status: 'normal', value: 'normal');
+    case 'foodWater':
+      return const ExamFinding(status: 'normal', value: 'self_feeding');
+    case 'urine':
+      return const ExamFinding(
+        status: 'normal',
+        value: 'uses_toilet_independently',
+      );
+    case 'defecation':
+      return const ExamFinding(status: 'normal', value: 'normal');
+    case 'sleep':
+      return const ExamFinding(status: 'normal', value: 'normal');
+    case 'scalpHair':
+      return const ExamFinding(status: 'normal', value: 'clean');
+    default:
+      return const ExamFinding();
+  }
+}
+
+ExamFinding _draftDefaultExamFinding(String key, dynamic json) {
+  final finding = ExamFinding.fromJson(json);
+  if (finding.status != 'not_assessed' ||
+      finding.value.trim().isNotEmpty ||
+      finding.notes.trim().isNotEmpty ||
+      finding.images.isNotEmpty ||
+      finding.extraValues.values.any((value) => value.trim().isNotEmpty)) {
+    return finding;
+  }
+  return defaultExamFinding(key);
+}
 
 class AssessmentCarePlan {
   final Set<String> visitPlans;
@@ -391,6 +438,7 @@ class VisitAssessment {
   final String patientId;
   final String patientName;
   final String patientAge;
+  final String patientAddress;
   final String regNo;
   final DateTime visitDate;
   final String timeFrom;
@@ -424,6 +472,7 @@ class VisitAssessment {
     required this.patientId,
     required this.patientName,
     this.patientAge = '',
+    this.patientAddress = '',
     required this.regNo,
     required this.visitDate,
     this.timeFrom = '',
@@ -470,6 +519,9 @@ class VisitAssessment {
       patientAge:
           json['patientAge']?.toString() ??
           (patient is Map ? patient['age']?.toString() ?? '' : ''),
+      patientAddress:
+          json['patientAddress']?.toString() ??
+          (patient is Map ? patient['address']?.toString() ?? '' : ''),
       regNo:
           json['regNo']?.toString() ??
           (patient is Map ? patient['registerId']?.toString() ?? '' : ''),
@@ -493,7 +545,9 @@ class VisitAssessment {
           .toList(),
       physicalExam: {
         for (final key in assessmentExamKeys)
-          key: ExamFinding.fromJson(examJson[key]),
+          key: status == 'submitted'
+              ? ExamFinding.fromJson(examJson[key])
+              : _draftDefaultExamFinding(key, examJson[key]),
       },
       previousVisitConcerns: json['previousVisitConcerns']?.toString() ?? '',
       medicineRemarks: json['medicineRemarks']?.toString() ?? '',
@@ -523,6 +577,7 @@ class VisitAssessment {
     'patientId': patientId,
     'patientName': patientName,
     'patientAge': patientAge,
+    'patientAddress': patientAddress,
     'regNo': regNo,
     'visitDate': visitDate.toIso8601String(),
     'timeFrom': timeFrom,
@@ -555,8 +610,11 @@ class VisitAssessment {
 
   VisitAssessment copyWith({
     String? id,
+    String? homeVisitId,
+    String? patientId,
     String? patientName,
     String? patientAge,
+    String? patientAddress,
     String? regNo,
     DateTime? visitDate,
     String? timeFrom,
@@ -586,10 +644,11 @@ class VisitAssessment {
   }) {
     return VisitAssessment(
       id: id ?? this.id,
-      homeVisitId: homeVisitId,
-      patientId: patientId,
+      homeVisitId: homeVisitId ?? this.homeVisitId,
+      patientId: patientId ?? this.patientId,
       patientName: patientName ?? this.patientName,
       patientAge: patientAge ?? this.patientAge,
+      patientAddress: patientAddress ?? this.patientAddress,
       regNo: regNo ?? this.regNo,
       visitDate: visitDate ?? this.visitDate,
       timeFrom: timeFrom ?? this.timeFrom,

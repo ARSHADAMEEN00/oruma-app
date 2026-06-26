@@ -10,16 +10,29 @@ class VisitAssessmentController extends ChangeNotifier {
   VisitAssessmentController({
     required VisitAssessment initialAssessment,
     VisitAssessmentRepository? repository,
-  }) : _assessment = initialAssessment,
-       _repository = repository ?? VisitAssessmentRepository();
+  }) : _repository = repository ?? VisitAssessmentRepository(),
+       _assessment = initialAssessment,
+       _newAssessmentSeed = _identitySeed(initialAssessment),
+       _createsHomeVisitOnSubmit = initialAssessment.homeVisitId.trim().isEmpty;
 
   final VisitAssessmentRepository _repository;
+  final VisitAssessment _newAssessmentSeed;
+  final bool _createsHomeVisitOnSubmit;
   VisitAssessment _assessment;
   Timer? _autoSaveTimer;
   Timer? _localSaveDebounce;
   bool _disposed = false;
+  bool _hasUserChanges = false;
 
   VisitAssessment get assessment => _assessment;
+  bool get hasDraftInProgress =>
+      _assessment.status != 'submitted' &&
+      !_assessment.isComplete &&
+      (!_createsHomeVisitOnSubmit ||
+          _assessment.homeVisitId.trim().isNotEmpty ||
+          _assessment.id != null ||
+          _hasUserChanges);
+
   List<VisitAssessment> previousAssessments = [];
   AssessmentSyncState syncState = AssessmentSyncState.idle;
   String? syncMessage;
@@ -29,28 +42,43 @@ class VisitAssessmentController extends ChangeNotifier {
   String language = 'ml';
 
   bool get isMalayalam => language == 'ml';
+  String get _draftKey => VisitAssessmentRepository.draftKeyFor(_assessment);
 
   Future<void> initialize() async {
     isLoading = true;
     _notify();
 
-    final local = await _repository.loadLocalDraft(_assessment.homeVisitId);
+    final initialDraftKey = _draftKey;
+    final local = await _repository.loadLocalDraft(initialDraftKey);
     VisitAssessment? remote;
-    try {
-      remote = await _repository.getRemoteForVisit(_assessment.homeVisitId);
-    } catch (_) {
-      syncState = AssessmentSyncState.offline;
-      syncMessage = 'Offline — changes are saved on this device';
+    if (_assessment.homeVisitId.trim().isNotEmpty) {
+      try {
+        remote = await _repository.getRemoteForVisit(_assessment.homeVisitId);
+      } catch (_) {
+        syncState = AssessmentSyncState.offline;
+        syncMessage = 'Offline — changes are saved on this device';
+      }
     }
 
-    if (local != null && remote != null) {
+    if (remote != null && (remote.status == 'submitted' || remote.isComplete)) {
+      _assessment = remote;
+      _hasUserChanges = false;
+      await _repository.clearLocalDraft(initialDraftKey);
+      await _repository.clearLocalDraft(remote.homeVisitId);
+    } else if (local != null && remote != null) {
       final localTime =
           local.updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
       final remoteTime =
           remote.updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
       _assessment = localTime.isAfter(remoteTime) ? local : remote;
+      _hasUserChanges = true;
     } else {
       _assessment = local ?? remote ?? _assessment;
+      _hasUserChanges =
+          local != null ||
+          (_assessment.id != null &&
+              _assessment.status != 'submitted' &&
+              !_assessment.isComplete);
     }
 
     _setHistory(await _repository.getHistory(_assessment.patientId));
@@ -86,6 +114,7 @@ class VisitAssessmentController extends ChangeNotifier {
     _assessment = transform(
       _assessment,
     ).copyWith(updatedAt: DateTime.now(), status: 'draft', isComplete: false);
+    _hasUserChanges = true;
     syncState = AssessmentSyncState.idle;
     syncMessage = null;
     _scheduleLocalSave();
@@ -211,8 +240,8 @@ class VisitAssessmentController extends ChangeNotifier {
   String? validateStep(int step) {
     switch (step) {
       case 0:
-        if (_assessment.patientId.isEmpty || _assessment.homeVisitId.isEmpty) {
-          return 'This assessment needs a linked patient and home visit.';
+        if (_assessment.patientId.isEmpty) {
+          return 'This assessment needs a linked patient.';
         }
         if (_assessment.regNo.trim().isEmpty) {
           return 'Register number is required.';
@@ -279,6 +308,19 @@ class VisitAssessmentController extends ChangeNotifier {
   }
 
   Future<bool> saveDraft({bool silent = false}) async {
+    if (_assessment.status == 'submitted' || _assessment.isComplete) {
+      await _repository.clearLocalDraft(_draftKey);
+      syncState = AssessmentSyncState.saved;
+      syncMessage = silent ? syncMessage : 'Assessment already submitted';
+      if (!silent) _notify();
+      return true;
+    }
+    if (!hasDraftInProgress) {
+      syncState = AssessmentSyncState.saved;
+      syncMessage = silent ? syncMessage : 'Ready for new assessment';
+      if (!silent) _notify();
+      return true;
+    }
     if (syncState == AssessmentSyncState.saving) return false;
     syncState = AssessmentSyncState.saving;
     if (!silent) syncMessage = 'Saving draft…';
@@ -287,6 +329,13 @@ class VisitAssessmentController extends ChangeNotifier {
     final localValue = _assessment.copyWith(updatedAt: DateTime.now());
     _assessment = localValue;
     await _repository.saveLocalDraft(localValue);
+
+    if (localValue.homeVisitId.trim().isEmpty) {
+      syncState = AssessmentSyncState.saved;
+      syncMessage = 'Draft saved on this device';
+      _notify();
+      return true;
+    }
 
     try {
       final synced = await _repository.syncDraft(localValue);
@@ -305,6 +354,8 @@ class VisitAssessmentController extends ChangeNotifier {
   }
 
   Future<bool> submit() async {
+    if (isSubmitting) return false;
+
     final validationError = validateStep(6);
     if (validationError != null) {
       syncState = AssessmentSyncState.error;
@@ -316,24 +367,61 @@ class VisitAssessmentController extends ChangeNotifier {
     isSubmitting = true;
     syncMessage = 'Submitting assessment…';
     _notify();
+    final originalDraftKey = _draftKey;
     try {
       var value = _assessment;
+      final shouldResetAfterSubmit = _createsHomeVisitOnSubmit;
+
+      if (value.homeVisitId.trim().isEmpty) {
+        final homeVisit = await _repository.createHomeVisitForAssessment(value);
+        final homeVisitId = homeVisit.id;
+        if (homeVisitId == null || homeVisitId.isEmpty) {
+          throw StateError('Could not create a linked home visit.');
+        }
+        value = value.copyWith(
+          homeVisitId: homeVisitId,
+          visitDate: DateTime.tryParse(homeVisit.visitDate) ?? value.visitDate,
+          team: homeVisit.team?.trim().isNotEmpty == true
+              ? homeVisit.team!
+              : value.team,
+          patientAddress: homeVisit.address.trim().isNotEmpty
+              ? homeVisit.address
+              : value.patientAddress,
+        );
+        _assessment = value;
+        await _repository.clearLocalDraft(originalDraftKey);
+      }
+
       if (value.id == null) {
         value = await _repository.syncDraft(value);
+        _assessment = value;
       }
       final submitted = await _repository.submit(
         value.copyWith(status: 'submitted', isComplete: true),
       );
-      _assessment = submitted;
+      _autoSaveTimer?.cancel();
+      _localSaveDebounce?.cancel();
+      _hasUserChanges = false;
+      await _repository.clearLocalDraft(originalDraftKey);
       await _repository.clearLocalDraft(submitted.homeVisitId);
-      _setHistory(await _repository.getHistory(submitted.patientId));
+      await _repository.cacheAssessmentInHistory(submitted);
+      final history = await _repository.getHistory(submitted.patientId);
+      _setHistory(_mergeHistory(history, submitted));
+      _assessment = shouldResetAfterSubmit ? _freshAssessment() : submitted;
+      currentStep = 0;
       syncState = AssessmentSyncState.saved;
       syncMessage = 'Assessment submitted';
       isSubmitting = false;
       _notify();
       return true;
     } catch (_) {
-      await _repository.saveLocalDraft(_assessment);
+      if (hasDraftInProgress) {
+        await _repository.saveLocalDraft(_assessment);
+        final currentDraftKey = _draftKey;
+        if (_createsHomeVisitOnSubmit && currentDraftKey != originalDraftKey) {
+          await _repository.saveLocalDraftForKey(originalDraftKey, _assessment);
+        }
+      }
       syncState = AssessmentSyncState.offline;
       syncMessage = 'Could not submit. The draft remains safely stored.';
       isSubmitting = false;
@@ -344,6 +432,7 @@ class VisitAssessmentController extends ChangeNotifier {
 
   void _startAutoSave() {
     _autoSaveTimer?.cancel();
+    if (_assessment.status == 'submitted' || _assessment.isComplete) return;
     _autoSaveTimer = Timer.periodic(
       const Duration(seconds: 30),
       (_) => saveDraft(silent: true),
@@ -351,10 +440,63 @@ class VisitAssessmentController extends ChangeNotifier {
   }
 
   void _scheduleLocalSave() {
+    if (!hasDraftInProgress) return;
     _localSaveDebounce?.cancel();
     _localSaveDebounce = Timer(const Duration(milliseconds: 650), () async {
       await _repository.saveLocalDraft(_assessment);
     });
+  }
+
+  List<VisitAssessment> _mergeHistory(
+    List<VisitAssessment> history,
+    VisitAssessment assessment,
+  ) {
+    final merged = [...history];
+    final index = merged.indexWhere((item) {
+      if (assessment.id != null && item.id == assessment.id) return true;
+      return item.homeVisitId == assessment.homeVisitId;
+    });
+    if (index >= 0) {
+      merged[index] = assessment;
+    } else {
+      merged.add(assessment);
+    }
+    return merged;
+  }
+
+  static VisitAssessment _identitySeed(VisitAssessment value) {
+    return VisitAssessment(
+      homeVisitId: value.homeVisitId,
+      patientId: value.patientId,
+      patientName: value.patientName,
+      patientAge: value.patientAge,
+      patientAddress: value.patientAddress,
+      regNo: value.regNo,
+      visitDate: value.visitDate,
+      team: value.team,
+      visitType: value.visitType,
+      nurseName: value.nurseName,
+      nurseId: value.nurseId,
+    );
+  }
+
+  VisitAssessment _freshAssessment() {
+    final now = DateTime.now();
+    return VisitAssessment(
+      homeVisitId: _createsHomeVisitOnSubmit
+          ? ''
+          : _newAssessmentSeed.homeVisitId,
+      patientId: _newAssessmentSeed.patientId,
+      patientName: _newAssessmentSeed.patientName,
+      patientAge: _newAssessmentSeed.patientAge,
+      patientAddress: _newAssessmentSeed.patientAddress,
+      regNo: _newAssessmentSeed.regNo,
+      visitDate: DateTime(now.year, now.month, now.day),
+      team: _newAssessmentSeed.team,
+      visitType: _newAssessmentSeed.visitType,
+      nurseName: _newAssessmentSeed.nurseName,
+      nurseId: _newAssessmentSeed.nurseId,
+    );
   }
 
   void _notify() {
@@ -366,7 +508,9 @@ class VisitAssessmentController extends ChangeNotifier {
     _disposed = true;
     _autoSaveTimer?.cancel();
     _localSaveDebounce?.cancel();
-    _repository.saveLocalDraft(_assessment);
+    if (hasDraftInProgress) {
+      _repository.saveLocalDraft(_assessment);
+    }
     super.dispose();
   }
 }

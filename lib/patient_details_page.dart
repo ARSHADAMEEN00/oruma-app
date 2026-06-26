@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:oruma_app/features/visit_assessment/domain/visit_assessment.dart';
+import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_list_screen.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:oruma_app/models/home_visit.dart';
 import 'package:oruma_app/models/medicine_supply.dart';
@@ -245,6 +246,26 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(_friendlyError(error))));
+    }
+  }
+
+  Future<void> _openVisitAssessments() async {
+    final patientId = _currentPatient.id;
+    if (patientId == null || patientId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This patient record is missing an ID.')),
+      );
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VisitAssessmentModuleScreen(patient: _currentPatient),
+      ),
+    );
+    if (mounted) {
+      await _loadDetails(showLoader: false);
     }
   }
 
@@ -931,19 +952,25 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
         title: 'No assessments yet',
         message:
             'Submitted visit assessments for this patient will appear here.',
+        action: _assessmentActionButton(),
       );
     }
 
     return RefreshIndicator(
       onRefresh: () => _loadDetails(showLoader: false),
-      child: ListView.separated(
+      child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
-        itemCount: _details.visitAssessments.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          return _assessmentCard(_details.visitAssessments[index]);
-        },
+        children: [
+          _assessmentActionButton(),
+          const SizedBox(height: 12),
+          ..._details.visitAssessments.map(
+            (assessment) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _assessmentCard(assessment),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1219,36 +1246,13 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
                 statusColor,
               ),
               const SizedBox(width: 8),
-              StatefulBuilder(
-                builder: (context, setState) {
-                  var isDownloading = false;
-                  return isDownloading
-                      ? const Padding(
-                          padding: EdgeInsets.only(right: 8.0, left: 8.0),
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: _patientPrimary,
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                        )
-                      : IconButton(
-                          onPressed: () async {
-                            setState(() => isDownloading = true);
-                            await _createAssessmentPdf(context, assessment);
-                            if (context.mounted) {
-                              setState(() => isDownloading = false);
-                            }
-                          },
-                          icon: const Icon(Icons.download_rounded),
-                          color: _patientPrimary,
-                          visualDensity: VisualDensity.compact,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        );
-                },
+              IconButton(
+                onPressed: () => _createAssessmentPdf(context, assessment),
+                icon: const Icon(Icons.download_rounded),
+                color: _patientPrimary,
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
             ],
           ),
@@ -1272,6 +1276,20 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
             _detailLine(Icons.groups_outlined, 'Team', assessment.team),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _assessmentActionButton() {
+    return FilledButton.icon(
+      onPressed: _detailsLoading ? null : _openVisitAssessments,
+      icon: const Icon(Icons.add, size: 20),
+      label: const Text('New Assessment'),
+      style: FilledButton.styleFrom(
+        backgroundColor: _patientPrimary,
+        foregroundColor: Colors.white,
+        minimumSize: const Size.fromHeight(48),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       ),
     );
   }
@@ -1423,7 +1441,10 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
     }
   }
 
-  Future<void> _createAssessmentPdf(BuildContext context, VisitAssessment assessment) async {
+  Future<void> _createAssessmentPdf(
+    BuildContext context,
+    VisitAssessment assessment,
+  ) async {
     try {
       final bytes = await VisitAssessmentPdfGenerator.generate(assessment);
       await Printing.sharePdf(
@@ -1738,6 +1759,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
     required IconData icon,
     required String title,
     required String message,
+    Widget? action,
   }) {
     return RefreshIndicator(
       onRefresh: () => _loadDetails(showLoader: false),
@@ -1778,6 +1800,10 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
                         fontSize: 13,
                       ),
                     ),
+                    if (action != null) ...[
+                      const SizedBox(height: 18),
+                      SizedBox(width: double.infinity, child: action),
+                    ],
                   ],
                 ),
               ),

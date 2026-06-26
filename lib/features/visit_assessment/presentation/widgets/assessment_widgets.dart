@@ -380,10 +380,12 @@ class AssessmentVoiceButton extends StatefulWidget {
     super.key,
     required this.onWords,
     this.label = 'Tap mic to voice input',
+    this.localeId,
   });
 
   final ValueChanged<String> onWords;
   final String label;
+  final String? localeId;
 
   @override
   State<AssessmentVoiceButton> createState() => _AssessmentVoiceButtonState();
@@ -415,7 +417,10 @@ class _AssessmentVoiceButtonState extends State<AssessmentVoiceButton> {
       if (mounted) setState(() => _listening = false);
       return;
     }
-    final started = await speech.start(widget.onWords);
+    final started = await speech.start(
+      widget.onWords,
+      preferredLocaleId: widget.localeId,
+    );
     if (!mounted) return;
     setState(() => _listening = started);
     if (!started) {

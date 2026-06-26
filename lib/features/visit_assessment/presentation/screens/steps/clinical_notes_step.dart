@@ -86,6 +86,7 @@ class _ClinicalNotesStepState extends State<ClinicalNotesStep> {
         const SizedBox(height: 6),
         Center(
           child: AssessmentVoiceButton(
+            localeId: isMalayalam ? 'ml-IN' : null,
             onWords: (words) {
               final text = _managementPlan.text.trim();
               _managementPlan.text = text.isEmpty ? words : '$text $words';

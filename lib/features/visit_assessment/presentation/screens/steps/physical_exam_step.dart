@@ -64,6 +64,8 @@ class PhysicalExamStep extends StatelessWidget {
   static const _previousVisitPromptMalayalam =
       'കഴിഞ്ഞ സന്ദർശനത്തിലെഴുതിയിരുന്ന ബുദ്ധിമുട്ടുകളും അതിന്റെ ഇപ്പോഴത്തെ അവസ്ഥയും, രോഗിയുടെ പ്രധാന പരാതികൾ / പ്രധാന ബുദ്ധിമുട്ട് / പൊതു അവസ്ഥ';
 
+  static const _dropdownFindingKeys = {'respiration', 'foodWater'};
+
   @override
   Widget build(BuildContext context) {
     final isMalayalam = controller.isMalayalam;
@@ -207,32 +209,29 @@ class PhysicalExamStep extends StatelessWidget {
     final finding =
         controller.assessment.physicalExam[key] ?? const ExamFinding();
     final options = _findingOptions(key, isMalayalam);
-    final normalizedValue = finding.value.toLowerCase().replaceAll(' ', '_');
-    final selectedOption = options.$1.contains(normalizedValue)
-        ? normalizedValue
-        : options.$1.contains(finding.status)
+    final selectedOption = _selectedFindingOption(key, finding, options.$1);
+    final secondary = _secondaryFindingOptions(key, isMalayalam);
+    final derivedStatus = _statusForFindingState(
+      key,
+      selectedOption,
+      finding.extraValues,
+    );
+    final displayStatus = derivedStatus == 'not_assessed'
         ? finding.status
-        : '';
-    final statusColor = finding.status == 'abnormal'
+        : derivedStatus;
+    final statusColor = displayStatus == 'abnormal'
         ? assessmentDanger
-        : finding.status == 'normal'
+        : displayStatus == 'normal'
         ? assessmentGreen
         : assessmentMuted;
-    final statusText = selectedOption.isNotEmpty
-        ? options.$2[selectedOption] ?? finding.value
-        : finding.value.isNotEmpty
-        ? finding.value
-        : finding.status == 'not_assessed'
-        ? isMalayalam
-              ? 'പരിശോധിച്ചിട്ടില്ല'
-              : 'Not assessed'
-        : finding.status == 'normal'
-        ? isMalayalam
-              ? 'സാധാരണം'
-              : 'Normal'
-        : isMalayalam
-        ? 'അസാധാരണം'
-        : 'Abnormal';
+    final statusText = _findingStatusText(
+      key,
+      finding,
+      selectedOption,
+      options.$2,
+      secondary,
+      isMalayalam,
+    );
     final imageEnabled = const {
       'skin',
       'pressureArea',
@@ -270,19 +269,13 @@ class PhysicalExamStep extends StatelessWidget {
             ],
           ),
           children: [
-            AssessmentSegment(
-              compact: true,
-              options: options.$1,
-              labels: options.$2,
-              selected: selectedOption,
-              dangerValue: options.$1.length == 2 ? 'abnormal' : null,
-              onSelected: (selection) => controller.updateFinding(
-                key,
-                (value) => value.copyWith(
-                  status: selection == options.$1.first ? 'normal' : 'abnormal',
-                  value: selection,
-                ),
-              ),
+            _findingControls(
+              key,
+              finding,
+              selectedOption,
+              options,
+              secondary,
+              isMalayalam,
             ),
             const SizedBox(height: 10),
             AssessmentTextField(
@@ -372,6 +365,385 @@ class PhysicalExamStep extends StatelessWidget {
     );
   }
 
+  Widget _findingControls(
+    String key,
+    ExamFinding finding,
+    String selectedOption,
+    (List<String>, Map<String, String>) options,
+    ({
+      String fieldKey,
+      String label,
+      List<String> options,
+      Map<String, String> labels,
+      bool dropdown,
+    })?
+    secondary,
+    bool isMalayalam,
+  ) {
+    if (key == 'urine') {
+      return _urineControls(selectedOption, options.$2);
+    }
+
+    final primary = _findingSelector(
+      key: key,
+      options: options.$1,
+      labels: options.$2,
+      selected: selectedOption,
+      dropdown: _dropdownFindingKeys.contains(key),
+      onSelected: (selection) => _updateFindingSelection(key, selection),
+    );
+
+    if (secondary == null) return primary;
+
+    final secondarySelected = finding.extraValues[secondary.fieldKey] ?? '';
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _findingSelector(
+                key: '$key-${secondary.fieldKey}',
+                options: secondary.options,
+                labels: secondary.labels,
+                selected: secondarySelected,
+                dropdown: secondary.dropdown,
+                onSelected: (selection) =>
+                    _updateFindingExtra(key, secondary.fieldKey, selection),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _urineControls(String selectedOption, Map<String, String> labels) {
+    const independent = 'uses_toilet_independently';
+    const catheterOptions = [
+      'urinary_catheter',
+      'condom_catheter',
+      'nephrostomy_tube',
+    ];
+    final catheterSelected = catheterOptions.contains(selectedOption)
+        ? selectedOption
+        : '';
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: AssessmentSegment(
+            compact: true,
+            options: const [independent],
+            labels: labels,
+            selected: selectedOption == independent ? independent : '',
+            onSelected: (selection) =>
+                _updateFindingSelection('urine', selection),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _findingSelector(
+                key: 'urine-catheter',
+                options: catheterOptions,
+                labels: labels,
+                selected: catheterSelected,
+                dropdown: true,
+                onSelected: (selection) =>
+                    _updateFindingSelection('urine', selection),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _findingSelector({
+    required String key,
+    required List<String> options,
+    required Map<String, String> labels,
+    required String selected,
+    required bool dropdown,
+    required ValueChanged<String> onSelected,
+  }) {
+    if (!dropdown) {
+      return AssessmentSegment(
+        compact: true,
+        options: options,
+        labels: labels,
+        selected: selected,
+        dangerValue: _dangerValueForOptions(options),
+        onSelected: onSelected,
+      );
+    }
+
+    final selectedValue = options.contains(selected) ? selected : null;
+    return DropdownButtonFormField<String>(
+      key: ValueKey('physical-exam-select-$key'),
+      initialValue: selectedValue,
+      isExpanded: true,
+      icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+      style: const TextStyle(
+        color: assessmentText,
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+      ),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: assessmentBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: assessmentBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: assessmentGreen),
+        ),
+      ),
+      items: options
+          .map(
+            (option) => DropdownMenuItem(
+              value: option,
+              child: Text(
+                labels[option] ?? option,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: (value) {
+        if (value != null) onSelected(value);
+      },
+    );
+  }
+
+  void _updateFindingSelection(String key, String selection) {
+    controller.updateFinding(
+      key,
+      (value) => value.copyWith(
+        status: _statusForFindingState(key, selection, value.extraValues),
+        value: selection,
+      ),
+    );
+  }
+
+  void _updateFindingExtra(String key, String fieldKey, String selection) {
+    controller.updateFinding(key, (value) {
+      final extras = {...value.extraValues, fieldKey: selection};
+      return value.copyWith(
+        status: _statusForFindingState(key, value.value, extras),
+        extraValues: extras,
+      );
+    });
+  }
+
+  String _findingStatusText(
+    String key,
+    ExamFinding finding,
+    String selectedOption,
+    Map<String, String> labels,
+    ({
+      String fieldKey,
+      String label,
+      List<String> options,
+      Map<String, String> labels,
+      bool dropdown,
+    })?
+    secondary,
+    bool isMalayalam,
+  ) {
+    final pieces = <String>[];
+    if (selectedOption.isNotEmpty) {
+      pieces.add(labels[selectedOption] ?? finding.value);
+    } else if (finding.value.isNotEmpty) {
+      pieces.add(finding.value);
+    }
+    if (secondary != null) {
+      final secondaryValue = finding.extraValues[secondary.fieldKey];
+      if (secondaryValue != null && secondaryValue.isNotEmpty) {
+        pieces.add(secondary.labels[secondaryValue] ?? secondaryValue);
+      }
+    }
+    if (pieces.isNotEmpty) return pieces.join(' / ');
+    if (finding.status == 'not_assessed') {
+      return isMalayalam ? 'പരിശോധിച്ചിട്ടില്ല' : 'Not assessed';
+    }
+    if (finding.status == 'normal') {
+      return isMalayalam ? 'സാധാരണം' : 'Normal';
+    }
+    return isMalayalam ? 'അസാധാരണം' : 'Abnormal';
+  }
+
+  String _selectedFindingOption(
+    String key,
+    ExamFinding finding,
+    List<String> options,
+  ) {
+    final normalized = _normalizeFindingValue(finding.value);
+    if (options.contains(normalized)) return normalized;
+
+    final status = finding.status;
+    switch (key) {
+      case 'respiration':
+        if (normalized == 'oxygen_cylinder') return 'oxygen_cylinder';
+        if (status == 'normal' || normalized == 'normal') return 'normal';
+        break;
+      case 'foodWater':
+        if (normalized == 'good') return 'self_feeding';
+        if (normalized == 'reduced' || normalized == 'poor') {
+          return 'assistance';
+        }
+        break;
+      case 'urine':
+        if (normalized == 'normal') return 'uses_toilet_independently';
+        if (normalized == 'catheter') return 'urinary_catheter';
+        break;
+      case 'defecation':
+        if (normalized == 'constipation') return 'uses_medication';
+        if (normalized == 'diarrhea' || normalized == 'incontinence') {
+          return 'no_defecation';
+        }
+        break;
+      case 'sleep':
+        if (normalized == 'good') return 'normal';
+        if (normalized == 'disturbed' || normalized == 'insomnia') {
+          return 'with_medication';
+        }
+        break;
+      case 'scalpHair':
+        if (status == 'normal' || normalized == 'normal') return 'clean';
+        if (status == 'abnormal' || normalized == 'abnormal') {
+          return 'not_clean';
+        }
+        break;
+      case 'skin':
+        if (status == 'normal' || normalized == 'normal') return 'soft_skin';
+        if (status == 'abnormal' || normalized == 'abnormal') {
+          return 'dry_skin';
+        }
+        break;
+      case 'eyeNoseMouth':
+      case 'oral':
+      case 'nails':
+      case 'perineum':
+      case 'pressureArea':
+      case 'hiddenArea':
+        if (status == 'normal' || normalized == 'normal') return 'clean';
+        if (status == 'abnormal' || normalized == 'abnormal') return 'unclean';
+        break;
+      case 'musclesJoints':
+        if (status == 'normal' || normalized == 'normal') return 'no_pain';
+        if (status == 'abnormal' || normalized == 'abnormal') {
+          return 'pain_present';
+        }
+        break;
+      case 'specialAttention':
+        if (status == 'normal' || normalized == 'normal') return 'no';
+        if (status == 'abnormal' || normalized == 'abnormal') return 'yes';
+        break;
+    }
+
+    if (options.contains(status)) return status;
+    return '';
+  }
+
+  String _normalizeFindingValue(String value) => value
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[\s-]+'), '_')
+      .replaceAll(RegExp(r'[^a-z0-9_]+'), '');
+
+  String _statusForFindingState(
+    String key,
+    String selection,
+    Map<String, String> extras,
+  ) {
+    final secondary = _secondaryStatus(key, extras);
+    if (secondary == 'abnormal') return 'abnormal';
+
+    final main = _statusForSelection(key, selection);
+    if (main != 'not_assessed') return main;
+    if (secondary != 'not_assessed') return secondary;
+    return 'not_assessed';
+  }
+
+  String _secondaryStatus(String key, Map<String, String> extras) {
+    switch (key) {
+      case 'scalpHair':
+        final value = extras['scalpCondition'];
+        if (value == null || value.isEmpty) return 'not_assessed';
+        return value == 'no_lice' ? 'normal' : 'abnormal';
+      case 'pressureArea':
+      case 'hiddenArea':
+        final value = extras['woundStatus'];
+        if (value == null || value.isEmpty) return 'not_assessed';
+        return value == 'no_wounds' ? 'normal' : 'abnormal';
+      default:
+        return 'not_assessed';
+    }
+  }
+
+  String _statusForSelection(String key, String selection) {
+    if (selection.isEmpty) return 'not_assessed';
+    switch (key) {
+      case 'respiration':
+        return selection == 'normal' ? 'normal' : 'abnormal';
+      case 'foodWater':
+        return selection == 'self_feeding' ? 'normal' : 'abnormal';
+      case 'urine':
+        return selection == 'uses_toilet_independently' ? 'normal' : 'abnormal';
+      case 'defecation':
+      case 'sleep':
+        return selection == 'normal' ? 'normal' : 'abnormal';
+      case 'scalpHair':
+        return selection == 'clean' ? 'normal' : 'abnormal';
+      case 'skin':
+        return selection == 'soft_skin' ? 'normal' : 'abnormal';
+      case 'eyeNoseMouth':
+      case 'oral':
+      case 'nails':
+      case 'perineum':
+      case 'pressureArea':
+      case 'hiddenArea':
+        return selection == 'clean' ? 'normal' : 'abnormal';
+      case 'musclesJoints':
+        return selection == 'no_pain' ? 'normal' : 'abnormal';
+      case 'specialAttention':
+        return selection == 'no' ? 'normal' : 'abnormal';
+      default:
+        return selection == 'normal' ? 'normal' : 'abnormal';
+    }
+  }
+
+  String? _dangerValueForOptions(List<String> options) {
+    for (final option in const [
+      'abnormal',
+      'unclean',
+      'pain_present',
+      'yes',
+      'no_defecation',
+      'over_sleep',
+      'dry_skin',
+      'not_clean',
+    ]) {
+      if (options.contains(option)) return option;
+    }
+    return null;
+  }
+
   Future<void> _pickImage(
     BuildContext context,
     String key,
@@ -416,60 +788,89 @@ class PhysicalExamStep extends StatelessWidget {
     bool isMalayalam,
   ) {
     switch (key) {
-      case 'foodWater':
+      case 'respiration':
         return (
-          const ['good', 'reduced', 'poor'],
-          isMalayalam
-              ? const {'good': 'നല്ലത്', 'reduced': 'കുറഞ്ഞത്', 'poor': 'മോശം'}
-              : const {'good': 'Good', 'reduced': 'Reduced', 'poor': 'Poor'},
-        );
-      case 'urine':
-        return (
-          const ['normal', 'retention', 'catheter', 'incontinence'],
+          const ['normal', 'oxygen_cylinder', 'bipap_machine', 'nebulizer'],
           isMalayalam
               ? const {
                   'normal': 'സാധാരണം',
-                  'retention': 'തടസ്സം',
-                  'catheter': 'കാത്തീറ്റർ',
-                  'incontinence': 'നിയന്ത്രണമില്ലായ്മ',
+                  'oxygen_cylinder': 'ഓക്സിജൻ സിലിണ്ടർ',
+                  'bipap_machine': 'BiPAP മെഷീൻ',
+                  'nebulizer': 'നെബുലൈസർ',
                 }
               : const {
                   'normal': 'Normal',
-                  'retention': 'Retention',
-                  'catheter': 'Catheter',
-                  'incontinence': 'Incontinence',
+                  'oxygen_cylinder': 'Oxygen cylinder',
+                  'bipap_machine': 'BiPAP Machine',
+                  'nebulizer': 'Nebulizer',
+                },
+        );
+      case 'foodWater':
+        return (
+          const ['self_feeding', 'tube_fed', 'assistance'],
+          isMalayalam
+              ? const {
+                  'self_feeding': 'സ്വയം കഴിക്കുന്നു',
+                  'tube_fed': 'ട്യൂബ് ഫീഡിംഗ്',
+                  'assistance': 'സഹായം ആവശ്യമാണ്',
+                }
+              : const {
+                  'self_feeding': 'Self Feeding',
+                  'tube_fed': 'Tube Fed',
+                  'assistance': 'Assistance',
+                },
+        );
+      case 'urine':
+        return (
+          const [
+            'uses_toilet_independently',
+            'urinary_catheter',
+            'condom_catheter',
+            'nephrostomy_tube',
+          ],
+          isMalayalam
+              ? const {
+                  'uses_toilet_independently':
+                      'സ്വതന്ത്രമായി ശൗചാലയം ഉപയോഗിക്കുന്നു',
+                  'urinary_catheter': 'യൂറിനറി കാത്തീറ്റർ',
+                  'condom_catheter': 'കോണ്ടം കാത്തീറ്റർ',
+                  'nephrostomy_tube': 'നെഫ്രോസ്റ്റമി ട്യൂബ്',
+                }
+              : const {
+                  'uses_toilet_independently': 'Uses Toilet Independently',
+                  'urinary_catheter': 'Urinary Catheter',
+                  'condom_catheter': 'Condom Catheter',
+                  'nephrostomy_tube': 'Nephrostomy Tube',
                 },
         );
       case 'defecation':
         return (
-          const ['normal', 'constipation', 'diarrhea', 'incontinence'],
+          const ['normal', 'uses_medication', 'no_defecation'],
           isMalayalam
               ? const {
                   'normal': 'സാധാരണം',
-                  'constipation': 'മലബന്ധം',
-                  'diarrhea': 'വയറിളക്കം',
-                  'incontinence': 'നിയന്ത്രണമില്ലായ്മ',
+                  'uses_medication': 'മരുന്ന് ഉപയോഗിക്കുന്നു',
+                  'no_defecation': 'മലവിസർജനം ഇല്ല',
                 }
               : const {
                   'normal': 'Normal',
-                  'constipation': 'Constipation',
-                  'diarrhea': 'Diarrhea',
-                  'incontinence': 'Incontinence',
+                  'uses_medication': 'Uses Medication',
+                  'no_defecation': 'No Defecation',
                 },
         );
       case 'sleep':
         return (
-          const ['good', 'disturbed', 'insomnia'],
+          const ['normal', 'with_medication', 'over_sleep'],
           isMalayalam
               ? const {
-                  'good': 'നല്ലത്',
-                  'disturbed': 'തടസ്സപ്പെട്ടത്',
-                  'insomnia': 'ഉറക്കമില്ലായ്മ',
+                  'normal': 'സാധാരണ ഉറക്കം',
+                  'with_medication': 'മരുന്നിന്റെ സഹായത്തോടെ',
+                  'over_sleep': 'അമിത ഉറക്കം',
                 }
               : const {
-                  'good': 'Good',
-                  'disturbed': 'Disturbed',
-                  'insomnia': 'Insomnia',
+                  'normal': 'Normal',
+                  'with_medication': 'With Medication',
+                  'over_sleep': 'Over Sleep',
                 },
         );
       case 'hygiene':
@@ -486,6 +887,49 @@ class PhysicalExamStep extends StatelessWidget {
               ? const {'yes': 'ഉണ്ട്', 'limited': 'പരിമിതം', 'no': 'ഇല്ല'}
               : const {'yes': 'Yes', 'limited': 'Limited', 'no': 'No'},
         );
+      case 'scalpHair':
+        return (
+          const ['clean', 'not_clean'],
+          isMalayalam
+              ? const {'clean': 'വൃത്തി ഉണ്ട്', 'not_clean': 'വൃത്തി ഇല്ല'}
+              : const {'clean': 'Clean', 'not_clean': 'Not Clean'},
+        );
+      case 'skin':
+        return (
+          const ['dry_skin', 'soft_skin'],
+          isMalayalam
+              ? const {
+                  'dry_skin': 'വരണ്ട ചർമ്മം',
+                  'soft_skin': 'മൃദുവായ ചർമ്മം',
+                }
+              : const {'dry_skin': 'Dry Skin', 'soft_skin': 'Soft Skin'},
+        );
+      case 'eyeNoseMouth':
+      case 'oral':
+      case 'nails':
+      case 'perineum':
+      case 'pressureArea':
+      case 'hiddenArea':
+        return (
+          const ['clean', 'unclean'],
+          isMalayalam
+              ? const {'clean': 'വൃത്തി ഉണ്ട്', 'unclean': 'വൃത്തിയില്ല'}
+              : const {'clean': 'Clean', 'unclean': 'Unclean'},
+        );
+      case 'musclesJoints':
+        return (
+          const ['pain_present', 'no_pain'],
+          isMalayalam
+              ? const {'pain_present': 'വേദന ഉണ്ട്', 'no_pain': 'വേദന ഇല്ല'}
+              : const {'pain_present': 'Pain Present', 'no_pain': 'No Pain'},
+        );
+      case 'specialAttention':
+        return (
+          const ['no', 'yes'],
+          isMalayalam
+              ? const {'no': 'ഇല്ല', 'yes': 'ഉണ്ട്'}
+              : const {'no': 'No', 'yes': 'Yes'},
+        );
       default:
         return (
           const ['normal', 'abnormal'],
@@ -493,6 +937,56 @@ class PhysicalExamStep extends StatelessWidget {
               ? const {'normal': 'സാധാരണം', 'abnormal': 'അസാധാരണം'}
               : const {'normal': 'Normal', 'abnormal': 'Abnormal'},
         );
+    }
+  }
+
+  ({
+    String fieldKey,
+    String label,
+    List<String> options,
+    Map<String, String> labels,
+    bool dropdown,
+  })?
+  _secondaryFindingOptions(String key, bool isMalayalam) {
+    switch (key) {
+      case 'scalpHair':
+        return (
+          fieldKey: 'scalpCondition',
+          label: isMalayalam ? 'പേൻ / താരൻ' : 'Lice / Dandruff',
+          options: const [
+            'lice_present',
+            'no_lice',
+            'dandruff_present_no_lice',
+            'no_dandruff_lice_present',
+          ],
+          labels: isMalayalam
+              ? const {
+                  'lice_present': 'പേൻ ഉണ്ട്',
+                  'no_lice': 'പേൻ ഇല്ല',
+                  'dandruff_present_no_lice': 'താരൻ ഉണ്ട് പേൻ ഇല്ല',
+                  'no_dandruff_lice_present': 'താരൻ ഇല്ല പേൻ ഉണ്ട്',
+                }
+              : const {
+                  'lice_present': 'Lice',
+                  'no_lice': 'No lice',
+                  'dandruff_present_no_lice': 'Dandruff Present No lice',
+                  'no_dandruff_lice_present': 'No Dandruff Lice Present',
+                },
+          dropdown: true,
+        );
+      case 'pressureArea':
+      case 'hiddenArea':
+        return (
+          fieldKey: 'woundStatus',
+          label: isMalayalam ? 'മുറിവുകൾ' : 'Wounds',
+          options: const ['wounds', 'no_wounds'],
+          labels: isMalayalam
+              ? const {'wounds': 'മുറിവുകൾ', 'no_wounds': 'മുറിവുകളില്ല'}
+              : const {'wounds': 'Wounds', 'no_wounds': 'No Wounds'},
+          dropdown: false,
+        );
+      default:
+        return null;
     }
   }
 }
