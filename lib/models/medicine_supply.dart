@@ -7,6 +7,8 @@ class MedicineSupply {
   final DateTime givenAt;
   final int qtyGiven;
   final String? status;
+  final int? qtyReturned;
+  final DateTime? returnedAt;
   final String? staffNote;
   final String? prescribedBy;
   final String? doctorPrescription;
@@ -22,6 +24,8 @@ class MedicineSupply {
     required this.givenAt,
     required this.qtyGiven,
     this.status = 'given',
+    this.qtyReturned,
+    this.returnedAt,
     this.staffNote,
     this.prescribedBy,
     this.doctorPrescription,
@@ -44,6 +48,12 @@ class MedicineSupply {
           ? (json['qtyGiven'] as num).toInt()
           : int.tryParse(json['qtyGiven']?.toString() ?? '0') ?? 0,
       status: json['status']?.toString(),
+      qtyReturned: (json['qtyReturned'] is num || json['qty_returned'] is num)
+          ? ((json['qtyReturned'] ?? json['qty_returned']) as num).toInt()
+          : int.tryParse((json['qtyReturned'] ?? json['qty_returned'])?.toString() ?? ''),
+      returnedAt: (json['returnedAt'] ?? json['returned_at']) != null
+          ? DateTime.tryParse((json['returnedAt'] ?? json['returned_at']).toString())
+          : null,
       staffNote: json['staffNote']?.toString(),
       prescribedBy: json['prescribedBy']?.toString(),
       doctorPrescription: json['doctorPrescription']?.toString(),
@@ -70,6 +80,8 @@ class MedicineSupply {
     };
     
     if (status != null) map['status'] = status;
+    if (qtyReturned != null) map['qtyReturned'] = qtyReturned;
+    if (returnedAt != null) map['returnedAt'] = returnedAt!.toIso8601String();
     if (staffNote != null) map['staffNote'] = staffNote;
     if (prescribedBy != null) map['prescribedBy'] = prescribedBy;
     if (doctorPrescription != null) map['doctorPrescription'] = doctorPrescription;
@@ -110,6 +122,8 @@ class MedicineSupply {
     DateTime? givenAt,
     int? qtyGiven,
     String? status,
+    int? qtyReturned,
+    DateTime? returnedAt,
     String? staffNote,
     String? prescribedBy,
     String? doctorPrescription,
@@ -123,6 +137,8 @@ class MedicineSupply {
       givenAt: givenAt ?? this.givenAt,
       qtyGiven: qtyGiven ?? this.qtyGiven,
       status: status ?? this.status,
+      qtyReturned: qtyReturned ?? this.qtyReturned,
+      returnedAt: returnedAt ?? this.returnedAt,
       staffNote: staffNote ?? this.staffNote,
       prescribedBy: prescribedBy ?? this.prescribedBy,
       doctorPrescription: doctorPrescription ?? this.doctorPrescription,

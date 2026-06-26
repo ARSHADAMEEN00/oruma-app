@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:oruma_app/features/visit_assessment/data/visit_assessment_pdf_generator.dart';
+import 'package:oruma_app/features/visit_assessment/data/visit_assessment_service.dart';
 import 'package:oruma_app/features/visit_assessment/domain/visit_assessment.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_theme.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_widgets.dart';
+import 'package:oruma_app/services/auth_service.dart';
+import 'package:provider/provider.dart';
 import 'package:printing/printing.dart';
 
 class VisitAssessmentDetailScreen extends StatelessWidget {
@@ -58,6 +61,8 @@ class VisitAssessmentDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.read<AuthService>();
+
     return Theme(
       data: visitAssessmentLightTheme(),
       child: Scaffold(
@@ -71,6 +76,12 @@ class VisitAssessmentDetailScreen extends StatelessWidget {
             fontWeight: FontWeight.w800,
           ),
           actions: [
+            if (auth.canDelete && assessment.id != null)
+              IconButton(
+                tooltip: 'Delete assessment',
+                onPressed: () => _deleteAssessment(context),
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+              ),
             if (onEdit != null)
               IconButton(
                 tooltip: 'Edit assessment',
@@ -142,6 +153,50 @@ class VisitAssessmentDetailScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _deleteAssessment(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Assessment'),
+        content: const Text('Are you sure you want to delete this assessment? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Deleting assessment...')),
+        );
+      }
+      await VisitAssessmentService.deleteAssessment(assessment.id!);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Assessment deleted successfully'), backgroundColor: Colors.green),
+        );
+        Navigator.pop(context, true); // Pop the detail screen and pass true to indicate deletion
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete assessment: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Future<void> _createPdf(BuildContext context) async {

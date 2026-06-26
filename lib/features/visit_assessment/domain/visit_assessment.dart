@@ -335,25 +335,7 @@ Map<String, ExamFinding> emptyPhysicalExam() => {
 };
 
 ExamFinding defaultExamFinding(String key) {
-  switch (key) {
-    case 'respiration':
-      return const ExamFinding(status: 'normal', value: 'normal');
-    case 'foodWater':
-      return const ExamFinding(status: 'normal', value: 'self_feeding');
-    case 'urine':
-      return const ExamFinding(
-        status: 'normal',
-        value: 'uses_toilet_independently',
-      );
-    case 'defecation':
-      return const ExamFinding(status: 'normal', value: 'normal');
-    case 'sleep':
-      return const ExamFinding(status: 'normal', value: 'normal');
-    case 'scalpHair':
-      return const ExamFinding(status: 'normal', value: 'clean');
-    default:
-      return const ExamFinding();
-  }
+  return const ExamFinding();
 }
 
 ExamFinding _draftDefaultExamFinding(String key, dynamic json) {

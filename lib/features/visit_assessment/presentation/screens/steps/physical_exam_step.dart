@@ -64,7 +64,7 @@ class PhysicalExamStep extends StatelessWidget {
   static const _previousVisitPromptMalayalam =
       'കഴിഞ്ഞ സന്ദർശനത്തിലെഴുതിയിരുന്ന ബുദ്ധിമുട്ടുകളും അതിന്റെ ഇപ്പോഴത്തെ അവസ്ഥയും, രോഗിയുടെ പ്രധാന പരാതികൾ / പ്രധാന ബുദ്ധിമുട്ട് / പൊതു അവസ്ഥ';
 
-  static const _dropdownFindingKeys = {'respiration', 'foodWater'};
+  static const _dropdownFindingKeys = {'respiration', 'foodWater', 'sleep', 'defecation'};
 
   @override
   Widget build(BuildContext context) {

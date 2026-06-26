@@ -446,10 +446,13 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
               icon: Icons.person_add_alt_1_outlined,
               children: [
                 Autocomplete<Patient>(
-                  displayStringForOption: (option) => '${option.name} (${option.phone})',
+                  displayStringForOption: (option) => '${option.name}${option.registerId?.isNotEmpty == true ? ' - ${option.registerId}' : ''} (${option.phone})',
                   optionsBuilder: (textEditingValue) {
                     if (textEditingValue.text.isEmpty) return const Iterable<Patient>.empty();
-                    return _patients.where((p) => p.name.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+                    final query = textEditingValue.text.toLowerCase();
+                    return _patients.where((p) => 
+                        p.name.toLowerCase().contains(query) || 
+                        (p.registerId?.toLowerCase().contains(query) ?? false));
                   },
                   onSelected: (selection) => setState(() => _selectedPatient = selection),
                   fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
@@ -480,9 +483,40 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                         const Icon(Icons.person, color: _medicineGreen, size: 20),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: Text(
-                            _selectedPatient!.name,
-                            style: const TextStyle(color: _medicineDarkGreen),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _selectedPatient!.name,
+                                style: const TextStyle(
+                                  color: _medicineDarkGreen,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                [
+                                  if (_selectedPatient!.registerId?.isNotEmpty == true)
+                                    'Reg No: ${_selectedPatient!.registerId}',
+                                  if (_selectedPatient!.phone.isNotEmpty)
+                                    'Ph: ${_selectedPatient!.phone}',
+                                ].join(' • '),
+                                style: const TextStyle(
+                                  color: _medicineDarkGreen,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              if (_selectedPatient!.address.isNotEmpty) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  _selectedPatient!.address,
+                                  style: const TextStyle(
+                                    color: _medicineDarkGreen,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                         InkWell(

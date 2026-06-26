@@ -368,19 +368,95 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
 
   Future<void> _changeStatus(MedicineSupply supply, String newStatus) async {
     if (supply.status == newStatus) return;
+
+    int? qtyReturned;
+    DateTime? returnedAt;
+
+    if (newStatus == 'returned') {
+      final TextEditingController qtyController =
+          TextEditingController(text: supply.qtyGiven.toString());
+      DateTime selectedDate = DateTime.now();
+
+      final bool? confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: const Text('Return Medicine'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: qtyController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Returned Quantity',
+                        helperText: 'Max: ${supply.qtyGiven}',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Return Date'),
+                      subtitle: Text(
+                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                      ),
+                      trailing: const Icon(Icons.calendar_today),
+                      onTap: () async {
+                        final DateTime? picked = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDate,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            selectedDate = picked;
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      final int? qty = int.tryParse(qtyController.text);
+                      if (qty == null || qty <= 0 || qty > supply.qtyGiven) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter a valid quantity'),
+                          ),
+                        );
+                        return;
+                      }
+                      Navigator.pop(context, true);
+                    },
+                    child: const Text('Confirm'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+
+      if (confirm != true) return;
+
+      qtyReturned = int.tryParse(qtyController.text);
+      returnedAt = selectedDate;
+    }
+
     try {
-      final updated = MedicineSupply(
-        id: supply.id,
-        patientId: supply.patientId,
-        medicineId: supply.medicineId,
-        givenByStaff: supply.givenByStaff,
-        givenAt: supply.givenAt,
-        qtyGiven: supply.qtyGiven,
+      final updated = supply.copyWith(
         status: newStatus,
-        staffNote: supply.staffNote,
-        prescribedBy: supply.prescribedBy,
-        supplyDays: supply.supplyDays,
-        doctorPrescription: supply.doctorPrescription,
+        qtyReturned: qtyReturned ?? supply.qtyReturned,
+        returnedAt: returnedAt ?? supply.returnedAt,
       );
       await MedicineSupplyService.updateMedicineSupply(supply.id!, updated);
       if (mounted) {
@@ -807,11 +883,14 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'Qty: ${supply.qtyGiven}',
+                              supply.status == 'returned'
+                                ? 'Given: ${supply.qtyGiven} • Ret: ${supply.qtyReturned ?? supply.qtyGiven}' + 
+                                  (supply.returnedAt != null ? ' (${supply.returnedAt!.day}/${supply.returnedAt!.month}/${supply.returnedAt!.year})' : '')
+                                : 'Qty: ${supply.qtyGiven}',
                               style: TextStyle(
-                                color: Colors.grey.shade500,
+                                color: supply.status == 'returned' ? Colors.orange.shade800 : Colors.grey.shade500,
                                 fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: supply.status == 'returned' ? FontWeight.w600 : FontWeight.w500,
                               ),
                             ),
                             const Spacer(),

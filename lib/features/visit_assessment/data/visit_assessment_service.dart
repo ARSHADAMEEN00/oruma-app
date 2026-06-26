@@ -60,4 +60,14 @@ class VisitAssessmentService {
     }
     throw Exception(result.error ?? 'Failed to submit visit assessment');
   }
+
+  static Future<bool> deleteAssessment(String id) async {
+    final result = await ApiService.delete(
+      '${ApiConfig.v2VisitAssessmentsEndpoint}/$id',
+    );
+    if (result.isSuccess) {
+      return true;
+    }
+    throw Exception(result.error ?? 'Failed to delete visit assessment');
+  }
 }
