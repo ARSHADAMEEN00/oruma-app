@@ -1069,6 +1069,14 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
   String? _selectedStoragePlace;
   bool _isSubmitting = false;
 
+  // ── Autocomplete state ──────────────────────────────────────────────────
+  List<Equipment> _allEquipment = [];
+  List<Equipment> _suggestions = [];
+  OverlayEntry? _overlayEntry;
+  final LayerLink _layerLink = LayerLink();
+  final FocusNode _nameFocus = FocusNode();
+  // ────────────────────────────────────────────────────────────────────────
+
   bool get _isEditing => widget.equipment != null;
 
   @override
@@ -1098,7 +1106,246 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
       text: widget.equipment?.uniqueId ?? '',
     );
     _selectedStoragePlace = widget.equipment?.storagePlace ?? 'Store';
+
+    // Load equipment list for autocomplete (uses AppCache — very fast)
+    _loadEquipment();
+
+    // Listen to name field changes to update suggestions
+    _nameController.addListener(_onNameChanged);
+    _nameFocus.addListener(() {
+      if (!_nameFocus.hasFocus) {
+        // Delay so the overlay item's onTap fires before the overlay is removed
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted) _hideSuggestions();
+        });
+      }
+    });
   }
+
+  // ── Autocomplete helpers ────────────────────────────────────────────────
+
+  Future<void> _loadEquipment() async {
+    try {
+      final list = await EquipmentService.getAllEquipment();
+      if (mounted) {
+        // Deduplicate by name so each equipment type appears only once
+        final seen = <String>{};
+        setState(() {
+          _allEquipment = list
+              .where((e) => seen.add(e.name.trim().toLowerCase()))
+              .toList();
+        });
+      }
+    } catch (_) {
+      // Autocomplete is optional — silently ignore errors
+    }
+  }
+
+  void _onNameChanged() {
+    final query = _nameController.text.trim().toLowerCase();
+    if (query.isEmpty) {
+      _hideSuggestions();
+      return;
+    }
+    final matches = _allEquipment
+        .where((e) => e.name.trim().toLowerCase().contains(query))
+        .toList();
+    setState(() => _suggestions = matches);
+    if (matches.isEmpty) {
+      _hideSuggestions();
+    } else {
+      _showSuggestions();
+    }
+  }
+
+  /// Extracts the base prefix from a uniqueId like "AMCR-001" → "AMCR".
+  String _extractPrefix(Equipment eq) {
+    // Prefer the serialNo field directly (it already stores the prefix)
+    if (eq.serialNo.isNotEmpty) return eq.serialNo;
+    // Fallback: strip the numeric suffix from uniqueId
+    final dash = eq.uniqueId.lastIndexOf('-');
+    if (dash > 0) return eq.uniqueId.substring(0, dash);
+    return eq.uniqueId;
+  }
+
+  void _selectEquipment(Equipment eq) {
+    _nameController.removeListener(_onNameChanged);
+    _nameController.text = eq.name;
+    _nameController.addListener(_onNameChanged);
+    // Auto-fill Serial No Prefix
+    _serialNoPrefixController.text = _extractPrefix(eq);
+    _hideSuggestions();
+    _nameFocus.unfocus();
+  }
+
+  void _showSuggestions() {
+    _hideSuggestions();
+    _overlayEntry = _buildOverlayEntry();
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _hideSuggestions() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  OverlayEntry _buildOverlayEntry() {
+    const maxItems = 5;
+    final itemH = 52.0;
+    final height = (_suggestions.length.clamp(1, maxItems)) * itemH;
+
+    return OverlayEntry(
+      builder: (ctx) => Positioned(
+        width: MediaQuery.of(context).size.width - 64, // match field width
+        child: CompositedTransformFollower(
+          link: _layerLink,
+          showWhenUnlinked: false,
+          offset: const Offset(0, 52), // drop below the field
+          child: Material(
+            elevation: 6,
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: height + 2),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: ListView.separated(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: _suggestions.length,
+                  separatorBuilder: (_, _s) =>
+                      Divider(height: 1, color: Colors.grey.shade100),
+                  itemBuilder: (_, i) {
+                    final eq = _suggestions[i];
+                    final prefix = _extractPrefix(eq);
+                    return InkWell(
+                      onTap: () => _selectEquipment(eq),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: _equipmentSurface,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                prefix.isNotEmpty
+                                    ? prefix.substring(
+                                        0,
+                                        prefix.length.clamp(0, 4),
+                                      )
+                                    : '??',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: _equipmentPrimary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    eq.name,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Prefix: $prefix',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.north_west,
+                              size: 14,
+                              color: Colors.grey[400],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Build the Equipment Name field with the autocomplete overlay ─────────
+  Widget _buildNameFieldWithAutocomplete() {
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: TextFormField(
+        controller: _nameController,
+        focusNode: _nameFocus,
+        validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: Colors.black,
+        ),
+        decoration: InputDecoration(
+          labelText: 'Equipment Name',
+          prefixIcon: Icon(
+            Icons.medical_services_outlined,
+            size: 20,
+            color: Colors.grey[400],
+          ),
+          suffixIcon: _suggestions.isNotEmpty
+              ? Icon(Icons.arrow_drop_down, color: Colors.grey[500])
+              : null,
+          filled: true,
+          fillColor: Colors.grey[50],
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 14,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.grey.shade200),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.grey.shade200),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(
+              color: _equipmentPrimary,
+              width: 1.5,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Colors.red, width: 1),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
 
   DateTime _normalizeDate(DateTime date) {
     return DateTime(date.year, date.month, date.day, 12, 0, 0);
@@ -1193,7 +1440,10 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
 
   @override
   void dispose() {
+    _hideSuggestions();
+    _nameController.removeListener(_onNameChanged);
     _nameController.dispose();
+    _nameFocus.dispose();
     _quantityController.dispose();
     _purchasedFromController.dispose();
     _purchaseDateController.dispose();
@@ -1342,12 +1592,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
               _buildSection(
                 title: 'Basic Information',
                 children: [
-                  _buildCompactField(
-                    controller: _nameController,
-                    label: 'Equipment Name',
-                    icon: Icons.medication_rounded,
-                    validator: (v) => v!.isEmpty ? 'Required' : null,
-                  ),
+                  _buildNameFieldWithAutocomplete(),
                   const SizedBox(height: 12),
                   if (_isEditing) ...[
                     _buildCompactField(
