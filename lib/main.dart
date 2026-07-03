@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:oruma_app/homscreen.dart';
 import 'package:oruma_app/loginscreen.dart';
 import 'package:oruma_app/services/auth_service.dart';
+import 'package:oruma_app/widgets/slide_page_route.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
@@ -75,6 +76,13 @@ class MyApp extends StatelessWidget {
           horizontal: 12,
         ),
       ),
+      // Apply smooth slide transitions globally to every MaterialPageRoute
+      pageTransitionsTheme: PageTransitionsTheme(
+        builders: {
+          for (final platform in TargetPlatform.values)
+            platform: _OrumaPageTransitionsBuilder(),
+        },
+      ),
     );
 
     return MaterialApp(
@@ -109,3 +117,25 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+/// Hooks Flutter's [PageTransitionsTheme] system so that every
+/// [MaterialPageRoute] automatically uses the smooth slide transition
+/// defined in [buildSlideTransition].
+class _OrumaPageTransitionsBuilder extends PageTransitionsBuilder {
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return buildSlideTransition(
+      context,
+      animation,
+      secondaryAnimation,
+      child,
+    );
+  }
+}
+
