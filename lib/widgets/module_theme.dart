@@ -38,6 +38,12 @@ class ModulePalettes {
     iconBackground: Color(0xFF9FE1CB),
     primary: Color(0xFF0F6E56),
   );
+
+  static const socialSupport = ModulePalette(
+    cardBackground: Color(0xFFF7E5EE),
+    iconBackground: Color(0xFFE8AEC9),
+    primary: Color(0xFF8A2454),
+  );
 }
 
 class ModuleTheme extends StatelessWidget {

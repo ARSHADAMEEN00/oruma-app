@@ -88,47 +88,14 @@ class VisitHeaderStep extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         const AssessmentLabel('Team', required: true),
-        DropdownButtonFormField<String>(
+        AssessmentTextField(
           initialValue: assessment.team.isEmpty
               ? 'Team Oruma'
               : assessment.team,
-          icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-          style: const TextStyle(
-            color: assessmentText,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white,
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: assessmentBorder),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: assessmentBorder),
-            ),
-          ),
-          items:
-              <String>{
-                assessment.team,
-                'Team Oruma',
-                'NHC Team A',
-                'NHC Team B',
-              }.where((item) => item.isNotEmpty).map((item) {
-                return DropdownMenuItem(value: item, child: Text(item));
-              }).toList(),
-          onChanged: (value) {
-            if (value != null) {
-              controller.update((item) => item.copyWith(team: value));
-            }
-          },
+          hint: 'Enter team name',
+          suffixIcon: const Icon(Icons.groups_outlined, size: 18),
+          onChanged: (value) =>
+              controller.update((item) => item.copyWith(team: value)),
         ),
         const SizedBox(height: 17),
         const AssessmentLabel('Visit Type'),
@@ -153,6 +120,7 @@ class VisitHeaderStep extends StatelessWidget {
       children: [
         AssessmentLabel(label, required: true),
         AssessmentTextField(
+          key: ValueKey('visit-time-$from-$value'),
           initialValue: parsed == null ? value : parsed.format(context),
           readOnly: true,
           suffixIcon: const Icon(Icons.access_time, size: 17),
@@ -193,11 +161,22 @@ class VisitHeaderStep extends StatelessWidget {
   }
 
   TimeOfDay? _parseTime(String value) {
-    final parts = value.split(':');
-    if (parts.length != 2) return null;
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    final parts = trimmed.split(':');
+    if (parts.length != 2) return _parseDisplayTime(trimmed);
     final hour = int.tryParse(parts[0]);
     final minute = int.tryParse(parts[1]);
-    if (hour == null || minute == null) return null;
+    if (hour == null || minute == null) return _parseDisplayTime(trimmed);
     return TimeOfDay(hour: hour, minute: minute);
+  }
+
+  TimeOfDay? _parseDisplayTime(String value) {
+    try {
+      final parsed = DateFormat.jm().parse(value);
+      return TimeOfDay(hour: parsed.hour, minute: parsed.minute);
+    } catch (_) {
+      return null;
+    }
   }
 }

@@ -28,6 +28,7 @@ class Medicine {
   final String? strengthUnit;
   final double qty;
   final String? qtyUnit;
+  final String? netContent;
   final DateTime? expiryDate;
   final String? batchNumber;
   final String? description;
@@ -50,6 +51,7 @@ class Medicine {
     this.strengthUnit,
     this.qty = 0,
     this.qtyUnit,
+    this.netContent,
     this.expiryDate,
     this.batchNumber,
     this.description,
@@ -76,6 +78,7 @@ class Medicine {
       strengthUnit: json['strengthUnit']?.toString(),
       qty: _toDouble(json['qty']) ?? 0,
       qtyUnit: json['qtyUnit']?.toString(),
+      netContent: json['netContent']?.toString(),
       expiryDate: json['expiryDate'] == null
           ? null
           : DateTime.tryParse(json['expiryDate'].toString()),
@@ -108,6 +111,7 @@ class Medicine {
       'strengthUnit': strengthUnit,
       'qty': qty,
       'qtyUnit': qtyUnit,
+      'netContent': netContent,
       'expiryDate': expiryDate?.toIso8601String(),
       'batchNumber': batchNumber,
       'description': description,

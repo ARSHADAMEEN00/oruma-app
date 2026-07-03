@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:oruma_app/equipment_supply_list_page.dart';
 import 'package:oruma_app/eq_supply.dart'; // Import for Distribute Page
 import 'package:oruma_app/models/equipment.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
@@ -11,6 +12,8 @@ import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
+import 'package:oruma_app/widgets/module_switch_tabs.dart';
+import 'package:oruma_app/widgets/module_theme.dart';
 
 const _equipmentPrimary = Color(0xFF854F0B);
 const _equipmentSurface = Color(0xFFFAEEDA);
@@ -172,10 +175,32 @@ class _EquipmentListPageState extends State<EquipmentListPage>
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: _equipmentSurface,
+        surfaceTintColor: _equipmentSurface,
+        foregroundColor: _equipmentPrimary,
         elevation: 1,
-        title: const Text('Equipment List', style: TextStyle(fontSize: 18)),
+        title: ModuleSwitchTabs(
+          labels: const ['Supplies', 'Equipment'],
+          icons: const [
+            Icons.assignment_turned_in_outlined,
+            Icons.medical_services_outlined,
+          ],
+          selectedIndex: 1,
+          color: _equipmentPrimary,
+          onSelected: (index) {
+            if (index == 0) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ModuleTheme(
+                    palette: ModulePalettes.equipmentSupply,
+                    child: EquipmentSupplyListPage(),
+                  ),
+                ),
+              );
+            }
+          },
+        ),
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
@@ -518,170 +543,181 @@ class _EquipmentListPageState extends State<EquipmentListPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            Row(
+      builder: (context) => SafeArea(
+        top: false,
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Colors.orange.shade50,
-                  child: Icon(
-                    Icons.medical_services,
-                    color: Colors.orange.shade400,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        supply.equipmentName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                      Text(
-                        supply.equipmentUniqueId,
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                ),
-                _buildStatusBadge(supply.status),
-              ],
-            ),
-            const SizedBox(height: 24),
-            const Divider(),
-            const SizedBox(height: 16),
-            // Receiver Details
-            const Text(
-              'Receiver Details',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: _equipmentPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _buildDetailRow(
-              Icons.person_outline,
-              'Name',
-              supply.receiverName ?? 'N/A',
-            ),
-            _buildDetailRow(
-              Icons.phone_outlined,
-              'Phone',
-              supply.receiverPhone ?? 'N/A',
-            ),
-            if (supply.receiverAddress != null &&
-                supply.receiverAddress!.isNotEmpty)
-              _buildDetailRow(
-                Icons.location_on_outlined,
-                'Address',
-                '${supply.receiverAddress}${supply.receiverPlace != null ? ', ${supply.receiverPlace}' : ''}',
-              ),
-
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 16),
-
-            // Patient Details (if exists)
-            if (supply.patientName != null &&
-                supply.patientName!.isNotEmpty) ...[
-              const Text(
-                'Patient Details',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: _equipmentPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              _buildDetailRow(
-                Icons.person_outlined,
-                'Name',
-                supply.patientName!,
-              ),
-              if (supply.patientPhone != null &&
-                  supply.patientPhone!.isNotEmpty)
-                _buildDetailRow(
-                  Icons.phone_outlined,
-                  'Phone',
-                  supply.patientPhone!,
-                ),
-              if (supply.patientAddress != null &&
-                  supply.patientAddress!.isNotEmpty)
-                _buildDetailRow(
-                  Icons.location_on_outlined,
-                  'Address',
-                  supply.patientAddress!,
-                ),
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 16),
-            ],
-
-            _buildDetailRow(
-              Icons.calendar_today_outlined,
-              'Supply Date',
-              _formatDate(supply.supplyDate),
-            ),
-            if (supply.notes != null && supply.notes!.isNotEmpty)
-              _buildDetailRow(Icons.note_outlined, 'Notes', supply.notes!),
-            if (supply.createdBy != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Created by: ${supply.createdBy}',
-                  style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
-                ),
-              ),
-            const SizedBox(height: 24),
-            if (context.read<AuthService>().canEdit)
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _returnSupply(supply);
-                  },
-                  icon: const Icon(Icons.assignment_return_outlined),
-                  label: const Text('Mark as Returned'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    backgroundColor: Colors.orange.shade50,
-                    foregroundColor: Colors.orange.shade700,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-              ),
-            const SizedBox(height: 16),
-          ],
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: Colors.orange.shade50,
+                      child: Icon(
+                        Icons.medical_services,
+                        color: Colors.orange.shade400,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            supply.equipmentName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                          Text(
+                            supply.equipmentUniqueId,
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildStatusBadge(supply.status),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                const Divider(),
+                const SizedBox(height: 16),
+                // Receiver Details
+                const Text(
+                  'Receiver Details',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: _equipmentPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildDetailRow(
+                  Icons.person_outline,
+                  'Name',
+                  supply.receiverName ?? 'N/A',
+                ),
+                _buildDetailRow(
+                  Icons.phone_outlined,
+                  'Phone',
+                  supply.receiverPhone ?? 'N/A',
+                ),
+                if (supply.receiverAddress != null &&
+                    supply.receiverAddress!.isNotEmpty)
+                  _buildDetailRow(
+                    Icons.location_on_outlined,
+                    'Address',
+                    '${supply.receiverAddress}${supply.receiverPlace != null ? ', ${supply.receiverPlace}' : ''}',
+                  ),
+
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 16),
+
+                // Patient Details (if exists)
+                if (supply.patientName != null &&
+                    supply.patientName!.isNotEmpty) ...[
+                  const Text(
+                    'Patient Details',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: _equipmentPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDetailRow(
+                    Icons.person_outlined,
+                    'Name',
+                    supply.patientName!,
+                  ),
+                  if (supply.patientPhone != null &&
+                      supply.patientPhone!.isNotEmpty)
+                    _buildDetailRow(
+                      Icons.phone_outlined,
+                      'Phone',
+                      supply.patientPhone!,
+                    ),
+                  if (supply.patientAddress != null &&
+                      supply.patientAddress!.isNotEmpty)
+                    _buildDetailRow(
+                      Icons.location_on_outlined,
+                      'Address',
+                      supply.patientAddress!,
+                    ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                ],
+
+                _buildDetailRow(
+                  Icons.calendar_today_outlined,
+                  'Supply Date',
+                  _formatDate(supply.supplyDate),
+                ),
+                if (supply.notes != null && supply.notes!.isNotEmpty)
+                  _buildDetailRow(Icons.note_outlined, 'Notes', supply.notes!),
+                if (supply.createdBy != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Created by: ${supply.createdBy}',
+                      style: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 24),
+                if (context.read<AuthService>().canEdit)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _returnSupply(supply);
+                      },
+                      icon: const Icon(Icons.assignment_return_outlined),
+                      label: const Text('Mark as Returned'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: Colors.orange.shade50,
+                        foregroundColor: Colors.orange.shade700,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -692,187 +728,206 @@ class _EquipmentListPageState extends State<EquipmentListPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            Row(
+      builder: (context) => SafeArea(
+        top: false,
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: _equipmentSurface,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(
-                    Icons.medical_services,
-                    color: _equipmentPrimary,
-                    size: 28,
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        eq.name,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: _equipmentSurface,
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      Text(
-                        eq.uniqueId,
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                      child: Icon(
+                        Icons.medical_services,
+                        color: _equipmentPrimary,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            eq.name,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            eq.uniqueId,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildStatusBadge(eq.status),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                const Divider(),
+                const SizedBox(height: 16),
+                if (eq.storagePlace != null && eq.storagePlace!.isNotEmpty)
+                  _buildDetailRow(
+                    Icons.warehouse_outlined,
+                    'Storage Place',
+                    eq.storagePlace!,
+                  ),
+                _buildDetailRow(
+                  Icons.store_outlined,
+                  'Purchased From',
+                  eq.purchasedFrom ?? 'N/A',
+                ),
+                if (eq.purchaseDate != null)
+                  _buildDetailRow(
+                    Icons.calendar_today_outlined,
+                    'Purchase Date',
+                    DateFormat('d MMM yyyy').format(eq.purchaseDate!),
+                  ),
+                if (eq.place.isNotEmpty)
+                  _buildDetailRow(
+                    Icons.location_on_outlined,
+                    'Vendor Location',
+                    eq.place,
+                  ),
+                _buildDetailRow(
+                  Icons.phone_outlined,
+                  'Contact',
+                  eq.phone ?? 'N/A',
+                ),
+                if (eq.createdBy != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Created by: ${eq.createdBy}',
+                      style: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    if (context.read<AuthService>().canEdit) ...[
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    EquipmentFormPage(equipment: eq),
+                              ),
+                            ).then((result) {
+                              if (result == true) {
+                                _fetchAvailableEquipment(search: _searchQuery);
+                              }
+                            });
+                          },
+                          icon: const Icon(Icons.edit_outlined),
+                          label: const Text('Edit Details'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            side: const BorderSide(
+                              color: _equipmentIconSurface,
+                            ),
+                            foregroundColor: _equipmentPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                         ),
                       ),
                     ],
-                  ),
-                ),
-                _buildStatusBadge(eq.status),
-              ],
-            ),
-            const SizedBox(height: 24),
-            const Divider(),
-            const SizedBox(height: 16),
-            if (eq.storagePlace != null && eq.storagePlace!.isNotEmpty)
-              _buildDetailRow(
-                Icons.warehouse_outlined,
-                'Storage Place',
-                eq.storagePlace!,
-              ),
-            _buildDetailRow(
-              Icons.store_outlined,
-              'Purchased From',
-              eq.purchasedFrom ?? 'N/A',
-            ),
-            if (eq.purchaseDate != null)
-              _buildDetailRow(
-                Icons.calendar_today_outlined,
-                'Purchase Date',
-                DateFormat('d MMM yyyy').format(eq.purchaseDate!),
-              ),
-            if (eq.place.isNotEmpty)
-              _buildDetailRow(
-                Icons.location_on_outlined,
-                'Vendor Location',
-                eq.place,
-              ),
-            _buildDetailRow(Icons.phone_outlined, 'Contact', eq.phone ?? 'N/A'),
-            if (eq.createdBy != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  'Created by: ${eq.createdBy}',
-                  style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
-                ),
-              ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                if (context.read<AuthService>().canEdit) ...[
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                EquipmentFormPage(equipment: eq),
-                          ),
-                        ).then((result) {
-                          if (result == true) {
-                            _fetchAvailableEquipment(search: _searchQuery);
-                          }
-                        });
-                      },
-                      icon: const Icon(Icons.edit_outlined),
-                      label: const Text('Edit Details'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: const BorderSide(color: _equipmentIconSurface),
-                        foregroundColor: _equipmentPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-                if (context.read<AuthService>().canDelete) ...[
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Delete Equipment?'),
-                            content: Text(
-                              'Are you sure you want to delete ${eq.uniqueId}? This action cannot be undone.',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: const Text(
-                                  'Delete',
-                                  style: TextStyle(color: Colors.red),
+                    if (context.read<AuthService>().canDelete) ...[
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Delete Equipment?'),
+                                content: Text(
+                                  'Are you sure you want to delete ${eq.uniqueId}? This action cannot be undone.',
                                 ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: const Text(
+                                      'Delete',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            );
+                            if (confirm == true) {
+                              if (!mounted) return;
+                              Navigator.of(this.context).pop();
+                              await EquipmentService.deleteEquipment(eq.id!);
+                              _fetchAvailableEquipment(search: _searchQuery);
+                            }
+                          },
+                          icon: const Icon(Icons.delete_outline),
+                          label: const Text('Delete'),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            backgroundColor: Colors.red.shade50,
+                            foregroundColor: Colors.red.shade700,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
-                        );
-                        if (confirm == true) {
-                          if (!mounted) return;
-                          Navigator.of(this.context).pop();
-                          await EquipmentService.deleteEquipment(eq.id!);
-                          _fetchAvailableEquipment(search: _searchQuery);
-                        }
-                      },
-                      icon: const Icon(Icons.delete_outline),
-                      label: const Text('Delete'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        backgroundColor: Colors.red.shade50,
-                        foregroundColor: Colors.red.shade700,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                    ),
-                  ),
-                ],
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 16),
               ],
             ),
-            const SizedBox(height: 16),
-          ],
+          ),
         ),
       ),
     );

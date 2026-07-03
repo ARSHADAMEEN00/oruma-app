@@ -6,6 +6,7 @@ import 'package:oruma_app/equipment_supply_list_page.dart';
 import 'package:oruma_app/home_visit_list_page.dart';
 import 'package:oruma_app/medicine_list_page.dart';
 import 'package:oruma_app/medicine_supply_list_page.dart';
+import 'package:oruma_app/social_support_list_page.dart';
 import 'package:oruma_app/pt_registration.dart' show patientrigister;
 import 'package:oruma_app/patient_list_page.dart';
 import 'package:oruma_app/deceased_patient_list_page.dart';
@@ -199,7 +200,7 @@ class _HomescreenState extends State<Homescreen> {
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
-                                        supply.patientName ?? 'Unknown',
+                                        _supplyRecipientName(supply),
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: Colors.grey[600],
@@ -421,80 +422,89 @@ class _HomescreenState extends State<Homescreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) {
         final user = context.watch<AuthService>().user;
-        return Container(
-          padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 50,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const CircleAvatar(
-                radius: 40,
-                backgroundColor: Color(0xFF1A237E),
-                child: Icon(Icons.person, size: 40, color: Colors.white),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                "Team Oruma",
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A237E),
-                ),
-              ),
-              Text(
-                user?['name'] ?? "",
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-              Text(
-                user?['email'] ?? "",
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-              const SizedBox(height: 32),
-              _buildProfileMenuItem(
-                icon: Icons.settings_outlined,
-                title: "Settings",
-                onTap: () => Navigator.pop(context),
-              ),
-              _buildProfileMenuItem(
-                icon: Icons.help_outline,
-                title: "Help & Support",
-                onTap: () {
-                  Navigator.pop(context);
-                  _showHelpAndSupport(context);
-                },
-              ),
-              const Divider(height: 32),
-              _buildProfileMenuItem(
-                icon: Icons.logout,
-                title: "Logout",
-                color: Colors.red,
-                onTap: () {
-                  Navigator.pop(context); // Close sheet
-                  context.read<AuthService>().logout();
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder: (context) => const Loginscreen(),
+        return SafeArea(
+          top: false,
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.86,
+            ),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 50,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    (route) => false,
-                  );
-                },
+                  ),
+                  const SizedBox(height: 24),
+                  const CircleAvatar(
+                    radius: 40,
+                    backgroundColor: Color(0xFF1A237E),
+                    child: Icon(Icons.person, size: 40, color: Colors.white),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Team Oruma",
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A237E),
+                    ),
+                  ),
+                  Text(
+                    user?['name'] ?? "",
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  Text(
+                    user?['email'] ?? "",
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 32),
+                  _buildProfileMenuItem(
+                    icon: Icons.settings_outlined,
+                    title: "Settings",
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  _buildProfileMenuItem(
+                    icon: Icons.help_outline,
+                    title: "Help & Support",
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showHelpAndSupport(context);
+                    },
+                  ),
+                  const Divider(height: 32),
+                  _buildProfileMenuItem(
+                    icon: Icons.logout,
+                    title: "Logout",
+                    color: Colors.red,
+                    onTap: () {
+                      Navigator.pop(context); // Close sheet
+                      context.read<AuthService>().logout();
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (context) => const Loginscreen(),
+                        ),
+                        (route) => false,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
               ),
-              const SizedBox(height: 16),
-            ],
+            ),
           ),
         );
       },
@@ -505,182 +515,197 @@ class _HomescreenState extends State<Homescreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1A237E), Color(0xFF0277BD)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.contact_support,
-                size: 36,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              "Help & Support",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1A237E),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[200]!),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1A237E).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.business,
-                          color: Color(0xFF1A237E),
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Team Oruma",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              "Kodur, Malappuram",
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        top: false,
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.86,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  const SizedBox(height: 12),
-                  const Divider(height: 1),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(
-                          Icons.phone,
-                          color: Colors.green,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Contact Number",
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(height: 2),
-                            Text(
-                              "999 55 66 067",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final Uri phoneUri = Uri(scheme: 'tel', path: '9995566067');
-                  if (await canLaunchUrl(phoneUri)) {
-                    await launchUrl(phoneUri);
-                  } else {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Could not launch phone dialer'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }
-                },
-                icon: const Icon(Icons.call, size: 18),
-                label: const Text(
-                  "Make a Call",
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF1A237E), Color(0xFF0277BD)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  elevation: 2,
+                  child: const Icon(
+                    Icons.contact_support,
+                    size: 36,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 12),
+                const Text(
+                  "Help & Support",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A237E),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[200]!),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1A237E).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.business,
+                              color: Color(0xFF1A237E),
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Team Oruma",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  "Kodur, Malappuram",
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Divider(height: 1),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.phone,
+                              color: Colors.green,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Contact Number",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  "999 55 66 067",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      final Uri phoneUri = Uri(
+                        scheme: 'tel',
+                        path: '9995566067',
+                      );
+                      if (await canLaunchUrl(phoneUri)) {
+                        await launchUrl(phoneUri);
+                      } else {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Could not launch phone dialer'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.call, size: 18),
+                    label: const Text(
+                      "Make a Call",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -773,6 +798,7 @@ class _HomescreenState extends State<Homescreen> {
   @override
   Widget build(BuildContext context) {
     debugPrint('User Role: ${context.read<AuthService>().role}');
+    final auth = context.watch<AuthService>();
     return Scaffold(
       key: _scaffoldKey,
       drawer: _buildProfessionalDrawer(context),
@@ -950,13 +976,15 @@ class _HomescreenState extends State<Homescreen> {
                     mainAxisSpacing: 12,
                     childAspectRatio: 1.4,
                     children: [
-                      _buildModernActionCard(
-                        context,
-                        title: "Visit Assessment\n(NHC)",
-                        icon: Icons.assignment_rounded,
-                        palette: ModulePalettes.patients, // Reusing patients palette or another suitable one
-                        page: const VisitAssessmentVisitPickerScreen(),
-                      ),
+                      if (auth.canAccessNHC)
+                        _buildModernActionCard(
+                          context,
+                          title: "Visit Assessment\n(NHC)",
+                          icon: Icons.assignment_rounded,
+                          palette: ModulePalettes
+                              .patients, // Reusing patients palette or another suitable one
+                          page: const VisitAssessmentVisitPickerScreen(),
+                        ),
                       _buildModernActionCard(
                         context,
                         title: "Home Visits",
@@ -967,6 +995,17 @@ class _HomescreenState extends State<Homescreen> {
                           child: HomeVisitListPage(),
                         ),
                       ),
+                      if (auth.isMember)
+                        _buildModernActionCard(
+                          context,
+                          title: "Social Support",
+                          icon: Icons.volunteer_activism_rounded,
+                          palette: ModulePalettes.socialSupport,
+                          page: const ModuleTheme(
+                            palette: ModulePalettes.socialSupport,
+                            child: SocialSupportListPage(),
+                          ),
+                        ),
                       _buildModernActionCard(
                         context,
                         title: "Equipment Supply",
@@ -977,16 +1016,17 @@ class _HomescreenState extends State<Homescreen> {
                           child: EquipmentSupplyListPage(),
                         ),
                       ),
-                      _buildModernActionCard(
-                        context,
-                        title: "Medicine Supply",
-                        icon: Icons.medication_liquid_rounded,
-                        palette: ModulePalettes.medicineSupply,
-                        page: const ModuleTheme(
+                      if (auth.canAccessMedicine)
+                        _buildModernActionCard(
+                          context,
+                          title: "Medicine Supply",
+                          icon: Icons.medication_liquid_rounded,
                           palette: ModulePalettes.medicineSupply,
-                          child: MedicineSupplyListPage(),
+                          page: const ModuleTheme(
+                            palette: ModulePalettes.medicineSupply,
+                            child: MedicineSupplyListPage(),
+                          ),
                         ),
-                      ),
                     ],
                   ),
 
@@ -1200,7 +1240,7 @@ class _HomescreenState extends State<Homescreen> {
                                   const SizedBox(width: 5),
                                   Expanded(
                                     child: Text(
-                                      supply.patientName ?? 'Unknown',
+                                      _supplyRecipientName(supply),
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.grey.shade700,
@@ -1254,6 +1294,23 @@ class _HomescreenState extends State<Homescreen> {
         );
       },
     );
+  }
+
+  String _supplyRecipientName(EquipmentSupply supply) {
+    return _firstNonEmpty([
+          supply.patientName,
+          supply.receiverName,
+          supply.careOf,
+        ]) ??
+        'Unknown';
+  }
+
+  String? _firstNonEmpty(Iterable<String?> values) {
+    for (final value in values) {
+      final trimmed = value?.trim();
+      if (trimmed != null && trimmed.isNotEmpty) return trimmed;
+    }
+    return null;
   }
 
   Widget _buildInfoRow(IconData icon, String text) {
@@ -1431,6 +1488,24 @@ class _HomescreenState extends State<Homescreen> {
                       );
                     },
                   ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.volunteer_activism_outlined,
+                    title: "Social Support",
+                    color: ModulePalettes.socialSupport.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ModuleTheme(
+                            palette: ModulePalettes.socialSupport,
+                            child: SocialSupportListPage(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                   const Padding(
                     padding: EdgeInsets.fromLTRB(14, 14, 14, 7),
                     child: Text(
@@ -1497,42 +1572,44 @@ class _HomescreenState extends State<Homescreen> {
                       );
                     },
                   ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.medication_liquid_outlined,
-                    title: "Medicine",
-                    color: ModulePalettes.medicineSupply.primary,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ModuleTheme(
-                            palette: ModulePalettes.medicineSupply,
-                            child: MedicineListPage(),
+                  if (auth.canAccessMedicine)
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.medication_liquid_outlined,
+                      title: "Medicine",
+                      color: ModulePalettes.medicineSupply.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ModuleTheme(
+                              palette: ModulePalettes.medicineSupply,
+                              child: MedicineListPage(),
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.vaccines_outlined,
-                    title: "Medicine Supply",
-                    color: ModulePalettes.medicineSupply.primary,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ModuleTheme(
-                            palette: ModulePalettes.medicineSupply,
-                            child: MedicineSupplyListPage(),
+                        );
+                      },
+                    ),
+                  if (auth.canAccessMedicine)
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.vaccines_outlined,
+                      title: "Medicine Supply",
+                      color: ModulePalettes.medicineSupply.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ModuleTheme(
+                              palette: ModulePalettes.medicineSupply,
+                              child: MedicineSupplyListPage(),
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
+                        );
+                      },
+                    ),
                   _buildDrawerItem(
                     context,
                     icon: Icons.precision_manufacturing_outlined,
@@ -1551,21 +1628,23 @@ class _HomescreenState extends State<Homescreen> {
                       );
                     },
                   ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.assignment_outlined,
-                    title: "Visit entry (NHC)",
-                    color: ModulePalettes.homeVisits.primary,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const VisitAssessmentVisitPickerScreen(),
-                        ),
-                      );
-                    },
-                  ),
+                  if (auth.canAccessNHC)
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.assignment_outlined,
+                      title: "Visit entry (NHC)",
+                      color: ModulePalettes.homeVisits.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const VisitAssessmentVisitPickerScreen(),
+                          ),
+                        );
+                      },
+                    ),
                   if (auth.isAdmin) ...[
                     const Padding(
                       padding: EdgeInsets.fromLTRB(14, 14, 14, 7),

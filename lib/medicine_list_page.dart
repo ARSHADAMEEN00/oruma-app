@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:oruma_app/medicine_supply_list_page.dart';
 import 'package:oruma_app/models/medicine.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/medicine_service.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
+import 'package:oruma_app/widgets/module_switch_tabs.dart';
 
 const _medicineGreen = Color(0xFF0F6E56);
 const _medicineDarkGreen = Color(0xFF0F6E56);
@@ -202,6 +204,11 @@ class _MedicineListPageState extends State<MedicineListPage> {
                   _stockText(medicine),
                 ),
                 _detailRow(
+                  Icons.local_drink_outlined,
+                  'Net Content',
+                  _displayValue(medicine.netContent),
+                ),
+                _detailRow(
                   Icons.category_outlined,
                   'Category',
                   _titleCase(medicine.category),
@@ -320,10 +327,29 @@ class _MedicineListPageState extends State<MedicineListPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5FAF8),
       appBar: AppBar(
-        foregroundColor: Colors.white,
-        backgroundColor: _medicineDarkGreen,
-        surfaceTintColor: _medicineDarkGreen,
-        title: const Text('Medicine Inventory', style: TextStyle(fontSize: 18)),
+        foregroundColor: _medicineDarkGreen,
+        backgroundColor: _medicineSurface,
+        surfaceTintColor: _medicineSurface,
+        title: ModuleSwitchTabs(
+          labels: const ['Supplies', 'Medicines'],
+          icons: const [
+            Icons.assignment_turned_in_outlined,
+            Icons.medication_liquid_outlined,
+          ],
+          selectedIndex: 1,
+          color: _medicineDarkGreen,
+          onSelected: (index) {
+            if (index == 0) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MedicineSupplyListPage(),
+                ),
+              );
+            }
+          },
+        ),
+        centerTitle: true,
         actions: [
           IconButton(
             tooltip: 'Refresh',
@@ -344,8 +370,8 @@ class _MedicineListPageState extends State<MedicineListPage> {
       body: Column(
         children: [
           Container(
-            color: _medicineDarkGreen,
-            padding: const EdgeInsets.fromLTRB(16, 5, 16, 22),
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
               controller: _searchController,
               textInputAction: TextInputAction.search,
@@ -359,14 +385,21 @@ class _MedicineListPageState extends State<MedicineListPage> {
                         icon: const Icon(Icons.close),
                       ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Colors.grey.shade50,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide(color: Colors.grey.shade200),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: const BorderSide(
+                    color: _medicineGreen,
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -420,6 +453,7 @@ class _MedicineListPageState extends State<MedicineListPage> {
         separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final medicine = _medicines[index];
+          final expiryWarning = _hasExpiryWarning(medicine);
           return InkWell(
             onTap: () => _showDetails(medicine),
             borderRadius: BorderRadius.circular(20),
@@ -428,15 +462,21 @@ class _MedicineListPageState extends State<MedicineListPage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: expiryWarning ? Colors.red.shade400 : Colors.white,
+                  width: expiryWarning ? 1.6 : 1,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: _medicineDarkGreen.withValues(alpha: 0.07),
+                    color: (expiryWarning ? Colors.red : _medicineDarkGreen)
+                        .withValues(alpha: 0.07),
                     blurRadius: 18,
                     offset: const Offset(0, 7),
                   ),
                 ],
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   _medicineIcon(medicine),
                   const SizedBox(width: 13),
@@ -444,21 +484,14 @@ class _MedicineListPageState extends State<MedicineListPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                medicine.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                            _stockPill(medicine),
-                          ],
+                        Text(
+                          _medicineListTitle(medicine),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -475,16 +508,12 @@ class _MedicineListPageState extends State<MedicineListPage> {
                         ),
                         const SizedBox(height: 9),
                         Wrap(
-                          spacing: 12,
+                          spacing: 10,
                           runSpacing: 5,
                           children: [
                             _inlineDetail(
                               Icons.science_outlined,
                               _strengthText(medicine),
-                            ),
-                            _inlineDetail(
-                              Icons.inventory_2_outlined,
-                              _stockText(medicine),
                             ),
                             if (medicine.expiryDate != null)
                               _inlineDetail(
@@ -498,36 +527,67 @@ class _MedicineListPageState extends State<MedicineListPage> {
                       ],
                     ),
                   ),
-                  if (auth.canEdit || auth.canDelete)
-                    PopupMenuButton<String>(
-                      onSelected: (value) {
-                        if (value == 'edit') _openForm(medicine);
-                        if (value == 'delete') _deleteMedicine(medicine);
-                      },
-                      itemBuilder: (context) => [
-                        if (auth.canEdit)
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: Text('Edit'),
-                          ),
-                        if (auth.canDelete)
-                          const PopupMenuItem(
-                            value: 'delete',
-                            child: Text(
-                              'Delete',
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 126,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            _stockPill(medicine),
+                            const SizedBox(width: 4),
+                            _medicineMenu(auth, medicine),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: _stockHighlight(medicine),
+                        ),
                       ],
-                    )
-                  else
-                    const Icon(Icons.chevron_right, color: Colors.grey),
+                    ),
+                  ),
                 ],
               ),
             ),
           );
         },
       ),
+    );
+  }
+
+  Widget _medicineMenu(AuthService auth, Medicine medicine) {
+    if (auth.canEdit || auth.canDelete) {
+      return SizedBox(
+        width: 34,
+        height: 34,
+        child: PopupMenuButton<String>(
+          padding: EdgeInsets.zero,
+          icon: const Icon(Icons.more_horiz, size: 22),
+          onSelected: (value) {
+            if (value == 'edit') _openForm(medicine);
+            if (value == 'delete') _deleteMedicine(medicine);
+          },
+          itemBuilder: (context) => [
+            if (auth.canEdit)
+              const PopupMenuItem(value: 'edit', child: Text('Edit')),
+            if (auth.canDelete)
+              const PopupMenuItem(
+                value: 'delete',
+                child: Text('Delete', style: TextStyle(color: Colors.red)),
+              ),
+          ],
+        ),
+      );
+    }
+    return const SizedBox(
+      width: 34,
+      height: 34,
+      child: Icon(Icons.chevron_right, color: Colors.grey),
     );
   }
 
@@ -590,6 +650,35 @@ class _MedicineListPageState extends State<MedicineListPage> {
         const SizedBox(width: 4),
         Text(text, style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
       ],
+    );
+  }
+
+  Widget _stockHighlight(Medicine medicine) {
+    final lowStock = medicine.qty <= 10;
+    final color = lowStock ? Colors.orange.shade800 : _medicineGreen;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.inventory_2_outlined, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            'Stock ${_stockText(medicine)}',
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -674,7 +763,46 @@ class _MedicineListPageState extends State<MedicineListPage> {
   }
 
   String _stockText(Medicine medicine) {
-    return '${_number(medicine.qty)} ${medicine.qtyUnit ?? 'units'}'.trim();
+    return '${_number(medicine.qty)} ${_stockUnitLabel(medicine.qtyUnit)}'
+        .trim();
+  }
+
+  String _medicineListTitle(Medicine medicine) {
+    final netContent = _netContentLabel(medicine.netContent);
+    if (netContent == null) return medicine.name;
+    return '${medicine.name} $netContent';
+  }
+
+  String? _netContentLabel(String? value) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    return trimmed.replaceFirstMapped(
+      RegExp(r'^(\d+(?:\.\d+)?)([A-Za-z]+)$'),
+      (match) => '${match[1]} ${match[2]}',
+    );
+  }
+
+  String _stockUnitLabel(String? value) {
+    return switch (value?.trim().toLowerCase()) {
+      'tab' => 'Tab',
+      'bottle' => 'Bottle',
+      'gel' => 'Gel',
+      null || '' => 'units',
+      _ => value!.trim(),
+    };
+  }
+
+  bool _hasExpiryWarning(Medicine medicine) {
+    final expiry = medicine.expiryDate;
+    if (expiry == null) return false;
+    final today = DateTime.now();
+    final expiryDate = DateTime(expiry.year, expiry.month, expiry.day);
+    final warningLimit = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).add(const Duration(days: 60));
+    return !expiryDate.isAfter(warningLimit);
   }
 
   String _number(double value) {
@@ -726,13 +854,14 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     'drops',
   ];
   static const strengthUnits = ['mg', 'mcg', 'g', 'IU', 'mEq', '%'];
+  static const stockUnits = ['tab', 'bottle', 'gel'];
 
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _codeController;
   late final TextEditingController _nameController;
   late final TextEditingController _strengthController;
   late final TextEditingController _qtyController;
-  late final TextEditingController _qtyUnitController;
+  late final TextEditingController _netContentController;
   late final TextEditingController _barcodeController;
   late final TextEditingController _brandController;
   late final TextEditingController _batchController;
@@ -742,12 +871,34 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
   String _category = 'other';
   String? _formulation;
   String? _strengthUnit = 'mg';
+  String _qtyUnit = 'tab';
   DateTime? _expiryDate;
   bool _isActive = true;
   bool _showMore = false;
   bool _saving = false;
+  bool _showExpiryError = false;
+  List<Medicine> _existingMedicines = [];
 
   bool get _editing => widget.medicine != null;
+  bool get _hasDuplicateCode {
+    final code = _codeController.text.trim().toUpperCase();
+    if (code.isEmpty) return false;
+    return _existingMedicines.any(
+      (medicine) =>
+          medicine.id != widget.medicine?.id &&
+          medicine.code.trim().toUpperCase() == code,
+    );
+  }
+
+  bool get _hasDuplicateName {
+    final name = _nameController.text.trim().toLowerCase();
+    if (name.isEmpty) return false;
+    return _existingMedicines.any(
+      (medicine) =>
+          medicine.id != widget.medicine?.id &&
+          medicine.name.trim().toLowerCase() == name,
+    );
+  }
 
   @override
   void initState() {
@@ -761,7 +912,10 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     _qtyController = TextEditingController(
       text: medicine == null ? '' : _number(medicine.qty),
     );
-    _qtyUnitController = TextEditingController(text: medicine?.qtyUnit);
+    _qtyUnit = stockUnits.contains(medicine?.qtyUnit?.toLowerCase())
+        ? medicine!.qtyUnit!.toLowerCase()
+        : 'tab';
+    _netContentController = TextEditingController(text: medicine?.netContent);
     _barcodeController = TextEditingController(text: medicine?.barcode);
     _brandController = TextEditingController(
       text: medicine?.brandNames.join(', '),
@@ -777,6 +931,9 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     _expiryDate = medicine?.expiryDate;
     _isActive = medicine?.isActive ?? true;
     _showMore = _editing;
+    _codeController.addListener(_refreshDuplicateHints);
+    _nameController.addListener(_refreshDuplicateHints);
+    _loadExistingMedicines();
   }
 
   @override
@@ -786,7 +943,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
       _nameController,
       _strengthController,
       _qtyController,
-      _qtyUnitController,
+      _netContentController,
       _barcodeController,
       _brandController,
       _batchController,
@@ -798,8 +955,26 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     super.dispose();
   }
 
+  Future<void> _loadExistingMedicines() async {
+    try {
+      final medicines = await MedicineService.getMedicines();
+      if (!mounted) return;
+      setState(() => _existingMedicines = medicines);
+    } catch (_) {
+      // Duplicate checks still run on the server if this lookup is unavailable.
+    }
+  }
+
+  void _refreshDuplicateHints() {
+    if (mounted) setState(() {});
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_expiryDate == null) {
+      setState(() => _showExpiryError = true);
+      return;
+    }
     setState(() => _saving = true);
 
     final medicine = Medicine(
@@ -811,7 +986,8 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
           ? null
           : _strengthUnit,
       qty: double.tryParse(_qtyController.text.trim()) ?? 0,
-      qtyUnit: _emptyToNull(_qtyUnitController.text),
+      qtyUnit: _qtyUnit,
+      netContent: _emptyToNull(_netContentController.text),
       barcode: _emptyToNull(_barcodeController.text),
       brandNames: _splitValues(_brandController.text, RegExp(r'[,;\n]')),
       category: _category,
@@ -858,7 +1034,12 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
       firstDate: DateTime.now().subtract(const Duration(days: 3650)),
       lastDate: DateTime.now().add(const Duration(days: 3650)),
     );
-    if (date != null) setState(() => _expiryDate = date);
+    if (date != null) {
+      setState(() {
+        _expiryDate = date;
+        _showExpiryError = false;
+      });
+    }
   }
 
   @override
@@ -892,6 +1073,12 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                   icon: Icons.tag_outlined,
                   required: true,
                   textCapitalization: TextCapitalization.characters,
+                  supportingText: _hasDuplicateCode
+                      ? 'This medicine code already exists'
+                      : null,
+                  supportingColor: Colors.red.shade700,
+                  validator: (_) =>
+                      _hasDuplicateCode ? 'Medicine code already exists' : null,
                 ),
                 _textField(
                   _nameController,
@@ -899,6 +1086,12 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                   hint: 'Morphine',
                   icon: Icons.medication_liquid_outlined,
                   required: true,
+                  supportingText: _hasDuplicateName
+                      ? 'This generic name already exists'
+                      : null,
+                  supportingColor: Colors.red.shade700,
+                  validator: (_) =>
+                      _hasDuplicateName ? 'Generic name already exists' : null,
                 ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -944,15 +1137,31 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: _textField(
-                        _qtyUnitController,
-                        'Stock unit',
-                        hint: 'tablets',
-                        icon: Icons.straighten_outlined,
+                      child: _dropdown(
+                        label: 'Stock unit',
+                        value: _qtyUnit,
+                        values: stockUnits,
+                        labels: const {
+                          'tab': 'Tab',
+                          'bottle': 'Bottle',
+                          'gel': 'Gel',
+                        },
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _qtyUnit = value);
+                          }
+                        },
                       ),
                     ),
                   ],
                 ),
+                _textField(
+                  _netContentController,
+                  'Net Content',
+                  hint: '250ml',
+                  icon: Icons.local_drink_outlined,
+                ),
+                _expiryDateField(required: true),
               ],
             ),
             const SizedBox(height: 14),
@@ -982,7 +1191,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Brand, category, batch, expiry and photos',
+                            'Brand, category, batch and photos',
                             style: TextStyle(
                               color: Color(0xFF5F786F),
                               fontSize: 12,
@@ -1039,36 +1248,6 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                       allowEmpty: true,
                       onChanged: (value) =>
                           setState(() => _formulation = value),
-                    ),
-                    InkWell(
-                      onTap: _pickExpiryDate,
-                      borderRadius: BorderRadius.circular(14),
-                      child: InputDecorator(
-                        decoration: _inputDecoration(
-                          'Expiry date',
-                          Icons.event_outlined,
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _expiryDate == null
-                                    ? 'Select expiry date'
-                                    : DateFormat(
-                                        'dd MMM yyyy',
-                                      ).format(_expiryDate!),
-                              ),
-                            ),
-                            if (_expiryDate != null)
-                              IconButton(
-                                visualDensity: VisualDensity.compact,
-                                onPressed: () =>
-                                    setState(() => _expiryDate = null),
-                                icon: const Icon(Icons.close, size: 18),
-                              ),
-                          ],
-                        ),
-                      ),
                     ),
                     _textField(
                       _batchController,
@@ -1250,17 +1429,28 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     TextInputType? keyboardType,
     TextCapitalization textCapitalization = TextCapitalization.sentences,
     int maxLines = 1,
+    String? supportingText,
+    Color? supportingColor,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       textCapitalization: textCapitalization,
       maxLines: maxLines,
-      decoration: _inputDecoration(label, icon, hint: hint),
-      validator: required
-          ? (value) =>
-                value?.trim().isEmpty == true ? '$label is required' : null
-          : null,
+      decoration: _inputDecoration(
+        label,
+        icon,
+        hint: hint,
+        supportingText: supportingText,
+        supportingColor: supportingColor,
+      ),
+      validator: (value) {
+        if (required && (value == null || value.trim().isEmpty)) {
+          return '$label is required';
+        }
+        return validator?.call(value);
+      },
     );
   }
 
@@ -1269,6 +1459,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     required String? value,
     required List<String> values,
     required ValueChanged<String?> onChanged,
+    Map<String, String> labels = const {},
     bool allowEmpty = false,
   }) {
     return DropdownButtonFormField<String>(
@@ -1284,11 +1475,57 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
             child: Text('Not selected'),
           ),
         ...values.map(
-          (item) =>
-              DropdownMenuItem(value: item, child: Text(_titleCase(item))),
+          (item) => DropdownMenuItem(
+            value: item,
+            child: Text(labels[item] ?? _titleCase(item)),
+          ),
         ),
       ],
       onChanged: onChanged,
+    );
+  }
+
+  Widget _expiryDateField({bool required = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: _pickExpiryDate,
+          borderRadius: BorderRadius.circular(14),
+          child: InputDecorator(
+            decoration: _inputDecoration(
+              required ? 'Expiry date *' : 'Expiry date',
+              Icons.event_outlined,
+              supportingText: _showExpiryError && _expiryDate == null
+                  ? 'Expiry date is required'
+                  : null,
+              supportingColor: Colors.red.shade700,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _expiryDate == null
+                        ? 'Select expiry date'
+                        : DateFormat('dd MMM yyyy').format(_expiryDate!),
+                    style: TextStyle(
+                      color: _expiryDate == null
+                          ? Colors.grey.shade600
+                          : Colors.black87,
+                    ),
+                  ),
+                ),
+                if (_expiryDate != null)
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => setState(() => _expiryDate = null),
+                    icon: const Icon(Icons.close, size: 18),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1296,10 +1533,17 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     String label,
     IconData icon, {
     String? hint,
+    String? supportingText,
+    Color? supportingColor,
   }) {
     return InputDecoration(
       labelText: label,
       hintText: hint,
+      helperText: supportingText,
+      helperStyle: supportingColor == null
+          ? null
+          : TextStyle(color: supportingColor, fontWeight: FontWeight.w600),
+      errorMaxLines: 2,
       prefixIcon: Icon(icon, color: _medicineGreen, size: 20),
       filled: true,
       fillColor: const Color(0xFFF8FBFA),

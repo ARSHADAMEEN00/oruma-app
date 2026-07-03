@@ -4,6 +4,7 @@ import 'equipment_supply.dart';
 import 'home_visit.dart';
 import 'medicine_supply.dart';
 import 'patient.dart';
+import 'social_support.dart';
 
 class PatientCreator {
   final String? id;
@@ -30,6 +31,7 @@ class PatientDetails {
   final List<EquipmentSupply> equipmentSupplies;
   final List<VisitAssessment> visitAssessments;
   final List<MedicineSupply> medicineSupplies;
+  final List<SocialSupport> socialSupports;
 
   const PatientDetails({
     required this.patient,
@@ -38,6 +40,7 @@ class PatientDetails {
     this.equipmentSupplies = const [],
     this.visitAssessments = const [],
     this.medicineSupplies = const [],
+    this.socialSupports = const [],
   });
 
   factory PatientDetails.fromJson(Map<String, dynamic> json) {
@@ -63,6 +66,9 @@ class PatientDetails {
           .toList(),
       medicineSupplies: (json['medicineSupplies'] as List<dynamic>? ?? const [])
           .map((item) => MedicineSupply.fromJson(item as Map<String, dynamic>))
+          .toList(),
+      socialSupports: (json['socialSupports'] as List<dynamic>? ?? const [])
+          .map((item) => SocialSupport.fromJson(item as Map<String, dynamic>))
           .toList(),
     );
   }

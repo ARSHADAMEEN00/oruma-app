@@ -6,4 +6,5 @@ export 'equipment.dart';
 export 'equipment_supply.dart';
 export 'medicine_supply.dart';
 export 'medicine.dart';
+export 'social_support.dart';
 export 'config.dart';

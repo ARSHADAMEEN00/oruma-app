@@ -39,6 +39,7 @@ class ApiConfig {
   static String get medicineSuppliesEndpoint => '$baseUrl/medicine-supplies';
   static String get v2MedicineSuppliesEndpoint =>
       '$baseUrl/v2/medicine-supplies';
+  static String get v2SocialSupportEndpoint => '$baseUrl/v2/social-support';
   static String get meEndpoint => '$baseUrl/auth/me';
 
   /// Default headers for API requests

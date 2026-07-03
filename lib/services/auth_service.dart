@@ -21,10 +21,14 @@ class AuthService with ChangeNotifier {
   bool get isAdmin => _role == 'admin';
   bool get isStaff => _role == 'staff';
   bool get isUser => _role == 'user';
+  bool get isMember => _role == 'member';
 
-  bool get canCreate => _role == 'admin' || _role == 'staff';
-  bool get canEdit => _role == 'admin' || _role == 'staff';
+  bool get canCreate =>
+      _role == 'admin' || _role == 'staff' || _role == 'member';
+  bool get canEdit => _role == 'admin' || _role == 'staff' || _role == 'member';
   bool get canDelete => _role == 'admin';
+  bool get canAccessMedicine => !isMember;
+  bool get canAccessNHC => !isMember;
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
@@ -51,7 +55,7 @@ class AuthService with ChangeNotifier {
         _role = data['role']; // Get role from response
 
         final prefs = await SharedPreferences.getInstance();
-        
+
         // Check if this is the first login for this user
         final wasLoggedInBefore = prefs.containsKey('auth_token');
         _isFirstLogin = !wasLoggedInBefore;

@@ -14,6 +14,7 @@ import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/services/medicine_service.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
+import 'package:oruma_app/widgets/module_switch_tabs.dart';
 
 const _medicineGreen = Color(0xFF0F6E56);
 const _cardBg = Color(0xFFE1F5EE);
@@ -117,22 +118,27 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
         surfaceTintColor: _cardBg,
         foregroundColor: _medicineGreen,
         elevation: 1,
-        title: const Text('Medicine Supplies', style: TextStyle(fontSize: 18)),
-        centerTitle: false,
-        actions: [
-          TextButton.icon(
-            onPressed: () {
-              Navigator.push(
+        title: ModuleSwitchTabs(
+          labels: const ['Supplies', 'Medicines'],
+          icons: const [
+            Icons.assignment_turned_in_outlined,
+            Icons.medication_liquid_outlined,
+          ],
+          selectedIndex: 0,
+          color: _medicineGreen,
+          onSelected: (index) {
+            if (index == 1) {
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const MedicineListPage(),
                 ),
               );
-            },
-            icon: const Icon(Icons.medication_outlined, size: 18),
-            label: const Text('Medicines'),
-            style: TextButton.styleFrom(foregroundColor: _medicineGreen),
-          ),
+            }
+          },
+        ),
+        centerTitle: true,
+        actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
         ],
       ),
@@ -373,8 +379,9 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
     DateTime? returnedAt;
 
     if (newStatus == 'returned') {
-      final TextEditingController qtyController =
-          TextEditingController(text: supply.qtyGiven.toString());
+      final TextEditingController qtyController = TextEditingController(
+        text: supply.qtyGiven.toString(),
+      );
       DateTime selectedDate = DateTime.now();
 
       final bool? confirm = await showDialog<bool>(
@@ -884,13 +891,19 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
                             const SizedBox(width: 6),
                             Text(
                               supply.status == 'returned'
-                                ? 'Given: ${supply.qtyGiven} • Ret: ${supply.qtyReturned ?? supply.qtyGiven}' + 
-                                  (supply.returnedAt != null ? ' (${supply.returnedAt!.day}/${supply.returnedAt!.month}/${supply.returnedAt!.year})' : '')
-                                : 'Qty: ${supply.qtyGiven}',
+                                  ? 'Given: ${supply.qtyGiven} • Ret: ${supply.qtyReturned ?? supply.qtyGiven}' +
+                                        (supply.returnedAt != null
+                                            ? ' (${supply.returnedAt!.day}/${supply.returnedAt!.month}/${supply.returnedAt!.year})'
+                                            : '')
+                                  : 'Qty: ${supply.qtyGiven}',
                               style: TextStyle(
-                                color: supply.status == 'returned' ? Colors.orange.shade800 : Colors.grey.shade500,
+                                color: supply.status == 'returned'
+                                    ? Colors.orange.shade800
+                                    : Colors.grey.shade500,
                                 fontSize: 12,
-                                fontWeight: supply.status == 'returned' ? FontWeight.w600 : FontWeight.w500,
+                                fontWeight: supply.status == 'returned'
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
                               ),
                             ),
                             const Spacer(),

@@ -411,7 +411,7 @@ class VisitAssessmentListScreen extends StatelessWidget {
           timeFrom: DateFormat('HH:mm').format(now),
           timeTo: DateFormat(
             'HH:mm',
-          ).format(now.add(const Duration(minutes: 90))),
+          ).format(now.add(const Duration(minutes: 45))),
         ),
       );
     }

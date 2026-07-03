@@ -74,8 +74,8 @@ class _EqSupplyState extends State<EqSupply> {
     final initialDate = _selectedSupplyDate.isBefore(firstDate)
         ? firstDate
         : _selectedSupplyDate.isAfter(today)
-            ? today
-            : _selectedSupplyDate;
+        ? today
+        : _selectedSupplyDate;
 
     final picked = await showDatePicker(
       context: context,
@@ -173,7 +173,8 @@ class _EqSupplyState extends State<EqSupply> {
     }
 
     // Validate that either patient or receiver is provided
-    if (_selectedPatient == null && _receiverNameController.text.trim().isEmpty) {
+    if (_selectedPatient == null &&
+        _receiverNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -181,7 +182,9 @@ class _EqSupplyState extends State<EqSupply> {
               const Icon(Icons.warning_amber_rounded, color: Colors.white),
               const SizedBox(width: 8),
               const Expanded(
-                child: Text('Please select a patient or enter receiver details'),
+                child: Text(
+                  'Please select a patient or enter receiver details',
+                ),
               ),
             ],
           ),
@@ -207,6 +210,7 @@ class _EqSupplyState extends State<EqSupply> {
         patientName: _selectedPatient?.name,
         patientPhone: _selectedPatient?.phone,
         patientAddress: _selectedPatient?.address,
+        patientPlace: _selectedPatient?.place,
         careOf: _careOfController.text.trim(),
         receiverName: _receiverNameController.text.trim(),
         receiverPhone: _receiverPhoneController.text.trim(),
@@ -474,7 +478,8 @@ class _EqSupplyState extends State<EqSupply> {
                                                                 Expanded(
                                                                   child: Text(
                                                                     equipment
-                                                                        .name.toUpperCase(),
+                                                                        .name
+                                                                        .toUpperCase(),
                                                                     style: const TextStyle(
                                                                       fontSize:
                                                                           14,
@@ -538,19 +543,21 @@ class _EqSupplyState extends State<EqSupply> {
                                 controller: _supplyDateController,
                                 readOnly: true,
                                 onTap: _submitting ? null : _pickSupplyDate,
-                                validator: (value) => value == null || value.isEmpty
+                                validator: (value) =>
+                                    value == null || value.isEmpty
                                     ? 'Please select a supply date'
                                     : null,
-                                decoration: _inputDecoration(
-                                  'Supply Date',
-                                  Icons.calendar_today_outlined,
-                                ).copyWith(
-                                  hintText: 'Select supply date',
-                                  suffixIcon: Icon(
-                                    Icons.arrow_drop_down,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                ),
+                                decoration:
+                                    _inputDecoration(
+                                      'Supply Date',
+                                      Icons.calendar_today_outlined,
+                                    ).copyWith(
+                                      hintText: 'Select supply date',
+                                      suffixIcon: Icon(
+                                        Icons.arrow_drop_down,
+                                        color: Colors.grey.shade500,
+                                      ),
+                                    ),
                               ),
                               const SizedBox(height: 16),
 
@@ -590,7 +597,8 @@ class _EqSupplyState extends State<EqSupply> {
                                             }
                                           },
                                       displayStringForOption:
-                                          (Patient patient) => patient.name.toUpperCase(),
+                                          (Patient patient) =>
+                                              patient.name.toUpperCase(),
                                       onSelected: (Patient patient) {
                                         setState(() {
                                           _selectedPatient = patient;

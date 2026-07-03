@@ -30,7 +30,6 @@ class _EquipmentRegistrationState extends State<EquipmentRegistration> {
     'Crutches',
     'Air bed',
     'Hospital cot',
-    'Nebulizer',
     'Concentrator',
   ];
 

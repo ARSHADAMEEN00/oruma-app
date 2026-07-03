@@ -53,6 +53,7 @@ class _ClinicalNotesStepState extends State<ClinicalNotesStep> {
           onChanged: (value) => widget.controller.update(
             (item) => item.copyWith(medicineRemarks: value),
           ),
+          localeId: isMalayalam ? 'ml-IN' : null,
         ),
         const SizedBox(height: 13),
         _noteField(
@@ -64,6 +65,7 @@ class _ClinicalNotesStepState extends State<ClinicalNotesStep> {
           onChanged: (value) => widget.controller.update(
             (item) => item.copyWith(nursingDiagnosis: value),
           ),
+          localeId: isMalayalam ? 'ml-IN' : null,
         ),
         const SizedBox(height: 13),
         _noteField(
@@ -73,6 +75,7 @@ class _ClinicalNotesStepState extends State<ClinicalNotesStep> {
           onChanged: (value) => widget.controller.update(
             (item) => item.copyWith(doctorConsultNotes: value),
           ),
+          localeId: isMalayalam ? 'ml-IN' : null,
         ),
         const SizedBox(height: 13),
         _noteField(
@@ -82,23 +85,7 @@ class _ClinicalNotesStepState extends State<ClinicalNotesStep> {
           onChanged: (value) => widget.controller.update(
             (item) => item.copyWith(nursingManagementPlan: value),
           ),
-        ),
-        const SizedBox(height: 6),
-        Center(
-          child: AssessmentVoiceButton(
-            localeId: isMalayalam ? 'ml-IN' : null,
-            onWords: (words) {
-              final text = _managementPlan.text.trim();
-              _managementPlan.text = text.isEmpty ? words : '$text $words';
-              _managementPlan.selection = TextSelection.collapsed(
-                offset: _managementPlan.text.length,
-              );
-              widget.controller.update(
-                (item) =>
-                    item.copyWith(nursingManagementPlan: _managementPlan.text),
-              );
-            },
-          ),
+          localeId: isMalayalam ? 'ml-IN' : null,
         ),
       ],
     );
@@ -110,11 +97,29 @@ class _ClinicalNotesStepState extends State<ClinicalNotesStep> {
     required String hint,
     required ValueChanged<String> onChanged,
     bool required = false,
+    String? localeId,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AssessmentLabel(label, required: required),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: AssessmentLabel(label, required: required)),
+            AssessmentVoiceButton(
+              localeId: localeId,
+              label: 'Voice input',
+              onWords: (words) {
+                final current = controller.text.trim();
+                controller.text = current.isEmpty ? words : '$current $words';
+                controller.selection = TextSelection.collapsed(
+                  offset: controller.text.length,
+                );
+                onChanged(controller.text);
+              },
+            ),
+          ],
+        ),
         AssessmentTextField(
           controller: controller,
           hint: hint,

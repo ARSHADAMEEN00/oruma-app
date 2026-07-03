@@ -7,6 +7,7 @@ import 'package:oruma_app/models/home_visit.dart';
 import 'package:oruma_app/models/medicine_supply.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/models/patient_details.dart';
+import 'package:oruma_app/models/social_support.dart';
 import 'package:oruma_app/pt_registration.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/patient_details_service.dart';
@@ -50,7 +51,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
     super.initState();
     _currentPatient = widget.patient;
     _details = PatientDetails(patient: widget.patient);
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: 7, vsync: this);
     _loadDetails();
   }
 
@@ -315,6 +316,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
                 _buildEquipmentTab(),
                 _buildAssessmentsTab(),
                 _buildMedicineSuppliesTab(),
+                _buildSocialSupportTab(),
               ],
             ),
           ),
@@ -665,6 +667,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
     final equipmentCount = _details.equipmentSupplies.length;
     final assessmentCount = _details.visitAssessments.length;
     final medicineSupplyCount = _details.medicineSupplies.length;
+    final socialSupportCount = _details.socialSupports.length;
 
     return Container(
       height: 52,
@@ -706,6 +709,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
           Tab(text: 'Equipment ($equipmentCount)'),
           Tab(text: 'Assessment ($assessmentCount)'),
           Tab(text: 'Medicines ($medicineSupplyCount)'),
+          Tab(text: 'Social Support ($socialSupportCount)'),
         ],
       ),
     );
@@ -999,6 +1003,35 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
         separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           return _medicineSupplyCard(_details.medicineSupplies[index]);
+        },
+      ),
+    );
+  }
+
+  Widget _buildSocialSupportTab() {
+    if (_detailsLoading && _details.socialSupports.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_detailsError != null && _details.socialSupports.isEmpty) {
+      return _recordsError('Could not load social support history');
+    }
+    if (_details.socialSupports.isEmpty) {
+      return _emptyState(
+        icon: Icons.volunteer_activism_outlined,
+        title: 'No social support yet',
+        message: 'Ration kits, vegetables, and medicines will appear here.',
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => _loadDetails(showLoader: false),
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        itemCount: _details.socialSupports.length,
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          return _socialSupportCard(_details.socialSupports[index]);
         },
       ),
     );
@@ -1389,6 +1422,94 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
     );
   }
 
+  Widget _socialSupportCard(SocialSupport support) {
+    final supportColor = Colors.pink.shade700;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: supportColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  Icons.volunteer_activism_outlined,
+                  color: supportColor,
+                  size: 21,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _formatDate(support.givenAt),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF202333),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      support.supportTypesLabel,
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: support.supportTypes
+                .map(
+                  (type) => _statusPill(
+                    socialSupportTypeLabels[type] ?? type,
+                    supportColor,
+                    icon: _socialSupportTypeIcon(type),
+                    compact: true,
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 15),
+          _detailLine(
+            Icons.person_outline,
+            'Volunteer',
+            _value(support.volunteerName),
+          ),
+          const SizedBox(height: 10),
+          _detailLine(
+            Icons.call_outlined,
+            'Contact',
+            _value(support.volunteerContact),
+          ),
+          if (support.note?.trim().isNotEmpty == true) ...[
+            const SizedBox(height: 10),
+            _detailLine(Icons.notes_outlined, 'Note', support.note!),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _sectionCard({
     required IconData icon,
     required String title,
@@ -1674,6 +1795,14 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
       'cancelled' => 'Cancelled',
       'given' || null || '' => 'Given',
       _ => status,
+    };
+  }
+
+  IconData _socialSupportTypeIcon(String type) {
+    return switch (type) {
+      'vegetables' => Icons.eco_outlined,
+      'medicine' => Icons.medication_outlined,
+      _ => Icons.inventory_2_outlined,
     };
   }
 

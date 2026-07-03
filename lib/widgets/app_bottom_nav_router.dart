@@ -4,8 +4,10 @@ import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_a
 import 'package:oruma_app/home_visit_list_page.dart';
 import 'package:oruma_app/homscreen.dart';
 import 'package:oruma_app/medicine_supply_list_page.dart';
+import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
+import 'package:provider/provider.dart';
 
 class AppBottomNavRouter {
   AppBottomNavRouter._();
@@ -19,6 +21,13 @@ class AppBottomNavRouter {
     required AppBottomSection target,
   }) {
     if (current == target || _transitionInProgress) return;
+    final auth = context.read<AuthService>();
+    if (target == AppBottomSection.medicine && !auth.canAccessMedicine) {
+      return;
+    }
+    if (target == AppBottomSection.nhc && !auth.canAccessNHC) {
+      return;
+    }
 
     final page = switch (target) {
       AppBottomSection.home => const Homescreen(),
@@ -52,15 +61,13 @@ class AppBottomNavRouter {
       reverseTransitionDuration: _transitionDuration,
       pageBuilder: (_, _, _) => ColoredBox(color: Colors.white, child: page),
       transitionsBuilder: (_, animation, _, child) {
-        final slideAnimation = Tween<Offset>(
-          begin: Offset(forward ? 1 : -1, 0),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeInOutCubic,
-          ),
-        );
+        final slideAnimation =
+            Tween<Offset>(
+              begin: Offset(forward ? 1 : -1, 0),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic),
+            );
         return ClipRect(
           child: SlideTransition(position: slideAnimation, child: child),
         );

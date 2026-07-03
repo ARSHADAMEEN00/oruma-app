@@ -6,6 +6,7 @@ class EquipmentSupply {
   final String? patientName;
   final String? patientPhone;
   final String? patientAddress;
+  final String? patientPlace;
   final String? careOf;
   final String? receiverName;
   final String? receiverPhone;
@@ -28,6 +29,7 @@ class EquipmentSupply {
     this.patientName,
     this.patientPhone,
     this.patientAddress,
+    this.patientPlace,
     this.careOf,
     this.receiverName,
     this.receiverPhone,
@@ -52,6 +54,7 @@ class EquipmentSupply {
       patientName: json['patientName']?.toString(),
       patientPhone: json['patientPhone']?.toString(),
       patientAddress: json['patientAddress']?.toString(),
+      patientPlace: json['patientPlace']?.toString(),
       careOf: json['careOf']?.toString(),
       receiverName: json['receiverName']?.toString(),
       receiverPhone: json['receiverPhone']?.toString(),
@@ -86,6 +89,7 @@ class EquipmentSupply {
       'patientName': patientName,
       'patientPhone': patientPhone,
       'patientAddress': patientAddress,
+      'patientPlace': patientPlace,
       'careOf': careOf,
       'receiverName': receiverName,
       'receiverPhone': receiverPhone,

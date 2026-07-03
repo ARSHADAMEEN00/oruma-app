@@ -12,6 +12,7 @@ import 'package:oruma_app/services/equipment_supply_service.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
+import 'package:oruma_app/widgets/module_switch_tabs.dart';
 
 const _equipmentSupplyPrimary = Color(0xFF854F0B);
 const _equipmentSupplySurface = Color(0xFFFAEEDA);
@@ -324,8 +325,29 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
         surfaceTintColor: _equipmentSupplySurface,
         foregroundColor: _equipmentSupplyPrimary,
         elevation: 1,
-        title: const Text('Equipment Supplies', style: TextStyle(fontSize: 18)),
-        centerTitle: false,
+        title: ModuleSwitchTabs(
+          labels: const ['Supplies', 'Equipment'],
+          icons: const [
+            Icons.assignment_turned_in_outlined,
+            Icons.medical_services_outlined,
+          ],
+          selectedIndex: 0,
+          color: _equipmentSupplyPrimary,
+          onSelected: (index) {
+            if (index == 1) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ModuleTheme(
+                    palette: ModulePalettes.equipmentSupply,
+                    child: EquipmentListPage(),
+                  ),
+                ),
+              );
+            }
+          },
+        ),
+        centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Container(
@@ -391,24 +413,6 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
           ),
         ),
         actions: [
-          TextButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ModuleTheme(
-                    palette: ModulePalettes.equipmentSupply,
-                    child: EquipmentListPage(),
-                  ),
-                ),
-              );
-            },
-            icon: const Icon(Icons.medical_services_outlined, size: 18),
-            label: const Text('Equipment'),
-            style: TextButton.styleFrom(
-              foregroundColor: _equipmentSupplyPrimary,
-            ),
-          ),
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
         ],
       ),
@@ -485,7 +489,10 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
 
     final q = _searchQuery.toLowerCase();
     return (supply.patientName?.toLowerCase().contains(q) ?? false) ||
+        (supply.receiverName?.toLowerCase().contains(q) ?? false) ||
         (supply.careOf?.toLowerCase().contains(q) ?? false) ||
+        (supply.patientPlace?.toLowerCase().contains(q) ?? false) ||
+        (supply.receiverPlace?.toLowerCase().contains(q) ?? false) ||
         supply.equipmentName.toLowerCase().contains(q);
   }
 
@@ -618,6 +625,8 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
     final authService = Provider.of<AuthService>(context, listen: false);
     final canEdit = authService.canEdit;
     final canDelete = authService.canDelete;
+    final recipientName = _supplyRecipientName(supply);
+    final placeLabel = _supplyPlaceLabel(supply);
 
     // Return button visibility (Using canEdit as it modifies the state)
     Widget buildReturnButton() {
@@ -720,9 +729,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
 
                       // Patient Name
                       Text(
-                        (supply.patientName?.isNotEmpty == true)
-                            ? supply.patientName!.toUpperCase()
-                            : (supply.receiverName ?? 'Unknown').toUpperCase(),
+                        recipientName.toUpperCase(),
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
@@ -745,6 +752,31 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (placeLabel != null) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.place_outlined,
+                              size: 14,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                placeLabel,
+                                style: TextStyle(
+                                  color: Colors.grey.shade500,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
 
                       // Footer: Phone & Action
                       const SizedBox(height: 14),
@@ -757,9 +789,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            (supply.patientName?.isNotEmpty == true)
-                                ? (supply.patientPhone ?? 'N/A')
-                                : (supply.receiverPhone ?? 'N/A'),
+                            _supplyPhone(supply),
                             style: TextStyle(
                               color: Colors.grey.shade500,
                               fontSize: 12,
@@ -830,6 +860,36 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
       child: cardContent,
     );
+  }
+
+  String _supplyRecipientName(EquipmentSupply supply) {
+    return _firstNonEmpty([
+          supply.patientName,
+          supply.receiverName,
+          supply.careOf,
+        ]) ??
+        'Unknown';
+  }
+
+  String _supplyPhone(EquipmentSupply supply) {
+    return _firstNonEmpty([supply.patientPhone, supply.receiverPhone]) ?? 'N/A';
+  }
+
+  String? _supplyPlaceLabel(EquipmentSupply supply) {
+    return _firstNonEmpty([
+      supply.patientPlace,
+      supply.receiverPlace,
+      supply.patientAddress,
+      supply.receiverAddress,
+    ]);
+  }
+
+  String? _firstNonEmpty(Iterable<String?> values) {
+    for (final value in values) {
+      final trimmed = value?.trim();
+      if (trimmed != null && trimmed.isNotEmpty) return trimmed;
+    }
+    return null;
   }
 
   Widget _buildDetailItem({required IconData icon, required String label}) {
@@ -989,6 +1049,13 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
                     Icons.location_on,
                     'Address',
                     supply.patientAddress!,
+                  ),
+                if (supply.patientPlace != null &&
+                    supply.patientPlace!.isNotEmpty)
+                  _buildDetailRow(
+                    Icons.location_city,
+                    'Place',
+                    supply.patientPlace!,
                   ),
                 if (supply.careOf != null && supply.careOf!.isNotEmpty)
                   _buildDetailRow(

@@ -64,7 +64,12 @@ class PhysicalExamStep extends StatelessWidget {
   static const _previousVisitPromptMalayalam =
       'കഴിഞ്ഞ സന്ദർശനത്തിലെഴുതിയിരുന്ന ബുദ്ധിമുട്ടുകളും അതിന്റെ ഇപ്പോഴത്തെ അവസ്ഥയും, രോഗിയുടെ പ്രധാന പരാതികൾ / പ്രധാന ബുദ്ധിമുട്ട് / പൊതു അവസ്ഥ';
 
-  static const _dropdownFindingKeys = {'respiration', 'foodWater', 'sleep', 'defecation'};
+  static const _dropdownFindingKeys = {
+    'respiration',
+    'foodWater',
+    'sleep',
+    'defecation',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -735,6 +740,7 @@ class PhysicalExamStep extends StatelessWidget {
       'pain_present',
       'yes',
       'no_defecation',
+      'no_sleep',
       'over_sleep',
       'dry_skin',
       'not_clean',
@@ -796,13 +802,13 @@ class PhysicalExamStep extends StatelessWidget {
                   'normal': 'സാധാരണം',
                   'oxygen_cylinder': 'ഓക്സിജൻ സിലിണ്ടർ',
                   'bipap_machine': 'BiPAP മെഷീൻ',
-                  'nebulizer': 'നെബുലൈസർ',
+                  'nebulizer': 'കോൺസൻട്രേറ്റർ',
                 }
               : const {
                   'normal': 'Normal',
                   'oxygen_cylinder': 'Oxygen cylinder',
                   'bipap_machine': 'BiPAP Machine',
-                  'nebulizer': 'Nebulizer',
+                  'nebulizer': 'Concentrator',
                 },
         );
       case 'foodWater':
@@ -830,8 +836,7 @@ class PhysicalExamStep extends StatelessWidget {
           ],
           isMalayalam
               ? const {
-                  'uses_toilet_independently':
-                      'സ്വതന്ത്രമായി ശൗചാലയം ഉപയോഗിക്കുന്നു',
+                  'uses_toilet_independently': 'സ്വയം ടോയിലെറ്റിൽ പോകും',
                   'urinary_catheter': 'യൂറിനറി കാത്തീറ്റർ',
                   'condom_catheter': 'കോണ്ടം കാത്തീറ്റർ',
                   'nephrostomy_tube': 'നെഫ്രോസ്റ്റമി ട്യൂബ്',
@@ -850,7 +855,7 @@ class PhysicalExamStep extends StatelessWidget {
               ? const {
                   'normal': 'സാധാരണം',
                   'uses_medication': 'മരുന്ന് ഉപയോഗിക്കുന്നു',
-                  'no_defecation': 'മലവിസർജനം ഇല്ല',
+                  'no_defecation': 'ശോധന ഇല്ല',
                 }
               : const {
                   'normal': 'Normal',
@@ -860,16 +865,18 @@ class PhysicalExamStep extends StatelessWidget {
         );
       case 'sleep':
         return (
-          const ['normal', 'with_medication', 'over_sleep'],
+          const ['normal', 'with_medication', 'no_sleep', 'over_sleep'],
           isMalayalam
               ? const {
                   'normal': 'സാധാരണ ഉറക്കം',
                   'with_medication': 'മരുന്നിന്റെ സഹായത്തോടെ',
+                  'no_sleep': 'ഉറക്കം ഇല്ല',
                   'over_sleep': 'അമിത ഉറക്കം',
                 }
               : const {
                   'normal': 'Normal',
                   'with_medication': 'With Medication',
+                  'no_sleep': 'No Sleep',
                   'over_sleep': 'Over Sleep',
                 },
         );

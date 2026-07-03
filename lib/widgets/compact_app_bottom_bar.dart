@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:oruma_app/services/auth_service.dart';
+import 'package:provider/provider.dart';
 
 enum AppBottomSection { home, medicine, patients, homeVisit, nhc }
 
@@ -22,6 +24,17 @@ class CompactAppBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthService>();
+    final items = _items.where((item) {
+      if (item.$1 == AppBottomSection.medicine && !auth.canAccessMedicine) {
+        return false;
+      }
+      if (item.$1 == AppBottomSection.nhc && !auth.canAccessNHC) {
+        return false;
+      }
+      return true;
+    }).toList();
+
     return DecoratedBox(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -40,7 +53,7 @@ class CompactAppBottomBar extends StatelessWidget {
         child: SizedBox(
           height: 54,
           child: Row(
-            children: _items.map((item) {
+            children: items.map((item) {
               final selected = current == item.$1;
               return Expanded(
                 child: Semantics(
