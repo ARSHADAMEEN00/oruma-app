@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oruma_app/services/api_config.dart';
+import 'package:oruma_app/services/app_cache.dart';
 
 class AuthService with ChangeNotifier {
   // Use ApiConfig to get the correct base URL
@@ -107,6 +108,8 @@ class AuthService with ChangeNotifier {
   Future<void> logout() async {
     _token = null;
     _role = null;
+    // Clear all cached data so stale data cannot leak to another user session
+    AppCache.clear();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
     await prefs.remove('auth_role');

@@ -1,6 +1,7 @@
 import '../models/equipment.dart';
 import 'api_config.dart';
 import 'api_service.dart';
+import 'app_cache.dart';
 
 /// Response from bulk equipment creation
 class CreateEquipmentResponse {
@@ -32,8 +33,39 @@ class CreateEquipmentResponse {
 class EquipmentService {
   EquipmentService._();
 
+  static const _prefix = 'equipment:';
+  static const _keyAll = 'equipment:all';
+  static const _keyAvailable = 'equipment:available';
+  static const _ttl = Duration(minutes: 10);
+
   /// Get all equipment from the API.
+  /// Results without filters are cached; searches with [search] bypass cache.
   static Future<List<Equipment>> getAllEquipment({
+    String? status,
+    String? search,
+  }) async {
+    final hasSearch = search != null && search.trim().isNotEmpty;
+
+    // Determine a stable cache key for unfiltered/status-only requests
+    final cacheKey = switch (status) {
+      'available' when !hasSearch => _keyAvailable,
+      null when !hasSearch => _keyAll,
+      _ => null, // search or combined filters → always live
+    };
+
+    if (cacheKey != null) {
+      return AppCache.get<List<Equipment>>(
+        cacheKey,
+        ttl: _ttl,
+        loader: () => _fetchEquipment(status: status, search: search),
+      );
+    }
+
+    // Search / combined filter – skip cache
+    return _fetchEquipment(status: status, search: search);
+  }
+
+  static Future<List<Equipment>> _fetchEquipment({
     String? status,
     String? search,
   }) async {
@@ -52,13 +84,11 @@ class EquipmentService {
         .toString();
 
     final result = await ApiService.get<List<dynamic>>(url);
-
     if (result.isSuccess && result.data != null) {
       return result.data!
           .map((json) => Equipment.fromJson(json as Map<String, dynamic>))
           .toList();
     }
-
     throw Exception(result.error ?? 'Failed to fetch equipment');
   }
 
@@ -67,21 +97,18 @@ class EquipmentService {
     return getAllEquipment(status: 'available', search: search);
   }
 
-  /// Get a single equipment by ID.
+  /// Get a single equipment by ID (not cached — low repeat rate).
   static Future<Equipment> getEquipmentById(String id) async {
     final result = await ApiService.get<Map<String, dynamic>>(
       '${ApiConfig.equipmentEndpoint}/$id',
     );
-
     if (result.isSuccess && result.data != null) {
       return Equipment.fromJson(result.data!);
     }
-
     throw Exception(result.error ?? 'Failed to fetch equipment');
   }
 
-  /// Create new equipment (creates multiple if quantity > 1).
-  /// Returns a response with all created equipment items.
+  /// Create new equipment and invalidate the equipment cache.
   static Future<CreateEquipmentResponse> createEquipment({
     required String name,
     required int quantity,
@@ -108,13 +135,13 @@ class EquipmentService {
     );
 
     if (result.isSuccess && result.data != null) {
+      AppCache.invalidatePrefix(_prefix);
       return CreateEquipmentResponse.fromJson(result.data!);
     }
-
     throw Exception(result.error ?? 'Failed to create equipment');
   }
 
-  /// Update an existing equipment.
+  /// Update an existing equipment and invalidate the equipment cache.
   static Future<Equipment> updateEquipment(
     String id, {
     String? name,
@@ -144,13 +171,13 @@ class EquipmentService {
     );
 
     if (result.isSuccess && result.data != null) {
+      AppCache.invalidatePrefix(_prefix);
       return Equipment.fromJson(result.data!);
     }
-
     throw Exception(result.error ?? 'Failed to update equipment');
   }
 
-  /// Update equipment status.
+  /// Update equipment status and invalidate the equipment cache.
   static Future<Equipment> updateStatus(String id, String status) async {
     final result = await ApiService.put<Map<String, dynamic>>(
       '${ApiConfig.equipmentEndpoint}/$id',
@@ -158,26 +185,26 @@ class EquipmentService {
     );
 
     if (result.isSuccess && result.data != null) {
+      AppCache.invalidatePrefix(_prefix);
       return Equipment.fromJson(result.data!);
     }
-
     throw Exception(result.error ?? 'Failed to update equipment status');
   }
 
-  /// Delete an equipment.
+  /// Delete an equipment and invalidate the equipment cache.
   static Future<bool> deleteEquipment(String id) async {
     final result = await ApiService.delete(
       '${ApiConfig.equipmentEndpoint}/$id',
     );
 
     if (result.isSuccess) {
+      AppCache.invalidatePrefix(_prefix);
       return true;
     }
-
     throw Exception(result.error ?? 'Failed to delete equipment');
   }
 
-  /// Search equipment by name or uniqueId.
+  /// Search equipment by name or uniqueId (always live, bypasses cache).
   static Future<List<Equipment>> searchEquipment(
     String query, {
     String? status,

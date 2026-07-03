@@ -1,14 +1,17 @@
 import '../models/patient.dart';
 import 'api_config.dart';
 import 'api_service.dart';
+import 'app_cache.dart';
 
 /// Patient service for CRUD operations via the backend API.
 class PatientService {
   PatientService._();
 
-  /// Get all patients from the API.
+  static const _prefix = 'patients:';
+  static const _ttl = Duration(minutes: 5);
+
+  /// Get all patients from the API. Adapter for legacy calls.
   static Future<List<Patient>> getAllPatients({bool? isDead}) async {
-    // Adapter for legacy calls
     String filter = 'all';
     if (isDead == true) {
       filter = 'dead';
@@ -20,10 +23,41 @@ class PatientService {
     return response.patients;
   }
 
-
   /// Get patients with filter and counts.
-  static Future<PatientListResponse> getPatientsList({String filter = 'all', String? village, String? ward}) async {
-    String query = '${ApiConfig.patientsEndpoint}?filter=$filter&populate=createdBy';
+  /// Results are cached per unique [filter] string when no village/ward
+  /// filter is applied. Filtered sub-views are always fetched live.
+  static Future<PatientListResponse> getPatientsList({
+    String filter = 'all',
+    String? village,
+    String? ward,
+  }) async {
+    final hasSubFilter =
+        (village != null && village.isNotEmpty) ||
+        (ward != null && ward.isNotEmpty);
+
+    // Only cache unfiltered list views — village/ward sub-views are live
+    if (!hasSubFilter) {
+      return AppCache.get<PatientListResponse>(
+        'patients:$filter',
+        ttl: _ttl,
+        loader: () => _fetchPatientsList(
+          filter: filter,
+          village: village,
+          ward: ward,
+        ),
+      );
+    }
+
+    return _fetchPatientsList(filter: filter, village: village, ward: ward);
+  }
+
+  static Future<PatientListResponse> _fetchPatientsList({
+    String filter = 'all',
+    String? village,
+    String? ward,
+  }) async {
+    String query =
+        '${ApiConfig.patientsEndpoint}?filter=$filter&populate=createdBy';
     if (village != null && village.isNotEmpty) {
       query += '&village=${Uri.encodeComponent(village)}';
     }
@@ -34,14 +68,14 @@ class PatientService {
 
     if (result.isSuccess && result.data != null) {
       if (result.data is Map<String, dynamic>) {
-        return PatientListResponse.fromJson(result.data as Map<String, dynamic>);
+        return PatientListResponse.fromJson(
+          result.data as Map<String, dynamic>,
+        );
       } else if (result.data is List) {
-        // Fallback for legacy API response (returns List instead of Map)
         final list = (result.data as List)
             .map((json) => Patient.fromJson(json as Map<String, dynamic>))
             .toList();
 
-        // Calculate counts based on the received list
         final allCount = list.length;
         final deadCount = list.where((p) => p.isDead).length;
         final aliveCount = list.where((p) => !p.isDead).length;
@@ -60,7 +94,7 @@ class PatientService {
     throw Exception(result.error ?? 'Failed to fetch patients');
   }
 
-  /// Get a single patient by ID.
+  /// Get a single patient by ID (not cached — low repeat rate).
   static Future<Patient> getPatientById(String id) async {
     final result = await ApiService.get<Map<String, dynamic>>(
       '${ApiConfig.patientsEndpoint}/$id?populate=createdBy',
@@ -73,7 +107,7 @@ class PatientService {
     throw Exception(result.error ?? 'Failed to fetch patient');
   }
 
-  /// Create a new patient.
+  /// Create a new patient and invalidate the patients cache.
   static Future<Patient> createPatient(Patient patient) async {
     final result = await ApiService.post<Map<String, dynamic>>(
       ApiConfig.patientsEndpoint,
@@ -81,13 +115,14 @@ class PatientService {
     );
 
     if (result.isSuccess && result.data != null) {
+      AppCache.invalidatePrefix(_prefix);
       return Patient.fromJson(result.data!);
     }
 
     throw Exception(result.error ?? 'Failed to create patient');
   }
 
-  /// Update an existing patient.
+  /// Update an existing patient and invalidate the patients cache.
   static Future<Patient> updatePatient(String id, Patient patient) async {
     final result = await ApiService.put<Map<String, dynamic>>(
       '${ApiConfig.patientsEndpoint}/$id',
@@ -95,24 +130,28 @@ class PatientService {
     );
 
     if (result.isSuccess && result.data != null) {
+      AppCache.invalidatePrefix(_prefix);
       return Patient.fromJson(result.data!);
     }
 
     throw Exception(result.error ?? 'Failed to update patient');
   }
 
-  /// Delete a patient.
+  /// Delete a patient and invalidate the patients cache.
   static Future<bool> deletePatient(String id) async {
-    final result = await ApiService.delete('${ApiConfig.patientsEndpoint}/$id');
+    final result = await ApiService.delete(
+      '${ApiConfig.patientsEndpoint}/$id',
+    );
 
     if (result.isSuccess) {
+      AppCache.invalidatePrefix(_prefix);
       return true;
     }
 
     throw Exception(result.error ?? 'Failed to delete patient');
   }
 
-  /// Search patients by name.
+  /// Search patients by name — always live, bypasses cache.
   static Future<List<Patient>> searchPatients(
     String query, {
     bool? isDead,
