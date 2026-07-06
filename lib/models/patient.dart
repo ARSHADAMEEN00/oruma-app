@@ -16,6 +16,7 @@ class Patient {
   final List<String> disease;
   final String plan;
   final String? locationLink;
+  final String? volunteerId;
   final String? volunteerName;
   final String? volunteerContact;
   final String? registerId;
@@ -41,6 +42,7 @@ class Patient {
     this.disease = const [],
     required this.plan,
     this.locationLink,
+    this.volunteerId,
     this.volunteerName,
     this.volunteerContact,
     this.registerId,
@@ -77,6 +79,7 @@ class Patient {
           : [],
       plan: json['plan']?.toString() ?? '',
       locationLink: json['locationLink']?.toString(),
+      volunteerId: _getId(json['volunteerId']),
       volunteerName: json['volunteerName']?.toString(),
       volunteerContact: json['volunteerContact']?.toString(),
       registerId: json['registerId']?.toString(),
@@ -115,6 +118,7 @@ class Patient {
       'disease': disease,
       'plan': plan,
       'locationLink': locationLink,
+      'volunteerId': volunteerId,
       'volunteerName': volunteerName,
       'volunteerContact': volunteerContact,
       'registerId': registerId,
@@ -140,6 +144,7 @@ class Patient {
     List<String>? disease,
     String? plan,
     String? locationLink,
+    String? volunteerId,
     String? volunteerName,
     String? volunteerContact,
     String? registerId,
@@ -162,6 +167,7 @@ class Patient {
       disease: disease ?? this.disease,
       plan: plan ?? this.plan,
       locationLink: locationLink ?? this.locationLink,
+      volunteerId: volunteerId ?? this.volunteerId,
       volunteerName: volunteerName ?? this.volunteerName,
       volunteerContact: volunteerContact ?? this.volunteerContact,
       registerId: registerId ?? this.registerId,
@@ -176,6 +182,14 @@ class Patient {
   @override
   String toString() {
     return 'Patient(id: $id, name: $name, village: $village, disease: $disease)';
+  }
+
+  static String? _getId(dynamic field) {
+    if (field == null) return null;
+    if (field is String) return field;
+    if (field is Map && field['_id'] != null) return field['_id'].toString();
+    if (field is Map && field['id'] != null) return field['id'].toString();
+    return field.toString();
   }
 }
 

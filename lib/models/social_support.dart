@@ -7,6 +7,7 @@ const socialSupportTypeLabels = {
 class SocialSupport {
   final String? id;
   final dynamic patientId;
+  final dynamic volunteerId;
   final List<String> supportTypes;
   final DateTime givenAt;
   final String? note;
@@ -19,6 +20,7 @@ class SocialSupport {
   const SocialSupport({
     this.id,
     required this.patientId,
+    this.volunteerId,
     required this.supportTypes,
     required this.givenAt,
     this.note,
@@ -33,6 +35,7 @@ class SocialSupport {
     return SocialSupport(
       id: json['_id']?.toString() ?? json['id']?.toString(),
       patientId: json['patientId'],
+      volunteerId: json['volunteerId'],
       supportTypes: (json['supportTypes'] as List<dynamic>? ?? const [])
           .map((item) => item.toString())
           .toList(),
@@ -55,6 +58,7 @@ class SocialSupport {
   Map<String, dynamic> toJson() {
     return {
       'patientId': _getId(patientId),
+      'volunteerId': _getId(volunteerId),
       'supportTypes': supportTypes,
       'givenAt': givenAt.toIso8601String(),
       'note': note,

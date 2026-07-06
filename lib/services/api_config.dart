@@ -33,13 +33,15 @@ class ApiConfig {
   static String get v2PatientsEndpoint => '$baseUrl/v2/patients';
   static String get v2MedicinesEndpoint => '$baseUrl/v2/medicines';
   static String get homeVisitsEndpoint => '$baseUrl/home-visits';
-  static String get v2VisitAssessmentsEndpoint => '$baseUrl/v2/visit-assessments';
+  static String get v2VisitAssessmentsEndpoint =>
+      '$baseUrl/v2/visit-assessments';
   static String get equipmentEndpoint => '$baseUrl/equipment';
   static String get equipmentSuppliesEndpoint => '$baseUrl/equipment-supplies';
   static String get medicineSuppliesEndpoint => '$baseUrl/medicine-supplies';
   static String get v2MedicineSuppliesEndpoint =>
       '$baseUrl/v2/medicine-supplies';
   static String get v2SocialSupportEndpoint => '$baseUrl/v2/social-support';
+  static String get v2VolunteersEndpoint => '$baseUrl/v2/volunteers';
   static String get meEndpoint => '$baseUrl/auth/me';
 
   /// Default headers for API requests

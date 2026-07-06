@@ -9,6 +9,7 @@ import 'package:oruma_app/home_visit_list_page.dart';
 import 'package:oruma_app/medicine_list_page.dart';
 import 'package:oruma_app/medicine_supply_list_page.dart';
 import 'package:oruma_app/social_support_list_page.dart';
+import 'package:oruma_app/volunteer_list_page.dart';
 import 'package:oruma_app/pt_registration.dart' show patientrigister;
 import 'package:oruma_app/patient_list_page.dart';
 import 'package:oruma_app/deceased_patient_list_page.dart';
@@ -1068,6 +1069,17 @@ class _HomescreenState extends State<Homescreen> {
                             child: SocialSupportListPage(),
                           ),
                         ),
+                      if (auth.isMember)
+                        _buildModernActionCard(
+                          context,
+                          title: "Volunteers",
+                          icon: Icons.badge_rounded,
+                          palette: ModulePalettes.volunteers,
+                          page: const ModuleTheme(
+                            palette: ModulePalettes.volunteers,
+                            child: VolunteerListPage(),
+                          ),
+                        ),
                       _buildModernActionCard(
                         context,
                         title: "Equipment Supply",
@@ -1627,6 +1639,24 @@ class _HomescreenState extends State<Homescreen> {
                           builder: (context) => const ModuleTheme(
                             palette: ModulePalettes.socialSupport,
                             child: SocialSupportListPage(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.badge_outlined,
+                    title: "Volunteers",
+                    color: ModulePalettes.volunteers.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ModuleTheme(
+                            palette: ModulePalettes.volunteers,
+                            child: VolunteerListPage(),
                           ),
                         ),
                       );

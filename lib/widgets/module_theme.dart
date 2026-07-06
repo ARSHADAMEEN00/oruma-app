@@ -44,6 +44,12 @@ class ModulePalettes {
     iconBackground: Color(0xFFE8AEC9),
     primary: Color(0xFF8A2454),
   );
+
+  static const volunteers = ModulePalette(
+    cardBackground: Color(0xFFE3F4F3),
+    iconBackground: Color(0xFFACDDDA),
+    primary: Color(0xFF2F6F73),
+  );
 }
 
 class ModuleTheme extends StatelessWidget {

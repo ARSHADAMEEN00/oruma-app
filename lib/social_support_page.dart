@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/models/social_support.dart';
+import 'package:oruma_app/models/volunteer.dart';
 import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/services/social_support_service.dart';
+import 'package:oruma_app/services/volunteer_service.dart';
 
 const _supportPrimary = Color(0xFF8A2454);
 const _supportDark = Color(0xFF64143A);
@@ -22,11 +24,11 @@ class SocialSupportPage extends StatefulWidget {
 class _SocialSupportPageState extends State<SocialSupportPage> {
   final _formKey = GlobalKey<FormState>();
   final _noteController = TextEditingController();
-  final _volunteerNameController = TextEditingController();
-  final _volunteerContactController = TextEditingController();
 
   List<Patient> _patients = [];
+  List<Volunteer> _volunteers = [];
   Patient? _selectedPatient;
+  Volunteer? _selectedVolunteer;
   DateTime _givenAt = DateTime.now();
   bool _loading = true;
   bool _saving = false;
@@ -48,17 +50,22 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
   @override
   void dispose() {
     _noteController.dispose();
-    _volunteerNameController.dispose();
-    _volunteerContactController.dispose();
     super.dispose();
   }
 
   Future<void> _loadPatients() async {
     try {
       final patients = await PatientService.getAllPatients(isDead: false);
+      final volunteers = await _loadVolunteersSafely();
+      final initialVolunteer = _findPatientVolunteer(
+        widget.initialPatient,
+        volunteers,
+      );
       if (!mounted) return;
       setState(() {
         _patients = patients;
+        _volunteers = volunteers;
+        _selectedVolunteer = initialVolunteer;
         _loading = false;
       });
     } catch (error) {
@@ -70,6 +77,14 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  Future<List<Volunteer>> _loadVolunteersSafely() async {
+    try {
+      return await VolunteerService.getVolunteers();
+    } catch (_) {
+      return const <Volunteer>[];
     }
   }
 
@@ -97,6 +112,13 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
       return;
     }
 
+    if (_selectedVolunteer?.id == null || _selectedVolunteer!.id!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a volunteer')),
+      );
+      return;
+    }
+
     if (_selectedTypes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -114,8 +136,9 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
           supportTypes: _selectedTypes.toList(),
           givenAt: _givenAt,
           note: _blankToNull(_noteController.text),
-          volunteerName: _volunteerNameController.text.trim(),
-          volunteerContact: _volunteerContactController.text.trim(),
+          volunteerId: _selectedVolunteer!.id,
+          volunteerName: _selectedVolunteer!.name,
+          volunteerContact: _selectedVolunteer!.phone,
         ),
       );
 
@@ -203,19 +226,8 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
               title: 'Volunteer details',
               icon: Icons.badge_outlined,
               children: [
-                _textField(
-                  _volunteerNameController,
-                  'Volunteer Name',
-                  icon: Icons.person_outline,
-                  required: true,
-                ),
-                _textField(
-                  _volunteerContactController,
-                  'Volunteer Contact',
-                  icon: Icons.call_outlined,
-                  keyboardType: TextInputType.phone,
-                  required: true,
-                ),
+                _volunteerAutocomplete(),
+                if (_selectedVolunteer != null) _selectedVolunteerCard(),
                 _textField(
                   _noteController,
                   'Note',
@@ -351,7 +363,7 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
               patient.place.toLowerCase().contains(query),
         );
       },
-      onSelected: (patient) => setState(() => _selectedPatient = patient),
+      onSelected: _selectPatient,
       fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
         if (_selectedPatient != null && controller.text.isEmpty) {
           controller.text = _patientLabel(_selectedPatient!);
@@ -411,6 +423,146 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
           IconButton(
             tooltip: 'Clear patient',
             onPressed: () => setState(() => _selectedPatient = null),
+            icon: const Icon(Icons.close, color: _supportPrimary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _selectPatient(Patient patient) {
+    final volunteer = _findPatientVolunteer(patient, _volunteers);
+    setState(() {
+      _selectedPatient = patient;
+      if (volunteer != null) {
+        _selectedVolunteer = volunteer;
+      }
+    });
+  }
+
+  Volunteer? _findPatientVolunteer(
+    Patient? patient,
+    List<Volunteer> volunteers,
+  ) {
+    if (patient == null) return null;
+
+    final volunteerId = patient.volunteerId;
+    if (volunteerId?.trim().isNotEmpty == true) {
+      for (final volunteer in volunteers) {
+        if (volunteer.id == volunteerId) return volunteer;
+      }
+    }
+
+    final name = patient.volunteerName?.trim().toLowerCase();
+    final phone = patient.volunteerContact?.trim();
+    if ((name == null || name.isEmpty) && (phone == null || phone.isEmpty)) {
+      return null;
+    }
+
+    for (final volunteer in volunteers) {
+      final sameName =
+          name == null ||
+          name.isEmpty ||
+          volunteer.name.trim().toLowerCase() == name;
+      final samePhone =
+          phone == null || phone.isEmpty || volunteer.phone.trim() == phone;
+      if (sameName && samePhone) return volunteer;
+    }
+    return null;
+  }
+
+  Widget _volunteerAutocomplete() {
+    if (_volunteers.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFCF8FA),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.volunteer_activism_outlined,
+              color: _supportPrimary,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'No volunteers added yet',
+                style: TextStyle(color: Colors.grey.shade700),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Autocomplete<Volunteer>(
+      key: ValueKey(_selectedVolunteer?.id ?? 'none'),
+      displayStringForOption: _volunteerLabel,
+      optionsBuilder: (textEditingValue) {
+        final query = textEditingValue.text.trim().toLowerCase();
+        if (query.isEmpty) return _volunteers;
+        return _volunteers.where((volunteer) => volunteer.matches(query));
+      },
+      onSelected: (volunteer) => setState(() => _selectedVolunteer = volunteer),
+      fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+        if (_selectedVolunteer != null && controller.text.isEmpty) {
+          controller.text = _volunteerLabel(_selectedVolunteer!);
+        }
+        return TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          onEditingComplete: onEditingComplete,
+          decoration: _inputDecoration(
+            'Volunteer',
+            Icons.volunteer_activism_outlined,
+            hint: 'Search volunteer',
+          ),
+          validator: (_) =>
+              _selectedVolunteer == null ? 'Please select a volunteer' : null,
+        );
+      },
+    );
+  }
+
+  Widget _selectedVolunteerCard() {
+    final volunteer = _selectedVolunteer!;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _supportCard,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _supportIcon),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.badge_outlined, color: _supportPrimary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  volunteer.name,
+                  style: const TextStyle(
+                    color: _supportDark,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  '${volunteer.phone} - ${volunteer.locationLabel}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: _supportDark, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Clear volunteer',
+            onPressed: () => setState(() => _selectedVolunteer = null),
             icon: const Icon(Icons.close, color: _supportPrimary),
           ),
         ],
@@ -506,6 +658,15 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
       if (patient.place.isNotEmpty) patient.place,
     ].whereType<String>().join(' • ');
     return details.isEmpty ? patient.name : '${patient.name} - $details';
+  }
+
+  String _volunteerLabel(Volunteer volunteer) {
+    final details = [
+      if (volunteer.phone.isNotEmpty) volunteer.phone,
+      if (volunteer.place.isNotEmpty) volunteer.place,
+      if (volunteer.ward.isNotEmpty) 'Ward ${volunteer.ward}',
+    ].join(' - ');
+    return details.isEmpty ? volunteer.name : '${volunteer.name} - $details';
   }
 
   String? _blankToNull(String value) {
