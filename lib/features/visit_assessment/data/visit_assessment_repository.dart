@@ -106,13 +106,31 @@ class VisitAssessmentRepository {
     );
   }
 
+  Future<void> removeAssessmentFromHistory(VisitAssessment assessment) async {
+    if (assessment.patientId.isEmpty) return;
+
+    final history = await loadCachedHistory(assessment.patientId);
+    final filtered = history
+        .where((item) => !_isSameAssessment(item, assessment))
+        .toList();
+    await cacheHistory(assessment.patientId, filtered);
+    await clearLocalDraft(draftKeyFor(assessment));
+    await clearLocalDraft(patientDateDraftKeyFor(assessment));
+    if (assessment.homeVisitId.trim().isNotEmpty) {
+      await clearLocalDraft(assessment.homeVisitId);
+    }
+  }
+
   Future<List<VisitAssessment>> getHistory(String patientId) async {
     try {
       final remote = await VisitAssessmentService.getAssessments(
         patientId: patientId,
       );
       final cached = await loadCachedHistory(patientId);
-      final merged = _mergeHistories(remote, cached);
+      final cachedDrafts = cached
+          .where((item) => item.status != 'submitted' && !item.isComplete)
+          .toList();
+      final merged = _mergeHistories(remote, cachedDrafts);
       await cacheHistory(patientId, merged);
       return merged;
     } catch (_) {
@@ -164,10 +182,9 @@ class VisitAssessmentRepository {
     VisitAssessment assessment,
   ) {
     final merged = [...history];
-    final index = merged.indexWhere((item) {
-      if (assessment.id != null && item.id == assessment.id) return true;
-      return item.homeVisitId == assessment.homeVisitId;
-    });
+    final index = merged.indexWhere(
+      (item) => _isSameAssessment(item, assessment),
+    );
     if (index >= 0) {
       merged[index] = assessment;
     } else {
@@ -189,12 +206,20 @@ class VisitAssessmentRepository {
   ) {
     var merged = [...primary];
     for (final assessment in secondary) {
-      final exists = merged.any((item) {
-        if (assessment.id != null && item.id == assessment.id) return true;
-        return item.homeVisitId == assessment.homeVisitId;
-      });
+      final exists = merged.any((item) => _isSameAssessment(item, assessment));
       if (!exists) merged = _mergeHistory(merged, assessment);
     }
     return merged;
+  }
+
+  bool _isSameAssessment(VisitAssessment a, VisitAssessment b) {
+    if (a.id != null && b.id != null && a.id == b.id) return true;
+    if (a.homeVisitId.trim().isNotEmpty &&
+        b.homeVisitId.trim().isNotEmpty &&
+        a.homeVisitId == b.homeVisitId) {
+      return true;
+    }
+    return a.patientId == b.patientId &&
+        patientDateDraftKeyFor(a) == patientDateDraftKeyFor(b);
   }
 }

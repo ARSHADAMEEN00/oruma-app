@@ -12,6 +12,7 @@ const _supportPrimary = Color(0xFF8A2454);
 const _supportDark = Color(0xFF64143A);
 const _supportCard = Color(0xFFF7E5EE);
 const _supportIcon = Color(0xFFE8AEC9);
+const double _filterControlHeight = 56;
 
 class SocialSupportListPage extends StatefulWidget {
   const SocialSupportListPage({super.key});
@@ -93,6 +94,7 @@ class _SocialSupportListPageState extends State<SocialSupportListPage> {
       final haystack = [
         record.patientName,
         record.patientRegisterId,
+        record.patientPlace,
         record.patientPhone,
         record.supportTypesLabel,
         record.note,
@@ -226,7 +228,7 @@ class _SocialSupportListPageState extends State<SocialSupportListPage> {
           ),
           const SizedBox(height: 10),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(child: _dateFilterField()),
               const SizedBox(width: 10),
@@ -254,7 +256,7 @@ class _SocialSupportListPageState extends State<SocialSupportListPage> {
       onTap: _pickDateRange,
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        height: 54,
+        height: _filterControlHeight,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
           color: Colors.grey.shade50,
@@ -326,48 +328,57 @@ class _SocialSupportListPageState extends State<SocialSupportListPage> {
   }
 
   Widget _patientFilter() {
-    return Autocomplete<Patient>(
-      displayStringForOption: _patientLabel,
-      optionsBuilder: (textEditingValue) {
-        final query = textEditingValue.text.trim().toLowerCase();
-        if (query.isEmpty) return const Iterable<Patient>.empty();
-        return _patients.where(
-          (patient) =>
-              patient.name.toLowerCase().contains(query) ||
-              (patient.registerId?.toLowerCase().contains(query) ?? false) ||
-              patient.phone.toLowerCase().contains(query),
-        );
-      },
-      onSelected: (patient) => setState(() => _selectedPatient = patient),
-      fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-        return TextField(
-          controller: controller,
-          focusNode: focusNode,
-          onEditingComplete: onEditingComplete,
-          decoration: InputDecoration(
-            hintText: 'Filter by patient',
-            prefixIcon: const Icon(Icons.person_search_outlined, size: 20),
-            filled: true,
-            fillColor: Colors.grey.shade50,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-            border: OutlineInputBorder(
+    return SizedBox(
+      height: _filterControlHeight,
+      child: Autocomplete<Patient>(
+        displayStringForOption: _patientLabel,
+        optionsBuilder: (textEditingValue) {
+          final query = textEditingValue.text.trim().toLowerCase();
+          if (query.isEmpty) return const Iterable<Patient>.empty();
+          return _patients.where(
+            (patient) =>
+                patient.name.toLowerCase().contains(query) ||
+                (patient.registerId?.toLowerCase().contains(query) ?? false) ||
+                patient.place.toLowerCase().contains(query),
+          );
+        },
+        onSelected: (patient) => setState(() => _selectedPatient = patient),
+        fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+          return Container(
+            height: _filterControlHeight,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.grey.shade200),
+              border: Border.all(color: Colors.grey.shade200),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.grey.shade200),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.person_search_outlined,
+                  size: 20,
+                  color: Color(0xFF5A4A51),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    onEditingComplete: onEditingComplete,
+                    textAlignVertical: TextAlignVertical.center,
+                    decoration: const InputDecoration(
+                      hintText: 'Filter by patient',
+                      border: InputBorder.none,
+                      isCollapsed: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: _supportPrimary, width: 1.5),
-            ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -450,6 +461,19 @@ class _SocialSupportListPageState extends State<SocialSupportListPage> {
                         ),
                       ),
                       const SizedBox(height: 4),
+                      if (_patientMeta(record).isNotEmpty) ...[
+                        Text(
+                          _patientMeta(record),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: _supportPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                      ],
                       Text(
                         DateFormat('dd MMM yyyy').format(record.givenAt),
                         style: TextStyle(
@@ -533,6 +557,15 @@ class _SocialSupportListPageState extends State<SocialSupportListPage> {
     );
   }
 
+  String _patientMeta(SocialSupport record) {
+    return [
+      if (record.patientRegisterId?.trim().isNotEmpty == true)
+        'Reg No: ${record.patientRegisterId!.trim()}',
+      if (record.patientPlace?.trim().isNotEmpty == true)
+        record.patientPlace!.trim(),
+    ].join(' • ');
+  }
+
   Widget _detailLine(IconData icon, String label, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -597,6 +630,15 @@ class _SocialSupportListPageState extends State<SocialSupportListPage> {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
+                      if (_patientMeta(record).isNotEmpty)
+                        Text(
+                          _patientMeta(record),
+                          style: const TextStyle(
+                            color: _supportPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       Text(
                         DateFormat('dd MMM yyyy').format(record.givenAt),
                         style: const TextStyle(color: _supportPrimary),
@@ -717,7 +759,7 @@ class _SocialSupportListPageState extends State<SocialSupportListPage> {
   String _patientLabel(Patient patient) {
     final details = [
       if (patient.registerId?.isNotEmpty == true) patient.registerId,
-      if (patient.phone.isNotEmpty) patient.phone,
+      if (patient.place.isNotEmpty) patient.place,
     ].whereType<String>().join(' • ');
     return details.isEmpty ? patient.name : '${patient.name} - $details';
   }

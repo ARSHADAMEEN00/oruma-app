@@ -348,7 +348,7 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
           (patient) =>
               patient.name.toLowerCase().contains(query) ||
               (patient.registerId?.toLowerCase().contains(query) ?? false) ||
-              patient.phone.toLowerCase().contains(query),
+              patient.place.toLowerCase().contains(query),
         );
       },
       onSelected: (patient) => setState(() => _selectedPatient = patient),
@@ -399,8 +399,9 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
                 Text(
                   [
                     if (patient.registerId?.isNotEmpty == true)
-                      patient.registerId,
-                    if (patient.phone.isNotEmpty) patient.phone,
+                      'Reg No: ${patient.registerId}',
+                    if (patient.place.isNotEmpty) 'Place: ${patient.place}',
+                    if (patient.phone.isNotEmpty) 'Ph: ${patient.phone}',
                   ].whereType<String>().join(' • '),
                   style: const TextStyle(color: _supportDark, fontSize: 12),
                 ),
@@ -502,7 +503,7 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
   String _patientLabel(Patient patient) {
     final details = [
       if (patient.registerId?.isNotEmpty == true) patient.registerId,
-      if (patient.phone.isNotEmpty) patient.phone,
+      if (patient.place.isNotEmpty) patient.place,
     ].whereType<String>().join(' • ');
     return details.isEmpty ? patient.name : '${patient.name} - $details';
   }

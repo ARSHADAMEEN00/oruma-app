@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:oruma_app/eq_supply.dart';
@@ -32,8 +34,12 @@ class Homescreen extends StatefulWidget {
 
 class _HomescreenState extends State<Homescreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final ScrollController _activeSuppliesScrollController = ScrollController();
+  Timer? _activeSuppliesAutoSlideTimer;
   int _activeSuppliesCount = 0;
+  int _activeSuppliesPageIndex = 0;
   List<EquipmentSupply> _activeSupplies = [];
+  bool _activeSuppliesLoading = true;
 
   @override
   void initState() {
@@ -41,16 +47,61 @@ class _HomescreenState extends State<Homescreen> {
     _loadActiveSupplies();
   }
 
+  @override
+  void dispose() {
+    _activeSuppliesAutoSlideTimer?.cancel();
+    _activeSuppliesScrollController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadActiveSupplies() async {
     try {
       final supplies = await EquipmentSupplyService.getActiveSupplies();
+      if (!mounted) return;
       setState(() {
         _activeSupplies = supplies;
         _activeSuppliesCount = supplies.length;
+        _activeSuppliesLoading = false;
+        _activeSuppliesPageIndex = 0;
       });
+      if (_activeSuppliesScrollController.hasClients) {
+        _activeSuppliesScrollController.jumpTo(0);
+      }
+      _restartActiveSuppliesAutoSlide();
     } catch (e) {
-      // Handle error silently or show a snackbar if needed
+      if (!mounted) return;
+      setState(() => _activeSuppliesLoading = false);
     }
+  }
+
+  void _restartActiveSuppliesAutoSlide() {
+    _activeSuppliesAutoSlideTimer?.cancel();
+    if (_activeSupplies.length <= 1) return;
+
+    _activeSuppliesAutoSlideTimer = Timer.periodic(const Duration(seconds: 4), (
+      _,
+    ) {
+      if (!mounted || !_activeSuppliesScrollController.hasClients) return;
+      final availableWidth = MediaQuery.sizeOf(context).width - 40;
+      final visibleCount = _activeSuppliesVisibleCount(availableWidth);
+      final maxStart = (_activeSupplies.length - visibleCount)
+          .clamp(0, _activeSupplies.length - 1)
+          .toInt();
+      if (maxStart <= 0) return;
+
+      final next = (_activeSuppliesPageIndex + 1) % (maxStart + 1);
+      final cardExtent = _activeSupplyCardWidth(availableWidth) + 12;
+      final targetOffset = (next * cardExtent).clamp(
+        0.0,
+        _activeSuppliesScrollController.position.maxScrollExtent,
+      );
+      setState(() => _activeSuppliesPageIndex = next);
+      _activeSuppliesScrollController.animateTo(
+        targetOffset,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   void _showNotifications() {
@@ -976,6 +1027,17 @@ class _HomescreenState extends State<Homescreen> {
                     mainAxisSpacing: 12,
                     childAspectRatio: 1.4,
                     children: [
+                      if (auth.isMember)
+                        _buildModernActionCard(
+                          context,
+                          title: "Patients",
+                          icon: Icons.people_alt_rounded,
+                          palette: ModulePalettes.patients,
+                          page: const ModuleTheme(
+                            palette: ModulePalettes.patients,
+                            child: PatientListPage(),
+                          ),
+                        ),
                       if (auth.canAccessNHC)
                         _buildModernActionCard(
                           context,
@@ -1130,170 +1192,234 @@ class _HomescreenState extends State<Homescreen> {
   }
 
   Widget _buildActiveSuppliesList(BuildContext context) {
-    return FutureBuilder<List<EquipmentSupply>>(
-      future: EquipmentSupplyService.getActiveSupplies(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.inventory_2_outlined,
-                  size: 40,
-                  color: Colors.grey.shade400,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "No active supplies",
-                  style: TextStyle(color: Colors.grey.shade500),
-                ),
-              ],
-            ),
-          );
-        }
+    if (_activeSuppliesLoading) {
+      return const SizedBox(
+        height: 130,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
 
-        final supplies = snapshot.data!;
-        return SizedBox(
-          height: 130,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: supplies.length,
-            itemBuilder: (context, index) {
-              final supply = supplies[index];
-              return Container(
-                width: 220,
-                margin: const EdgeInsets.only(right: 12, bottom: 4, top: 2),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.grey.shade100),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Container(width: 4, color: const Color(0xFFFAC775)),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFFAC775),
-                                      borderRadius: BorderRadius.circular(7),
-                                    ),
-                                    child: const Icon(
-                                      Icons.medical_services_outlined,
-                                      color: Color(0xFF854F0B),
-                                      size: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      supply.equipmentName,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 13,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.person_outline,
-                                    size: 12,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Expanded(
-                                    child: Text(
-                                      _supplyRecipientName(supply),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey.shade700,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.calendar_today_outlined,
-                                    size: 11,
-                                    color: Colors.grey.shade400,
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    () {
-                                      try {
-                                        final d = DateTime.parse(
-                                          supply.supplyDate.toString(),
-                                        );
-                                        return DateFormat(
-                                          'd MMM yyyy',
-                                        ).format(d);
-                                      } catch (_) {
-                                        return supply.supplyDate.toString();
-                                      }
-                                    }(),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey.shade400,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
+    if (_activeSupplies.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.inventory_2_outlined,
+              size: 40,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "No active supplies",
+              style: TextStyle(color: Colors.grey.shade500),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = _activeSupplyCardWidth(constraints.maxWidth);
+        final visibleCount = _activeSuppliesVisibleCount(constraints.maxWidth);
+        final indicatorCount = (_activeSupplies.length - visibleCount + 1)
+            .clamp(1, _activeSupplies.length)
+            .toInt();
+
+        return Column(
+          children: [
+            SizedBox(
+              height: 130,
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  if (notification.metrics.axis != Axis.horizontal) {
+                    return false;
+                  }
+                  final next = (notification.metrics.pixels / (cardWidth + 12))
+                      .round()
+                      .clamp(0, indicatorCount - 1)
+                      .toInt();
+                  if (next != _activeSuppliesPageIndex) {
+                    setState(() => _activeSuppliesPageIndex = next);
+                  }
+                  return false;
+                },
+                child: ListView.builder(
+                  controller: _activeSuppliesScrollController,
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _activeSupplies.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        right: index == _activeSupplies.length - 1 ? 0 : 12,
                       ),
-                    ],
+                      child: SizedBox(
+                        width: cardWidth,
+                        child: _activeSupplyCard(_activeSupplies[index]),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            if (indicatorCount > 1) ...[
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  indicatorCount,
+                  (index) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: _activeSuppliesPageIndex == index ? 16 : 6,
+                    height: 6,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    decoration: BoxDecoration(
+                      color: _activeSuppliesPageIndex == index
+                          ? const Color(0xFF1A237E)
+                          : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            ],
+          ],
         );
       },
     );
+  }
+
+  double _activeSupplyCardWidth(double availableWidth) {
+    if (availableWidth >= 680) {
+      return (availableWidth - 12) / 2;
+    }
+    return availableWidth * 0.78;
+  }
+
+  int _activeSuppliesVisibleCount(double availableWidth) {
+    return availableWidth >= 680 ? 2 : 1;
+  }
+
+  Widget _activeSupplyCard(EquipmentSupply supply) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4, top: 2),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(width: 4, color: const Color(0xFFFAC775)),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFAC775),
+                            borderRadius: BorderRadius.circular(7),
+                          ),
+                          child: const Icon(
+                            Icons.medical_services_outlined,
+                            color: Color(0xFF854F0B),
+                            size: 14,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            supply.equipmentName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.person_outline,
+                          size: 12,
+                          color: Colors.grey.shade500,
+                        ),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            _supplyRecipientName(supply),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          size: 11,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          _formatSupplyDate(supply.supplyDate),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatSupplyDate(DateTime date) {
+    return DateFormat('d MMM yyyy').format(date);
   }
 
   String _supplyRecipientName(EquipmentSupply supply) {

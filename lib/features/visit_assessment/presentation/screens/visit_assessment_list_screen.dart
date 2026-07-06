@@ -112,7 +112,7 @@ class _VisitAssessmentModuleScreenState
   }
 }
 
-class VisitAssessmentListScreen extends StatelessWidget {
+class VisitAssessmentListScreen extends StatefulWidget {
   const VisitAssessmentListScreen({
     super.key,
     required this.controller,
@@ -123,8 +123,51 @@ class VisitAssessmentListScreen extends StatelessWidget {
   final Patient? patient;
 
   @override
+  State<VisitAssessmentListScreen> createState() =>
+      _VisitAssessmentListScreenState();
+}
+
+class _VisitAssessmentListScreenState extends State<VisitAssessmentListScreen> {
+  bool _didRefreshVisibleHistory = false;
+
+  VisitAssessmentController get controller => widget.controller;
+  Patient? get patient => widget.patient;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshVisibleHistory();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant VisitAssessmentListScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller ||
+        oldWidget.controller.assessment.patientId !=
+            widget.controller.assessment.patientId) {
+      _didRefreshVisibleHistory = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _refreshVisibleHistory();
+      });
+    }
+  }
+
+  Future<void> _refreshVisibleHistory() async {
+    if (!mounted || _didRefreshVisibleHistory || controller.isLoading) return;
+    _didRefreshVisibleHistory = true;
+    await controller.refreshHistory();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final assessment = controller.assessment;
+    if (!controller.isLoading && !_didRefreshVisibleHistory) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _refreshVisibleHistory();
+      });
+    }
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -385,7 +428,10 @@ class VisitAssessmentListScreen extends StatelessWidget {
         ),
       ),
     );
-    if (action == 'edit' && context.mounted) {
+    if (action == 'deleted') {
+      await controller.removeDeletedAssessment(item);
+      await controller.refreshHistory();
+    } else if (action == 'edit' && context.mounted) {
       await _openEditFlow(context, item);
     }
   }

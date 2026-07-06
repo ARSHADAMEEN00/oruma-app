@@ -81,6 +81,10 @@ class PatientPdfGenerator {
       _Row('Phone', _v(p.phone)),
       _Row('Caregiver / Relation', _v(p.relation)),
       _Row('Caregiver Phone', _v(p.phone2)),
+      if (p.volunteerName?.trim().isNotEmpty == true)
+        _Row('Volunteer Name', _v(p.volunteerName)),
+      if (p.volunteerContact?.trim().isNotEmpty == true)
+        _Row('Volunteer Contact', _v(p.volunteerContact)),
       _Row('Gender', _v(p.gender)),
       _Row('Age', '${p.age} years'),
     ], firstSection: true);
@@ -217,6 +221,36 @@ class PatientPdfGenerator {
         );
       }).toList(),
       'No medicine supplies recorded',
+    );
+
+    // ── Section H – Social Support ───────────────────────────────────────
+    const supportCols = <String>[
+      '#',
+      'Date',
+      'Support',
+      'Volunteer',
+      'Contact',
+      'Note',
+    ];
+    final supportWidths = _scaleWidths([40, 130, 230, 220, 160, 265]);
+    await _renderTableSection(
+      writer,
+      'H',
+      'Social Support (${details.socialSupports.length})',
+      supportCols,
+      supportWidths,
+      details.socialSupports.asMap().entries.map((e) {
+        final s = e.value;
+        return _TRow([
+          '${e.key + 1}',
+          _fmtDate(s.givenAt),
+          _v(s.supportTypesLabel),
+          _v(s.volunteerName),
+          _v(s.volunteerContact),
+          _v(s.note),
+        ]);
+      }).toList(),
+      'No social support recorded',
     );
 
     final pageBytes = await writer.finish();

@@ -192,6 +192,19 @@ class VisitAssessmentController extends ChangeNotifier {
     );
   }
 
+  Future<void> removeDeletedAssessment(VisitAssessment assessment) async {
+    await _repository.removeAssessmentFromHistory(assessment);
+    previousAssessments = previousAssessments
+        .where((item) => !_isSameAssessment(item, assessment))
+        .toList();
+    _notify();
+  }
+
+  Future<void> refreshHistory() async {
+    _setHistory(await _repository.getHistory(_assessment.patientId));
+    _notify();
+  }
+
   void updateFinding(
     String key,
     ExamFinding Function(ExamFinding value) transform,
@@ -462,6 +475,18 @@ class VisitAssessmentController extends ChangeNotifier {
       merged.add(assessment);
     }
     return merged;
+  }
+
+  bool _isSameAssessment(VisitAssessment a, VisitAssessment b) {
+    if (a.id != null && b.id != null && a.id == b.id) return true;
+    if (a.homeVisitId.trim().isNotEmpty &&
+        b.homeVisitId.trim().isNotEmpty &&
+        a.homeVisitId == b.homeVisitId) {
+      return true;
+    }
+    return a.patientId == b.patientId &&
+        VisitAssessmentRepository.patientDateDraftKeyFor(a) ==
+            VisitAssessmentRepository.patientDateDraftKeyFor(b);
   }
 
   static VisitAssessment _identitySeed(VisitAssessment value) {

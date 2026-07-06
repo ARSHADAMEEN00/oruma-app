@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:oruma_app/medicine_supply_list_page.dart';
 import 'package:oruma_app/models/medicine.dart';
@@ -15,6 +18,22 @@ const _medicineGreen = Color(0xFF0F6E56);
 const _medicineDarkGreen = Color(0xFF0F6E56);
 const _medicineSurface = Color(0xFFE1F5EE);
 const _medicineIconBackground = Color(0xFF9FE1CB);
+
+Uint8List? _photoDataBytes(String value) {
+  if (!value.startsWith('data:image/')) return null;
+  final commaIndex = value.indexOf(',');
+  if (commaIndex == -1) return null;
+  try {
+    return base64Decode(value.substring(commaIndex + 1));
+  } catch (_) {
+    return null;
+  }
+}
+
+bool _isRemotePhoto(String value) {
+  final uri = Uri.tryParse(value);
+  return uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
+}
 
 class MedicineListPage extends StatefulWidget {
   const MedicineListPage({super.key});
@@ -263,31 +282,8 @@ class _MedicineListPageState extends State<MedicineListPage> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 10),
-                ...medicine.photos.map(
-                  (photo) => Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _medicineSurface,
-                      borderRadius: BorderRadius.circular(13),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.image_outlined,
-                          color: _medicineDarkGreen,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            photo,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                ...medicine.photos.asMap().entries.map(
+                  (entry) => _photoReferenceTile(entry.value, entry.key),
                 ),
               ],
               if (context.read<AuthService>().canEdit) ...[
@@ -308,6 +304,50 @@ class _MedicineListPageState extends State<MedicineListPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _photoReferenceTile(String photo, int index) {
+    final dataBytes = _photoDataBytes(photo);
+    final isImage = dataBytes != null || _isRemotePhoto(photo);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: _medicineSurface,
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(9),
+            child: SizedBox(
+              width: 52,
+              height: 52,
+              child: dataBytes != null
+                  ? Image.memory(dataBytes, fit: BoxFit.cover)
+                  : _isRemotePhoto(photo)
+                  ? Image.network(
+                      photo,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => const Icon(
+                        Icons.broken_image_outlined,
+                        color: _medicineDarkGreen,
+                      ),
+                    )
+                  : const Icon(Icons.image_outlined, color: _medicineDarkGreen),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              isImage ? 'Photo ${index + 1}' : photo,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -617,7 +657,7 @@ class _MedicineListPageState extends State<MedicineListPage> {
     final color = expired
         ? Colors.red
         : lowStock
-        ? Colors.orange
+        ? Colors.red
         : _medicineGreen;
     final label = expired
         ? 'Expired'
@@ -655,7 +695,7 @@ class _MedicineListPageState extends State<MedicineListPage> {
 
   Widget _stockHighlight(Medicine medicine) {
     final lowStock = medicine.qty <= 10;
-    final color = lowStock ? Colors.orange.shade800 : _medicineGreen;
+    final color = lowStock ? Colors.red.shade700 : _medicineGreen;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
@@ -787,6 +827,7 @@ class _MedicineListPageState extends State<MedicineListPage> {
       'tab' => 'Tab',
       'bottle' => 'Bottle',
       'gel' => 'Gel',
+      'piece' => 'Piece',
       null || '' => 'units',
       _ => value!.trim(),
     };
@@ -854,9 +895,10 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     'drops',
   ];
   static const strengthUnits = ['mg', 'mcg', 'g', 'IU', 'mEq', '%'];
-  static const stockUnits = ['tab', 'bottle', 'gel'];
+  static const stockUnits = ['tab', 'bottle', 'gel', 'piece'];
 
   final _formKey = GlobalKey<FormState>();
+  final ImagePicker _imagePicker = ImagePicker();
   late final TextEditingController _codeController;
   late final TextEditingController _nameController;
   late final TextEditingController _strengthController;
@@ -866,7 +908,6 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
   late final TextEditingController _brandController;
   late final TextEditingController _batchController;
   late final TextEditingController _descriptionController;
-  late final TextEditingController _photosController;
 
   String _category = 'other';
   String? _formulation;
@@ -878,6 +919,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
   bool _saving = false;
   bool _showExpiryError = false;
   List<Medicine> _existingMedicines = [];
+  List<String> _photos = [];
 
   bool get _editing => widget.medicine != null;
   bool get _hasDuplicateCode {
@@ -922,9 +964,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     );
     _batchController = TextEditingController(text: medicine?.batchNumber);
     _descriptionController = TextEditingController(text: medicine?.description);
-    _photosController = TextEditingController(
-      text: medicine?.photos.join('\n'),
-    );
+    _photos = List<String>.from(medicine?.photos ?? const []);
     _category = medicine?.category ?? 'other';
     _formulation = medicine?.formulation;
     _strengthUnit = medicine?.strengthUnit ?? 'mg';
@@ -948,7 +988,6 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
       _brandController,
       _batchController,
       _descriptionController,
-      _photosController,
     ]) {
       controller.dispose();
     }
@@ -995,7 +1034,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
       expiryDate: _expiryDate,
       batchNumber: _emptyToNull(_batchController.text),
       description: _emptyToNull(_descriptionController.text),
-      photos: _splitValues(_photosController.text, RegExp(r'\n')),
+      photos: _photos,
       isActive: _isActive,
     );
 
@@ -1040,6 +1079,150 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
         _showExpiryError = false;
       });
     }
+  }
+
+  Future<void> _pickPhotoReference(ImageSource source) async {
+    try {
+      final picked = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 72,
+        maxWidth: 1200,
+      );
+      if (picked == null) return;
+
+      final bytes = await picked.readAsBytes();
+      final mimeType = picked.mimeType?.trim().isNotEmpty == true
+          ? picked.mimeType!
+          : 'image/jpeg';
+      final encoded = 'data:$mimeType;base64,${base64Encode(bytes)}';
+
+      if (!mounted) return;
+      setState(() => _photos = [..._photos, encoded]);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not add photo: ${error.toString().replaceFirst(RegExp(r'^Exception:\s*'), '')}',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Widget _photoPickerField() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FBFA),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.photo_library_outlined,
+                color: _medicineGreen,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Photo references',
+                  style: TextStyle(fontSize: 15, color: Colors.black87),
+                ),
+              ),
+              Text(
+                '${_photos.length}',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _pickPhotoReference(ImageSource.camera),
+                  icon: const Icon(Icons.photo_camera_outlined, size: 18),
+                  label: const Text('Camera'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _pickPhotoReference(ImageSource.gallery),
+                  icon: const Icon(Icons.photo_library_outlined, size: 18),
+                  label: const Text('Gallery'),
+                ),
+              ),
+            ],
+          ),
+          if (_photos.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: _photos.asMap().entries.map((entry) {
+                return _photoPreview(entry.value, entry.key);
+              }).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _photoPreview(String photo, int index) {
+    final dataBytes = _photoDataBytes(photo);
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 84,
+            height: 84,
+            color: _medicineSurface,
+            child: dataBytes != null
+                ? Image.memory(dataBytes, fit: BoxFit.cover)
+                : _isRemotePhoto(photo)
+                ? Image.network(
+                    photo,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) =>
+                        const Icon(Icons.broken_image_outlined),
+                  )
+                : const Icon(Icons.image_outlined, color: _medicineGreen),
+          ),
+        ),
+        Positioned(
+          right: -8,
+          top: -8,
+          child: IconButton.filled(
+            visualDensity: VisualDensity.compact,
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(28, 28),
+            ),
+            onPressed: () {
+              setState(() {
+                _photos = [..._photos.take(index), ..._photos.skip(index + 1)];
+              });
+            },
+            icon: const Icon(Icons.close, size: 15),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -1145,6 +1328,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                           'tab': 'Tab',
                           'bottle': 'Bottle',
                           'gel': 'Gel',
+                          'piece': 'Piece',
                         },
                         onChanged: (value) {
                           if (value != null) {
@@ -1158,7 +1342,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                 _textField(
                   _netContentController,
                   'Net Content',
-                  hint: '250ml',
+                  hint: 'e.g. 250 ml or 250 g',
                   icon: Icons.local_drink_outlined,
                 ),
                 _expiryDateField(required: true),
@@ -1260,13 +1444,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                       icon: Icons.notes_outlined,
                       maxLines: 3,
                     ),
-                    _textField(
-                      _photosController,
-                      'Photo references',
-                      hint: 'One image URL or reference per line',
-                      icon: Icons.photo_library_outlined,
-                      maxLines: 3,
-                    ),
+                    _photoPickerField(),
                     SwitchListTile.adaptive(
                       contentPadding: EdgeInsets.zero,
                       value: _isActive,

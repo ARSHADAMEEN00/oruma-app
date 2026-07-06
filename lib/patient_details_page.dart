@@ -757,6 +757,19 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
                 _value(_currentPatient.phone2),
                 trailing: _phoneButton(_currentPatient.phone2),
               ),
+              if (_currentPatient.volunteerName?.trim().isNotEmpty == true)
+                _infoRow(
+                  Icons.volunteer_activism_outlined,
+                  'Volunteer name',
+                  _value(_currentPatient.volunteerName),
+                ),
+              if (_currentPatient.volunteerContact?.trim().isNotEmpty == true)
+                _infoRow(
+                  Icons.call_outlined,
+                  'Volunteer contact',
+                  _value(_currentPatient.volunteerContact),
+                  trailing: _phoneButton(_currentPatient.volunteerContact),
+                ),
               _infoRow(
                 Icons.wc_outlined,
                 'Gender',

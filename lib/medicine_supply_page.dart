@@ -26,7 +26,7 @@ class MedicineSupplyPage extends StatefulWidget {
 
 class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
   final _formKey = GlobalKey<FormState>();
-  
+
   List<Patient> _patients = [];
   List<Medicine> _medicines = [];
   bool _loadingData = true;
@@ -34,16 +34,16 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
 
   Patient? _selectedPatient;
   Medicine? _selectedMedicine;
-  
+
   final TextEditingController _qtyController = TextEditingController();
-  
+
   // Optional fields
   bool _showMore = false;
   String _status = 'given';
   final TextEditingController _noteController = TextEditingController();
   final TextEditingController _prescribedByController = TextEditingController();
   final TextEditingController _supplyDaysController = TextEditingController();
-  
+
   DateTime _givenAt = DateTime.now();
 
   @override
@@ -56,7 +56,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
     try {
       final pResult = await PatientService.getAllPatients();
       final mResult = await MedicineService.getMedicines();
-      
+
       if (mounted) {
         setState(() {
           _patients = pResult;
@@ -67,7 +67,9 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _loadingData = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load data: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load data: $e')));
       }
     }
   }
@@ -83,13 +85,17 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (_selectedPatient == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a patient')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a patient')));
       return;
     }
     if (_selectedMedicine == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a medicine')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a medicine')));
       return;
     }
 
@@ -100,7 +106,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
       final staffId = authService.user?['_id'] ?? authService.user?['id'];
 
       if (staffId == null) {
-         throw Exception("You must be logged in to supply medicine.");
+        throw Exception("You must be logged in to supply medicine.");
       }
 
       final supply = MedicineSupply(
@@ -111,7 +117,9 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
         qtyGiven: int.tryParse(_qtyController.text) ?? 0,
         status: _status,
         staffNote: _noteController.text.isEmpty ? null : _noteController.text,
-        prescribedBy: _prescribedByController.text.isEmpty ? null : _prescribedByController.text,
+        prescribedBy: _prescribedByController.text.isEmpty
+            ? null
+            : _prescribedByController.text,
         supplyDays: int.tryParse(_supplyDaysController.text),
       );
 
@@ -130,7 +138,9 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().replaceFirst(RegExp(r'^Exception:\s*'), '')),
+            content: Text(
+              e.toString().replaceFirst(RegExp(r'^Exception:\s*'), ''),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -153,7 +163,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
   void _showMedicineDetails() {
     if (_selectedMedicine == null) return;
     final medicine = _selectedMedicine!;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -170,16 +180,23 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
           children: [
             Center(
               child: Container(
-                width: 40, height: 4,
+                width: 40,
+                height: 4,
                 margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
             Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: _iconBg, borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    color: _iconBg,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: const Icon(Icons.medication, color: _medicineGreen),
                 ),
                 const SizedBox(width: 16),
@@ -187,18 +204,41 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(medicine.name, style: const TextStyle(fontSize: 20, color: Colors.black)),
-                      Text(medicine.code, style: const TextStyle(color: _medicineGreen)),
+                      Text(
+                        medicine.name,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          color: Colors.black,
+                        ),
+                      ),
+                      Text(
+                        medicine.code,
+                        style: const TextStyle(color: _medicineGreen),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 24),
-            _buildDetailRow('Category', medicine.category.split('_').map((e) => e[0].toUpperCase() + e.substring(1)).join(' ')),
+            _buildDetailRow(
+              'Category',
+              medicine.category
+                  .split('_')
+                  .map((e) => e[0].toUpperCase() + e.substring(1))
+                  .join(' '),
+            ),
             _buildDetailRow('Formulation', medicine.formulation ?? 'Not set'),
-            _buildDetailRow('Stock Available', '${medicine.qty} ${medicine.qtyUnit ?? ""}'),
-            _buildDetailRow('Expiry Date', medicine.expiryDate != null ? DateFormat('dd MMM yyyy').format(medicine.expiryDate!) : 'Not set'),
+            _buildDetailRow(
+              'Stock Available',
+              '${medicine.qty} ${medicine.qtyUnit ?? ""}',
+            ),
+            _buildDetailRow(
+              'Expiry Date',
+              medicine.expiryDate != null
+                  ? DateFormat('dd MMM yyyy').format(medicine.expiryDate!)
+                  : 'Not set',
+            ),
             _buildDetailRow('Notes', medicine.description ?? 'None'),
             const SizedBox(height: 32),
             SizedBox(
@@ -221,7 +261,10 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(flex: 2, child: Text(label, style: const TextStyle(color: Colors.grey))),
+          Expanded(
+            flex: 2,
+            child: Text(label, style: const TextStyle(color: Colors.grey)),
+          ),
           Expanded(flex: 3, child: Text(value)),
         ],
       ),
@@ -255,10 +298,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
               children: [
                 Text(
                   'Medicine Supply',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 17),
                 ),
                 SizedBox(height: 4),
                 Text(
@@ -307,12 +347,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                      ),
-                    ),
+                    Text(title, style: const TextStyle(fontSize: 16)),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
@@ -399,12 +434,19 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
         label,
         Icons.arrow_drop_down_circle_outlined,
       ),
-      items: values.map(
-        (item) => DropdownMenuItem(
-          value: item,
-          child: Text(item.split('_').map((e) => e[0].toUpperCase() + e.substring(1)).join(' ')),
-        ),
-      ).toList(),
+      items: values
+          .map(
+            (item) => DropdownMenuItem(
+              value: item,
+              child: Text(
+                item
+                    .split('_')
+                    .map((e) => e[0].toUpperCase() + e.substring(1))
+                    .join(' '),
+              ),
+            ),
+          )
+          .toList(),
       onChanged: onChanged,
     );
   }
@@ -419,7 +461,9 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
           foregroundColor: Colors.white,
           title: const Text('New Supply', style: TextStyle(fontSize: 18)),
         ),
-        body: const Center(child: CircularProgressIndicator(color: _medicineGreen)),
+        body: const Center(
+          child: CircularProgressIndicator(color: _medicineGreen),
+        ),
       );
     }
 
@@ -428,10 +472,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
       appBar: AppBar(
         backgroundColor: _medicineDarkGreen,
         foregroundColor: Colors.white,
-        title: const Text(
-          'New Supply',
-          style: TextStyle(fontSize: 18),
-        ),
+        title: const Text('New Supply', style: TextStyle(fontSize: 18)),
       ),
       body: Form(
         key: _formKey,
@@ -446,28 +487,37 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
               icon: Icons.person_add_alt_1_outlined,
               children: [
                 Autocomplete<Patient>(
-                  displayStringForOption: (option) => '${option.name}${option.registerId?.isNotEmpty == true ? ' - ${option.registerId}' : ''} (${option.phone})',
+                  displayStringForOption: _patientOptionLabel,
                   optionsBuilder: (textEditingValue) {
-                    if (textEditingValue.text.isEmpty) return const Iterable<Patient>.empty();
+                    if (textEditingValue.text.isEmpty)
+                      return const Iterable<Patient>.empty();
                     final query = textEditingValue.text.toLowerCase();
-                    return _patients.where((p) => 
-                        p.name.toLowerCase().contains(query) || 
-                        (p.registerId?.toLowerCase().contains(query) ?? false));
-                  },
-                  onSelected: (selection) => setState(() => _selectedPatient = selection),
-                  fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-                    return TextFormField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      onEditingComplete: onEditingComplete,
-                      decoration: _inputDecoration(
-                        'Patient',
-                        Icons.person_search_outlined,
-                        hint: 'Search patient...',
-                      ),
-                      validator: (value) => _selectedPatient == null ? 'Please select a patient' : null,
+                    return _patients.where(
+                      (p) =>
+                          p.name.toLowerCase().contains(query) ||
+                          (p.registerId?.toLowerCase().contains(query) ??
+                              false) ||
+                          p.place.toLowerCase().contains(query),
                     );
                   },
+                  onSelected: (selection) =>
+                      setState(() => _selectedPatient = selection),
+                  fieldViewBuilder:
+                      (context, controller, focusNode, onEditingComplete) {
+                        return TextFormField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          onEditingComplete: onEditingComplete,
+                          decoration: _inputDecoration(
+                            'Patient',
+                            Icons.person_search_outlined,
+                            hint: 'Search patient...',
+                          ),
+                          validator: (value) => _selectedPatient == null
+                              ? 'Please select a patient'
+                              : null,
+                        );
+                      },
                 ),
                 if (_selectedPatient != null)
                   Container(
@@ -480,7 +530,11 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.person, color: _medicineGreen, size: 20),
+                        const Icon(
+                          Icons.person,
+                          color: _medicineGreen,
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Column(
@@ -496,8 +550,13 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                               const SizedBox(height: 4),
                               Text(
                                 [
-                                  if (_selectedPatient!.registerId?.isNotEmpty == true)
+                                  if (_selectedPatient!
+                                          .registerId
+                                          ?.isNotEmpty ==
+                                      true)
                                     'Reg No: ${_selectedPatient!.registerId}',
+                                  if (_selectedPatient!.place.isNotEmpty)
+                                    'Place: ${_selectedPatient!.place}',
                                   if (_selectedPatient!.phone.isNotEmpty)
                                     'Ph: ${_selectedPatient!.phone}',
                                 ].join(' • '),
@@ -521,7 +580,11 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                         ),
                         InkWell(
                           onTap: () => setState(() => _selectedPatient = null),
-                          child: const Icon(Icons.close, color: _medicineGreen, size: 20),
+                          child: const Icon(
+                            Icons.close,
+                            color: _medicineGreen,
+                            size: 20,
+                          ),
                         ),
                       ],
                     ),
@@ -530,33 +593,44 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                 Autocomplete<Medicine>(
                   displayStringForOption: (option) => option.name,
                   optionsBuilder: (textEditingValue) {
-                    if (textEditingValue.text.isEmpty) return const Iterable<Medicine>.empty();
-                    return _medicines.where((m) => m.name.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+                    if (textEditingValue.text.isEmpty)
+                      return const Iterable<Medicine>.empty();
+                    return _medicines.where(
+                      (m) => m.name.toLowerCase().contains(
+                        textEditingValue.text.toLowerCase(),
+                      ),
+                    );
                   },
                   onSelected: (selection) => setState(() {
                     _selectedMedicine = selection;
                     if (selection.expiryDate != null) {
-                      final diff = selection.expiryDate!.difference(DateTime.now()).inDays;
-                      _supplyDaysController.text = (diff >= 0 ? diff : 0).toString();
+                      final diff = selection.expiryDate!
+                          .difference(DateTime.now())
+                          .inDays;
+                      _supplyDaysController.text = (diff >= 0 ? diff : 0)
+                          .toString();
                     } else {
                       _supplyDaysController.clear();
                     }
                   }),
-                  fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-                    return TextFormField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      onEditingComplete: onEditingComplete,
-                      decoration: _inputDecoration(
-                        'Medicine',
-                        Icons.medication_outlined,
-                        hint: 'Search medicine...',
-                      ),
-                      validator: (value) => _selectedMedicine == null ? 'Please select a medicine' : null,
-                    );
-                  },
+                  fieldViewBuilder:
+                      (context, controller, focusNode, onEditingComplete) {
+                        return TextFormField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          onEditingComplete: onEditingComplete,
+                          decoration: _inputDecoration(
+                            'Medicine',
+                            Icons.medication_outlined,
+                            hint: 'Search medicine...',
+                          ),
+                          validator: (value) => _selectedMedicine == null
+                              ? 'Please select a medicine'
+                              : null,
+                        );
+                      },
                 ),
-                
+
                 if (_selectedMedicine != null)
                   Container(
                     width: double.infinity,
@@ -568,7 +642,11 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.medication_liquid, color: _medicineGreen, size: 20),
+                        const Icon(
+                          Icons.medication_liquid,
+                          color: _medicineGreen,
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Column(
@@ -576,23 +654,38 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                             children: [
                               Text(
                                 _selectedMedicine!.name,
-                                style: const TextStyle(color: _medicineDarkGreen),
+                                style: const TextStyle(
+                                  color: _medicineDarkGreen,
+                                ),
                               ),
                               Text(
                                 'Stock: ${_selectedMedicine!.qty}',
-                                style: TextStyle(color: _medicineDarkGreen.withValues(alpha: 0.8), fontSize: 12),
+                                style: TextStyle(
+                                  color: _medicineDarkGreen.withValues(
+                                    alpha: 0.8,
+                                  ),
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),
                         ),
                         InkWell(
                           onTap: _showMedicineDetails,
-                          child: const Icon(Icons.info_outline, color: _medicineGreen, size: 20),
+                          child: const Icon(
+                            Icons.info_outline,
+                            color: _medicineGreen,
+                            size: 20,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         InkWell(
                           onTap: () => setState(() => _selectedMedicine = null),
-                          child: const Icon(Icons.close, color: _medicineGreen, size: 20),
+                          child: const Icon(
+                            Icons.close,
+                            color: _medicineGreen,
+                            size: 20,
+                          ),
                         ),
                       ],
                     ),
@@ -691,7 +784,6 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                   subtitle: 'Extra information for this supply.',
                   icon: Icons.fact_check_outlined,
                   children: [
-
                     _textField(
                       _prescribedByController,
                       'Prescribed By',
@@ -746,10 +838,21 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                       color: Colors.white,
                     ),
                   )
-                : const Text('Save Supply Record', style: TextStyle(fontSize: 16)),
+                : const Text(
+                    'Save Supply Record',
+                    style: TextStyle(fontSize: 16),
+                  ),
           ),
         ),
       ),
     );
+  }
+
+  String _patientOptionLabel(Patient patient) {
+    final details = [
+      if (patient.registerId?.isNotEmpty == true) patient.registerId,
+      if (patient.place.isNotEmpty) patient.place,
+    ].whereType<String>().join(' • ');
+    return details.isEmpty ? patient.name : '${patient.name} - $details';
   }
 }

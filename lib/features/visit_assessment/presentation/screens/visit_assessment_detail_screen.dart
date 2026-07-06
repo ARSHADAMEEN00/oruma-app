@@ -160,7 +160,9 @@ class VisitAssessmentDetailScreen extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Assessment'),
-        content: const Text('Are you sure you want to delete this assessment? This action cannot be undone.'),
+        content: const Text(
+          'Are you sure you want to delete this assessment? This action cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -179,21 +181,31 @@ class VisitAssessmentDetailScreen extends StatelessWidget {
 
     try {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Deleting assessment...')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Deleting assessment...')));
       }
       await VisitAssessmentService.deleteAssessment(assessment.id!);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Assessment deleted successfully'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Assessment deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
         );
-        Navigator.pop(context, true); // Pop the detail screen and pass true to indicate deletion
+        Navigator.pop(context, 'deleted');
       }
     } catch (e) {
       if (context.mounted) {
+        final message = e.toString().replaceFirst(
+          RegExp(r'^Exception:\s*'),
+          '',
+        );
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete assessment: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Failed to delete assessment: $message'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }

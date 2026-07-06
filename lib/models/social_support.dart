@@ -88,6 +88,11 @@ class SocialSupport {
     return null;
   }
 
+  String? get patientPlace {
+    if (patientId is Map) return patientId['place']?.toString();
+    return null;
+  }
+
   String get supportTypesLabel {
     return supportTypes
         .map((type) => socialSupportTypeLabels[type] ?? type)

@@ -42,6 +42,9 @@ class _patientrigisterState extends State<patientrigister> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController phone2Controller = TextEditingController();
   final TextEditingController locationLinkController = TextEditingController();
+  final TextEditingController volunteerNameController = TextEditingController();
+  final TextEditingController volunteerContactController =
+      TextEditingController();
   final TextEditingController wardController = TextEditingController();
 
   // Dropdown options (loaded from API)
@@ -71,6 +74,8 @@ class _patientrigisterState extends State<patientrigister> {
       phoneController.text = widget.patient!.phone;
       phone2Controller.text = widget.patient!.phone2 ?? '';
       locationLinkController.text = widget.patient!.locationLink ?? '';
+      volunteerNameController.text = widget.patient!.volunteerName ?? '';
+      volunteerContactController.text = widget.patient!.volunteerContact ?? '';
       _gender = widget.patient!.gender;
       _selectedVillage = widget.patient!.village;
       _selectedWardTitle = widget.patient!.ward;
@@ -139,6 +144,8 @@ class _patientrigisterState extends State<patientrigister> {
     phoneController.dispose();
     phone2Controller.dispose();
     locationLinkController.dispose();
+    volunteerNameController.dispose();
+    volunteerContactController.dispose();
     wardController.dispose();
     super.dispose();
   }
@@ -626,10 +633,7 @@ class _patientrigisterState extends State<patientrigister> {
                   const SizedBox(height: 20),
                   const Text(
                     "Gender",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -665,10 +669,7 @@ class _patientrigisterState extends State<patientrigister> {
                   const SizedBox(height: 16),
                   const Text(
                     "Diseases",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -705,9 +706,7 @@ class _patientrigisterState extends State<patientrigister> {
                             SizedBox(width: 4),
                             Text(
                               'Other',
-                              style: TextStyle(
-                                color: _patientPrimary,
-                              ),
+                              style: TextStyle(color: _patientPrimary),
                             ),
                           ],
                         ),
@@ -853,6 +852,23 @@ class _patientrigisterState extends State<patientrigister> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  TextFormField(
+                    controller: volunteerNameController,
+                    decoration: _buildInputDecoration(
+                      "Volunteer Name",
+                      Icons.volunteer_activism_outlined,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: volunteerContactController,
+                    keyboardType: TextInputType.phone,
+                    decoration: _buildInputDecoration(
+                      "Volunteer Contact",
+                      Icons.call_outlined,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     decoration: _buildInputDecoration(
                       "Care Plan",
@@ -907,10 +923,7 @@ class _patientrigisterState extends State<patientrigister> {
                   )
                 : Text(
                     isEditing ? "UPDATE PATIENT" : "REGISTER PATIENT",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      letterSpacing: 1.0,
-                    ),
+                    style: const TextStyle(fontSize: 14, letterSpacing: 1.0),
                   ),
           ),
         ),
@@ -952,10 +965,7 @@ class _patientrigisterState extends State<patientrigister> {
               const SizedBox(width: 12),
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF333333),
-                ),
+                style: const TextStyle(fontSize: 16, color: Color(0xFF333333)),
               ),
             ],
           ),
@@ -996,6 +1006,12 @@ class _patientrigisterState extends State<patientrigister> {
           locationLink: locationLinkController.text.trim().isEmpty
               ? null
               : locationLinkController.text.trim(),
+          volunteerName: volunteerNameController.text.trim().isEmpty
+              ? null
+              : volunteerNameController.text.trim(),
+          volunteerContact: volunteerContactController.text.trim().isEmpty
+              ? null
+              : volunteerContactController.text.trim(),
           disease: _selectedDiseases,
           plan: _selectedPlan!,
           registerId: widget.patient?.registerId,
