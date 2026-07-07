@@ -356,7 +356,7 @@ class _MedicineListPageState extends State<MedicineListPage> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
 
-    void _handleBottomNavigation(AppBottomSection section) {
+    void handleBottomNavigation(AppBottomSection section) {
       AppBottomNavRouter.handle(
         context,
         current: AppBottomSection.medicine,
@@ -449,7 +449,7 @@ class _MedicineListPageState extends State<MedicineListPage> {
       ),
       bottomNavigationBar: CompactAppBottomBar(
         current: AppBottomSection.medicine,
-        onSelected: _handleBottomNavigation,
+        onSelected: handleBottomNavigation,
       ),
     );
   }
@@ -526,11 +526,12 @@ class _MedicineListPageState extends State<MedicineListPage> {
                       children: [
                         Text(
                           _medicineListTitle(medicine),
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             fontWeight: FontWeight.w800,
+                            height: 1.15,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -561,6 +562,9 @@ class _MedicineListPageState extends State<MedicineListPage> {
                                 DateFormat(
                                   'MMM yyyy',
                                 ).format(medicine.expiryDate!.toLocal()),
+                                color: expiryWarning
+                                    ? Colors.red.shade700
+                                    : null,
                               ),
                           ],
                         ),
@@ -682,13 +686,16 @@ class _MedicineListPageState extends State<MedicineListPage> {
     );
   }
 
-  Widget _inlineDetail(IconData icon, String text) {
+  Widget _inlineDetail(IconData icon, String text, {Color? color}) {
+    final detailColor = color ?? Colors.grey.shade600;
+    final iconColor = color ?? Colors.grey.shade500;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: Colors.grey.shade500),
+        Icon(icon, size: 14, color: iconColor),
         const SizedBox(width: 4),
-        Text(text, style: TextStyle(color: Colors.grey.shade600, fontSize: 11)),
+        Text(text, style: TextStyle(color: detailColor, fontSize: 11)),
       ],
     );
   }
