@@ -9,6 +9,7 @@ import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/v
 import 'package:oruma_app/features/visit_assessment/presentation/screens/steps/vitals_step.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_theme.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_widgets.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 
@@ -28,13 +29,12 @@ class VisitAssessmentFlowScreen extends StatelessWidget {
             onPopInvokedWithResult: (didPop, _) {
               if (didPop) controller.saveDraft(silent: true);
             },
-            child: Scaffold(
+            child: AdaptiveAppScaffold(
               backgroundColor: Colors.white,
-              bottomNavigationBar: CompactAppBottomBar(
-                current: AppBottomSection.nhc,
-                onSelected: (section) =>
-                    _handleBottomNavigation(context, section),
-              ),
+              currentSection: AppBottomSection.nhc,
+              onNavigationSelected: (section) =>
+                  _handleBottomNavigation(context, section),
+              contentMaxWidth: 900,
               body: SafeArea(
                 bottom: false,
                 child: Column(

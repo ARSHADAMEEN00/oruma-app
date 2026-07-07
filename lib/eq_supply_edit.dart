@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 
 class EqSupplyEdit extends StatefulWidget {
   final EquipmentSupply supply;
@@ -18,7 +19,7 @@ class _EqSupplyEditState extends State<EqSupplyEdit> {
   late TextEditingController _receiverPhoneController;
   late TextEditingController _receiverAddressController;
   late TextEditingController _receiverPlaceController;
-  
+
   bool _submitting = false;
   bool _loading = true;
   late EquipmentSupply _supply;
@@ -33,7 +34,7 @@ class _EqSupplyEditState extends State<EqSupplyEdit> {
     _receiverPhoneController = TextEditingController();
     _receiverAddressController = TextEditingController();
     _receiverPlaceController = TextEditingController();
-    
+
     _loadSupplyData();
   }
 
@@ -132,7 +133,7 @@ class _EqSupplyEditState extends State<EqSupplyEdit> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -182,7 +183,9 @@ class _EqSupplyEditState extends State<EqSupplyEdit> {
                                 decoration: BoxDecoration(
                                   color: Colors.blue.shade50,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.blue.shade100),
+                                  border: Border.all(
+                                    color: Colors.blue.shade100,
+                                  ),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,6 +347,7 @@ class _EqSupplyEditState extends State<EqSupplyEdit> {
                 ),
               ],
             ),
+      contentMaxWidth: 900,
     );
   }
 

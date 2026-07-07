@@ -58,6 +58,7 @@ class MedicineSupplyService {
 
     if (result.isSuccess && result.data != null) {
       AppCache.invalidatePrefix(_prefix);
+      AppCache.invalidatePrefix('medicines:');
       return MedicineSupply.fromJson(result.data!);
     }
 
@@ -76,6 +77,7 @@ class MedicineSupplyService {
 
     if (result.isSuccess && result.data != null) {
       AppCache.invalidatePrefix(_prefix);
+      AppCache.invalidatePrefix('medicines:');
       return MedicineSupply.fromJson(result.data!);
     }
 
@@ -90,6 +92,7 @@ class MedicineSupplyService {
 
     if (result.isSuccess) {
       AppCache.invalidatePrefix(_prefix);
+      AppCache.invalidatePrefix('medicines:');
       return true;
     }
 

@@ -6,6 +6,8 @@ import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/services/social_support_service.dart';
 import 'package:oruma_app/social_support_page.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
+import 'package:oruma_app/widgets/reveal_action_fab.dart';
 import 'package:provider/provider.dart';
 
 const _supportPrimary = Color(0xFF8A2454);
@@ -181,7 +183,7 @@ class _SocialSupportListPageState extends State<SocialSupportListPage> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
 
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         backgroundColor: _supportCard,
@@ -198,14 +200,15 @@ class _SocialSupportListPageState extends State<SocialSupportListPage> {
         ],
       ),
       floatingActionButton: auth.canCreate
-          ? FloatingActionButton.extended(
+          ? RevealActionFab(
               onPressed: _openCreate,
               backgroundColor: _supportPrimary,
               foregroundColor: Colors.white,
-              icon: const Icon(Icons.add),
-              label: const Text('New Support'),
+              icon: Icons.add,
+              label: 'New Support',
             )
           : null,
+      contentMaxWidth: 820,
       body: Column(
         children: [
           _buildFilters(),

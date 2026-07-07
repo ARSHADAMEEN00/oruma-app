@@ -8,6 +8,7 @@ import 'package:oruma_app/services/medicine_service.dart';
 import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/services/medicine_supply_service.dart';
 import 'package:oruma_app/services/auth_service.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 
 const _medicineDarkGreen = Color(0xFF0A4A3A);
 const _medicineGreen = Color(0xFF0F6E56);
@@ -39,7 +40,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
 
   // Optional fields
   bool _showMore = false;
-  String _status = 'given';
+  final String _status = 'given';
   final TextEditingController _noteController = TextEditingController();
   final TextEditingController _prescribedByController = TextEditingController();
   final TextEditingController _supplyDaysController = TextEditingController();
@@ -98,6 +99,27 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
       ).showSnackBar(const SnackBar(content: Text('Please select a medicine')));
       return;
     }
+    final qtyGiven = int.tryParse(_qtyController.text.trim());
+    if (qtyGiven == null || qtyGiven <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid quantity')),
+      );
+      return;
+    }
+    if (qtyGiven > _selectedMedicine!.qty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Not enough medicine stock available')),
+      );
+      return;
+    }
+    final supplyDays = int.tryParse(_supplyDaysController.text.trim());
+    if (_supplyDaysController.text.trim().isNotEmpty &&
+        (supplyDays == null || supplyDays < 0)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter valid supply days')),
+      );
+      return;
+    }
 
     setState(() => _saving = true);
 
@@ -114,13 +136,13 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
         medicineId: _selectedMedicine!.id!,
         givenByStaff: staffId,
         givenAt: _givenAt,
-        qtyGiven: int.tryParse(_qtyController.text) ?? 0,
+        qtyGiven: qtyGiven,
         status: _status,
         staffNote: _noteController.text.isEmpty ? null : _noteController.text,
         prescribedBy: _prescribedByController.text.isEmpty
             ? null
             : _prescribedByController.text,
-        supplyDays: int.tryParse(_supplyDaysController.text),
+        supplyDays: supplyDays,
       );
 
       await MedicineSupplyService.createMedicineSupply(supply);
@@ -422,39 +444,10 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
     );
   }
 
-  Widget _dropdown({
-    required String label,
-    required String? value,
-    required List<String> values,
-    required ValueChanged<String?> onChanged,
-  }) {
-    return DropdownButtonFormField<String>(
-      initialValue: value,
-      decoration: _inputDecoration(
-        label,
-        Icons.arrow_drop_down_circle_outlined,
-      ),
-      items: values
-          .map(
-            (item) => DropdownMenuItem(
-              value: item,
-              child: Text(
-                item
-                    .split('_')
-                    .map((e) => e[0].toUpperCase() + e.substring(1))
-                    .join(' '),
-              ),
-            ),
-          )
-          .toList(),
-      onChanged: onChanged,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_loadingData) {
-      return Scaffold(
+      return AdaptiveAppScaffold(
         backgroundColor: const Color(0xFFF5FAF8),
         appBar: AppBar(
           backgroundColor: _medicineDarkGreen,
@@ -464,10 +457,11 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
         body: const Center(
           child: CircularProgressIndicator(color: _medicineGreen),
         ),
+        contentMaxWidth: 900,
       );
     }
 
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: const Color(0xFFF5FAF8),
       appBar: AppBar(
         backgroundColor: _medicineDarkGreen,
@@ -489,8 +483,9 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                 Autocomplete<Patient>(
                   displayStringForOption: _patientOptionLabel,
                   optionsBuilder: (textEditingValue) {
-                    if (textEditingValue.text.isEmpty)
+                    if (textEditingValue.text.isEmpty) {
                       return const Iterable<Patient>.empty();
+                    }
                     final query = textEditingValue.text.toLowerCase();
                     return _patients.where(
                       (p) =>
@@ -593,8 +588,9 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                 Autocomplete<Medicine>(
                   displayStringForOption: (option) => option.name,
                   optionsBuilder: (textEditingValue) {
-                    if (textEditingValue.text.isEmpty)
+                    if (textEditingValue.text.isEmpty) {
                       return const Iterable<Medicine>.empty();
+                    }
                     return _medicines.where(
                       (m) => m.name.toLowerCase().contains(
                         textEditingValue.text.toLowerCase(),
@@ -815,6 +811,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
           ],
         ),
       ),
+      contentMaxWidth: 900,
       bottomNavigationBar: SafeArea(
         top: false,
         child: Container(

@@ -4,6 +4,8 @@ import 'package:oruma_app/models/volunteer.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/config_service.dart';
 import 'package:oruma_app/services/volunteer_service.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
+import 'package:oruma_app/widgets/reveal_action_fab.dart';
 import 'package:provider/provider.dart';
 
 const _volunteerPrimary = Color(0xFF2F6F73);
@@ -166,7 +168,7 @@ class _VolunteerListPageState extends State<VolunteerListPage> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
 
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         backgroundColor: _volunteerSurface,
@@ -183,14 +185,15 @@ class _VolunteerListPageState extends State<VolunteerListPage> {
         ],
       ),
       floatingActionButton: auth.canCreate
-          ? FloatingActionButton.extended(
+          ? RevealActionFab(
               onPressed: () => _openForm(),
               backgroundColor: _volunteerPrimary,
               foregroundColor: Colors.white,
-              icon: const Icon(Icons.add),
-              label: const Text('Add Volunteer'),
+              icon: Icons.add,
+              label: 'Add Volunteer',
             )
           : null,
+      contentMaxWidth: 820,
       body: Column(
         children: [
           _buildFilters(),
@@ -746,7 +749,7 @@ class _VolunteerFormPageState extends State<VolunteerFormPage> {
   @override
   Widget build(BuildContext context) {
     if (_loadingConfig) {
-      return Scaffold(
+      return AdaptiveAppScaffold(
         backgroundColor: Colors.grey.shade50,
         appBar: AppBar(
           backgroundColor: _volunteerSurface,
@@ -756,10 +759,11 @@ class _VolunteerFormPageState extends State<VolunteerFormPage> {
         body: const Center(
           child: CircularProgressIndicator(color: _volunteerPrimary),
         ),
+        contentMaxWidth: 900,
       );
     }
 
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         backgroundColor: _volunteerSurface,
@@ -883,6 +887,7 @@ class _VolunteerFormPageState extends State<VolunteerFormPage> {
           ],
         ),
       ),
+      contentMaxWidth: 900,
       bottomNavigationBar: SafeArea(
         top: false,
         child: Container(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:oruma_app/models/config.dart';
 import 'package:oruma_app/services/config_service.dart';
+import 'package:oruma_app/widgets/reveal_action_fab.dart';
 
 class ConfigPage extends StatefulWidget {
   const ConfigPage({Key? key}) : super(key: key);
@@ -393,14 +394,12 @@ class _ConfigPageState extends State<ConfigPage> {
                   ),
               ],
             ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: RevealActionFab(
         onPressed: _isLoading ? null : _saveConfig,
         backgroundColor: const Color(0xFF1A237E),
-        icon: const Icon(Icons.save, color: Colors.white),
-        label: const Text(
-          'Save Changes',
-          style: TextStyle(color: Colors.white),
-        ),
+        foregroundColor: Colors.white,
+        icon: Icons.save,
+        label: 'Save Changes',
       ),
     );
   }

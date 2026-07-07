@@ -10,10 +10,10 @@ import 'package:oruma_app/services/equipment_supply_service.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
-import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
-import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/module_switch_tabs.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
+import 'package:oruma_app/widgets/reveal_action_fab.dart';
 
 const _equipmentPrimary = Color(0xFF854F0B);
 const _equipmentSurface = Color(0xFFFAEEDA);
@@ -172,7 +172,7 @@ class _EquipmentListPageState extends State<EquipmentListPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: _equipmentSurface,
@@ -238,14 +238,13 @@ class _EquipmentListPageState extends State<EquipmentListPage>
         ],
       ),
       floatingActionButton: Provider.of<AuthService>(context).canCreate
-          ? FloatingActionButton.extended(
+          ? RevealActionFab(
               onPressed: _navigateToAdd,
-              icon: const Icon(Icons.add),
-              label: Text(
-                _tabController.index == 0 ? 'Add Equipment' : 'Distribute',
-              ),
+              icon: Icons.add,
+              label: _tabController.index == 0 ? 'Add Equipment' : 'Distribute',
             )
           : null,
+      contentMaxWidth: 860,
       body: Column(
         children: [
           _buildSearchBar(),
@@ -1331,10 +1330,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(
-              color: _equipmentPrimary,
-              width: 1.5,
-            ),
+            borderSide: const BorderSide(color: _equipmentPrimary, width: 1.5),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
@@ -1456,7 +1452,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: const Color(0xFFF8F9FC), // Light blue-grey background
       appBar: AppBar(
         title: Text(
@@ -1516,6 +1512,7 @@ class _EquipmentFormPageState extends State<EquipmentFormPage> {
           ),
         ),
       ),
+      contentMaxWidth: 900,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(

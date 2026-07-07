@@ -12,9 +12,11 @@ import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/medicine_supply_service.dart';
 import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/services/medicine_service.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 import 'package:oruma_app/widgets/module_switch_tabs.dart';
+import 'package:oruma_app/widgets/reveal_action_fab.dart';
 
 const _medicineGreen = Color(0xFF0F6E56);
 const _cardBg = Color(0xFFE1F5EE);
@@ -111,7 +113,7 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
 
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: _cardBg,
@@ -143,23 +145,23 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
         ],
       ),
       floatingActionButton: auth.canCreate
-          ? FloatingActionButton.extended(
+          ? RevealActionFab(
               onPressed: _navigateToCreateSupply,
               backgroundColor: _medicineGreen,
               foregroundColor: Colors.white,
-              icon: const Icon(Icons.add),
-              label: const Text('New Supply'),
+              icon: Icons.add,
+              label: 'New Supply',
             )
           : null,
+      currentSection: AppBottomSection.medicine,
+      onNavigationSelected: (section) =>
+          _handleBottomNavigation(context, section),
+      contentMaxWidth: 820,
       body: Column(
         children: [
           _buildSearchBarAndTabs(),
           Expanded(child: _buildList(auth)),
         ],
-      ),
-      bottomNavigationBar: CompactAppBottomBar(
-        current: AppBottomSection.medicine,
-        onSelected: (section) => _handleBottomNavigation(context, section),
       ),
     );
   }

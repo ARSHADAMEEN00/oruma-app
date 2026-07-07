@@ -40,6 +40,8 @@ class ApiConfig {
   static String get medicineSuppliesEndpoint => '$baseUrl/medicine-supplies';
   static String get v2MedicineSuppliesEndpoint =>
       '$baseUrl/v2/medicine-supplies';
+  static String get v2MedicineStockEntriesEndpoint =>
+      '$baseUrl/v2/medicine-stock-entries';
   static String get v2SocialSupportEndpoint => '$baseUrl/v2/social-support';
   static String get v2VolunteersEndpoint => '$baseUrl/v2/volunteers';
   static String get meEndpoint => '$baseUrl/auth/me';

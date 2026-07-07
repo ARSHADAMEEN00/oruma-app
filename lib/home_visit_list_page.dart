@@ -11,8 +11,10 @@ import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_list_screen.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
+import 'package:oruma_app/widgets/reveal_action_fab.dart';
 
 class HomeVisitListPage extends StatefulWidget {
   const HomeVisitListPage({super.key});
@@ -179,7 +181,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
     final now = DateTime.now();
     final isToday = _isSameDay(_selectedDate, now);
 
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         title: const Text("Home Visits", style: TextStyle(fontSize: 18)),
@@ -212,6 +214,10 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
           ),
         ],
       ),
+      currentSection: AppBottomSection.homeVisit,
+      onNavigationSelected: (section) =>
+          _handleBottomNavigation(context, section),
+      contentMaxWidth: 860,
       body: FutureBuilder<List<HomeVisit>>(
         future: _visitsFuture,
         builder: (context, snapshot) {
@@ -255,7 +261,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
         },
       ),
       floatingActionButton: Provider.of<AuthService>(context).canCreate
-          ? FloatingActionButton.extended(
+          ? RevealActionFab(
               onPressed: () async {
                 final result = await Navigator.push(
                   context,
@@ -270,14 +276,10 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
               },
               backgroundColor: primaryColor,
               foregroundColor: Colors.white,
-              icon: const Icon(Icons.add),
-              label: const Text("Schedule Visit"),
+              icon: Icons.add,
+              label: 'Schedule Visit',
             )
           : null,
-      bottomNavigationBar: CompactAppBottomBar(
-        current: AppBottomSection.homeVisit,
-        onSelected: (section) => _handleBottomNavigation(context, section),
-      ),
     );
   }
 

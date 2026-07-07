@@ -5,14 +5,18 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:oruma_app/medicine_stock_entry_page.dart';
+import 'package:oruma_app/medicine_stock_history_page.dart';
 import 'package:oruma_app/medicine_supply_list_page.dart';
 import 'package:oruma_app/models/medicine.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/medicine_service.dart';
 import 'package:provider/provider.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 import 'package:oruma_app/widgets/module_switch_tabs.dart';
+import 'package:oruma_app/widgets/reveal_action_fab.dart';
 
 const _medicineGreen = Color(0xFF0F6E56);
 const _medicineDarkGreen = Color(0xFF0F6E56);
@@ -110,6 +114,23 @@ class _MedicineListPageState extends State<MedicineListPage> {
     if (result == true) {
       await _loadMedicines();
     }
+  }
+
+  Future<void> _openStockEntry() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (context) => const MedicineStockEntryPage()),
+    );
+    if (result == true) {
+      await _loadMedicines();
+    }
+  }
+
+  Future<void> _openStockHistory() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const MedicineStockHistoryPage()),
+    );
   }
 
   Future<void> _deleteMedicine(Medicine medicine) async {
@@ -364,7 +385,7 @@ class _MedicineListPageState extends State<MedicineListPage> {
       );
     }
 
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: const Color(0xFFF5FAF8),
       appBar: AppBar(
         foregroundColor: _medicineDarkGreen,
@@ -392,21 +413,30 @@ class _MedicineListPageState extends State<MedicineListPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            tooltip: 'Refresh',
-            onPressed: _loadMedicines,
-            icon: const Icon(Icons.refresh),
+            tooltip: 'Stock history',
+            onPressed: _openStockHistory,
+            icon: const Icon(Icons.history_outlined),
           ),
+          if (auth.canCreate)
+            IconButton(
+              tooltip: 'Add medicine',
+              onPressed: () => _openForm(),
+              icon: const Icon(Icons.add_circle_outline),
+            ),
         ],
       ),
       floatingActionButton: auth.canCreate
-          ? FloatingActionButton.extended(
-              onPressed: _openForm,
+          ? RevealActionFab(
+              onPressed: _openStockEntry,
               backgroundColor: _medicineGreen,
               foregroundColor: Colors.white,
-              icon: const Icon(Icons.add),
-              label: const Text('Add Medicine'),
+              icon: Icons.add_box_outlined,
+              label: 'Add Stock',
             )
           : null,
+      currentSection: AppBottomSection.medicine,
+      onNavigationSelected: handleBottomNavigation,
+      contentMaxWidth: 820,
       body: Column(
         children: [
           Container(
@@ -446,10 +476,6 @@ class _MedicineListPageState extends State<MedicineListPage> {
           ),
           Expanded(child: _buildContent(auth)),
         ],
-      ),
-      bottomNavigationBar: CompactAppBottomBar(
-        current: AppBottomSection.medicine,
-        onSelected: handleBottomNavigation,
       ),
     );
   }
@@ -1234,7 +1260,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: const Color(0xFFF5FAF8),
       appBar: AppBar(
         backgroundColor: _medicineDarkGreen,
@@ -1473,6 +1499,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
           ],
         ),
       ),
+      contentMaxWidth: 900,
       bottomNavigationBar: SafeArea(
         top: false,
         child: Container(

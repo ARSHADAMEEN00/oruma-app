@@ -6,6 +6,7 @@ import 'package:oruma_app/services/config_service.dart';
 import 'package:oruma_app/models/config.dart';
 import 'package:oruma_app/models/volunteer.dart';
 import 'package:oruma_app/services/volunteer_service.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:intl/intl.dart';
 
 const _patientCardBackground = Color(0xFFE6F1FB);
@@ -501,7 +502,7 @@ class _patientrigisterState extends State<patientrigister> {
 
     // Show loading indicator while config is loading
     if (_isLoadingConfig) {
-      return Scaffold(
+      return AdaptiveAppScaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
           title: Text(
@@ -516,12 +517,13 @@ class _patientrigisterState extends State<patientrigister> {
         body: const Center(
           child: CircularProgressIndicator(color: _patientPrimary),
         ),
+        contentMaxWidth: 900,
       );
     }
 
     // Show error if config failed to load
     if (_configError != null) {
-      return Scaffold(
+      return AdaptiveAppScaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
           title: Text(
@@ -574,10 +576,11 @@ class _patientrigisterState extends State<patientrigister> {
             ],
           ),
         ),
+        contentMaxWidth: 900,
       );
     }
 
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
@@ -964,6 +967,7 @@ class _patientrigisterState extends State<patientrigister> {
           ),
         ),
       ),
+      contentMaxWidth: 900,
     );
   }
 

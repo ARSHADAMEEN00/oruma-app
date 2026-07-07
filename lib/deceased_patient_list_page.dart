@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/patient_details_page.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:intl/intl.dart';
 
@@ -67,7 +68,7 @@ class _DeceasedPatientListPageState extends State<DeceasedPatientListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveAppScaffold(
       appBar: AppBar(
         title: _isSearching
             ? TextField(
@@ -107,6 +108,7 @@ class _DeceasedPatientListPageState extends State<DeceasedPatientListPage> {
         ],
       ),
       backgroundColor: Colors.grey.shade50,
+      contentMaxWidth: 820,
       body: Builder(
         builder: (context) {
           if (_isLoading) {

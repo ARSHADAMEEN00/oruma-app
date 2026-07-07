@@ -3,6 +3,7 @@ import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_a
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_theme.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/patient_service.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 
@@ -82,7 +83,7 @@ class _VisitAssessmentVisitPickerScreenState
   Widget build(BuildContext context) {
     return Theme(
       data: visitAssessmentLightTheme(),
-      child: Scaffold(
+      child: AdaptiveAppScaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
           title: const Text(
@@ -124,10 +125,9 @@ class _VisitAssessmentVisitPickerScreenState
             Expanded(child: _body()),
           ],
         ),
-        bottomNavigationBar: CompactAppBottomBar(
-          current: AppBottomSection.nhc,
-          onSelected: _handleBottomNavigation,
-        ),
+        currentSection: AppBottomSection.nhc,
+        onNavigationSelected: _handleBottomNavigation,
+        contentMaxWidth: 820,
       ),
     );
   }

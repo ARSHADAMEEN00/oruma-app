@@ -9,10 +9,10 @@ import 'package:oruma_app/equipment_list_page.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
-import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
-import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 import 'package:oruma_app/widgets/module_switch_tabs.dart';
+import 'package:oruma_app/widgets/reveal_action_fab.dart';
 
 const _equipmentSupplyPrimary = Color(0xFF854F0B);
 const _equipmentSupplySurface = Color(0xFFFAEEDA);
@@ -318,7 +318,7 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: _equipmentSupplySurface,
@@ -417,14 +417,15 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
         ],
       ),
       floatingActionButton: Provider.of<AuthService>(context).canCreate
-          ? FloatingActionButton.extended(
+          ? RevealActionFab(
               onPressed: _navigateToCreateSupply,
               backgroundColor: _equipmentSupplyPrimary,
               foregroundColor: Colors.white,
-              icon: const Icon(Icons.add),
-              label: const Text('New Supply'),
+              icon: Icons.add,
+              label: 'New Supply',
             )
           : null,
+      contentMaxWidth: 860,
       body: Column(
         children: [
           _buildSearchBar(),

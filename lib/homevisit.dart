@@ -3,6 +3,7 @@ import 'package:oruma_app/models/home_visit.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/home_visit_service.dart';
 import 'package:oruma_app/services/patient_service.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:intl/intl.dart';
 
 const _homeVisitCardBackground = Color(0xFFEAF3DE);
@@ -209,7 +210,7 @@ class _HomevisitState extends State<Homevisit> {
   Widget build(BuildContext context) {
     const primaryColor = _homeVisitPrimary;
 
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: _homeVisitCardBackground,
       appBar: AppBar(
         title: Text(isEditing ? 'Edit Home Visit' : 'Schedule Home Visit'),
@@ -295,15 +296,22 @@ class _HomevisitState extends State<Homevisit> {
                                   ),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(color: Colors.grey.shade300),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(color: Colors.grey.shade300),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(color: _homeVisitPrimary, width: 1.5),
+                                    borderSide: BorderSide(
+                                      color: _homeVisitPrimary,
+                                      width: 1.5,
+                                    ),
                                   ),
                                   filled: true,
                                   fillColor: Colors.white,
@@ -630,6 +638,7 @@ class _HomevisitState extends State<Homevisit> {
                 ),
               ),
             ),
+      contentMaxWidth: 900,
     );
   }
 

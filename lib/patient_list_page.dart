@@ -9,9 +9,10 @@ import 'package:oruma_app/patient_details_page.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:oruma_app/services/config_service.dart';
 import 'package:oruma_app/models/config.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
-
+import 'package:oruma_app/widgets/reveal_action_fab.dart';
 
 class PatientListPage extends StatefulWidget {
   const PatientListPage({super.key});
@@ -139,7 +140,7 @@ class _PatientListPageState extends State<PatientListPage> {
       );
     }
 
-    return Scaffold(
+    return AdaptiveAppScaffold(
       appBar: AppBar(
         title: _isSearching
             ? TextField(
@@ -175,10 +176,9 @@ class _PatientListPageState extends State<PatientListPage> {
             ),
         ],
       ),
-      bottomNavigationBar: CompactAppBottomBar(
-        current: AppBottomSection.patients,
-        onSelected: _handleBottomNavigation,
-      ),
+      currentSection: AppBottomSection.patients,
+      onNavigationSelected: _handleBottomNavigation,
+      contentMaxWidth: 820,
       body: Column(
         children: [
           if (_counts != null) _buildFilterTabs(),
@@ -285,7 +285,7 @@ class _PatientListPageState extends State<PatientListPage> {
         ],
       ),
       floatingActionButton: Provider.of<AuthService>(context).canCreate
-          ? FloatingActionButton.extended(
+          ? RevealActionFab(
               onPressed: () async {
                 final result = await Navigator.push(
                   context,
@@ -300,8 +300,8 @@ class _PatientListPageState extends State<PatientListPage> {
                   _loadPatients();
                 }
               },
-              label: const Text("Add Patient"),
-              icon: const Icon(Icons.person_add),
+              label: 'Add Patient',
+              icon: Icons.person_add,
             )
           : null,
     );

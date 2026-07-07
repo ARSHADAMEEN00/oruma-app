@@ -5,6 +5,7 @@ import 'package:oruma_app/models/equipment.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:oruma_app/services/equipment_service.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:intl/intl.dart';
 
 class EqSupply extends StatefulWidget {
@@ -261,7 +262,7 @@ class _EqSupplyState extends State<EqSupply> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -960,6 +961,7 @@ class _EqSupplyState extends State<EqSupply> {
                 ),
               ],
             ),
+      contentMaxWidth: 900,
     );
   }
 

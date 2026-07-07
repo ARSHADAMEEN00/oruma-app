@@ -9,6 +9,7 @@ import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessm
 import 'package:oruma_app/models/home_visit.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/auth_service.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:provider/provider.dart';
@@ -168,7 +169,7 @@ class _VisitAssessmentListScreenState extends State<VisitAssessmentListScreen> {
         _refreshVisibleHistory();
       });
     }
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         leading: IconButton(
@@ -242,10 +243,10 @@ class _VisitAssessmentListScreenState extends State<VisitAssessmentListScreen> {
                 ],
               ),
             ),
-      bottomNavigationBar: CompactAppBottomBar(
-        current: AppBottomSection.nhc,
-        onSelected: (section) => _handleBottomNavigation(context, section),
-      ),
+      currentSection: AppBottomSection.nhc,
+      onNavigationSelected: (section) =>
+          _handleBottomNavigation(context, section),
+      contentMaxWidth: 820,
     );
   }
 

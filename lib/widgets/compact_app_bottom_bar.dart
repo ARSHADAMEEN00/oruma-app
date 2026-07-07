@@ -4,6 +4,14 @@ import 'package:provider/provider.dart';
 
 enum AppBottomSection { home, medicine, patients, homeVisit, nhc }
 
+class AppBottomNavItem {
+  const AppBottomNavItem(this.section, this.icon, this.label);
+
+  final AppBottomSection section;
+  final IconData icon;
+  final String label;
+}
+
 class CompactAppBottomBar extends StatelessWidget {
   const CompactAppBottomBar({
     super.key,
@@ -14,26 +22,58 @@ class CompactAppBottomBar extends StatelessWidget {
   final AppBottomSection current;
   final ValueChanged<AppBottomSection> onSelected;
 
-  static const _items = <(AppBottomSection, IconData, String)>[
-    (AppBottomSection.home, Icons.home_outlined, 'Home'),
-    (AppBottomSection.medicine, Icons.medication_outlined, 'Medicine'),
-    (AppBottomSection.patients, Icons.people_outline, 'Patients'),
-    (AppBottomSection.homeVisit, Icons.home_work_outlined, 'Home Visit'),
-    (AppBottomSection.nhc, Icons.assignment_outlined, 'Visit (NHC)'),
+  static const items = <AppBottomNavItem>[
+    AppBottomNavItem(AppBottomSection.home, Icons.home_outlined, 'Home'),
+    AppBottomNavItem(
+      AppBottomSection.medicine,
+      Icons.medication_outlined,
+      'Medicine',
+    ),
+    AppBottomNavItem(
+      AppBottomSection.patients,
+      Icons.people_outline,
+      'Patients',
+    ),
+    AppBottomNavItem(
+      AppBottomSection.homeVisit,
+      Icons.home_work_outlined,
+      'Home Visit',
+    ),
+    AppBottomNavItem(
+      AppBottomSection.nhc,
+      Icons.assignment_outlined,
+      'Visit (NHC)',
+    ),
   ];
 
-  @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<AuthService>();
-    final items = _items.where((item) {
-      if (item.$1 == AppBottomSection.medicine && !auth.canAccessMedicine) {
+  static List<AppBottomNavItem> visibleItems(AuthService auth) {
+    return items.where((item) {
+      if (item.section == AppBottomSection.medicine &&
+          !auth.canAccessMedicine) {
         return false;
       }
-      if (item.$1 == AppBottomSection.nhc && !auth.canAccessNHC) {
+      if (item.section == AppBottomSection.nhc && !auth.canAccessNHC) {
         return false;
       }
       return true;
     }).toList();
+  }
+
+  static List<AppBottomNavItem> visibleItemsFor(AuthService? auth) {
+    return auth == null ? items : visibleItems(auth);
+  }
+
+  static AuthService? maybeAuth(BuildContext context) {
+    try {
+      return context.watch<AuthService>();
+    } on ProviderNotFoundException {
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = visibleItemsFor(maybeAuth(context));
 
     return DecoratedBox(
       decoration: const BoxDecoration(
@@ -54,14 +94,14 @@ class CompactAppBottomBar extends StatelessWidget {
           height: 54,
           child: Row(
             children: items.map((item) {
-              final selected = current == item.$1;
+              final selected = current == item.section;
               return Expanded(
                 child: Semantics(
                   selected: selected,
                   button: true,
-                  label: item.$3,
+                  label: item.label,
                   child: InkWell(
-                    onTap: () => onSelected(item.$1),
+                    onTap: () => onSelected(item.section),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Column(
@@ -79,7 +119,7 @@ class CompactAppBottomBar extends StatelessWidget {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
-                              item.$2,
+                              item.icon,
                               size: 19,
                               color: selected
                                   ? const Color(0xFF0F7A55)
@@ -88,7 +128,7 @@ class CompactAppBottomBar extends StatelessWidget {
                           ),
                           const SizedBox(height: 1),
                           Text(
-                            item.$3,
+                            item.label,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(

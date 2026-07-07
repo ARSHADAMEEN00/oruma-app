@@ -20,6 +20,7 @@ import 'package:oruma_app/services/equipment_supply_service.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:oruma_app/config_page.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
@@ -851,14 +852,13 @@ class _HomescreenState extends State<Homescreen> {
   Widget build(BuildContext context) {
     debugPrint('User Role: ${context.read<AuthService>().role}');
     final auth = context.watch<AuthService>();
-    return Scaffold(
-      key: _scaffoldKey,
+    return AdaptiveAppScaffold(
+      scaffoldKey: _scaffoldKey,
       drawer: _buildProfessionalDrawer(context),
       backgroundColor: Colors.white,
-      bottomNavigationBar: CompactAppBottomBar(
-        current: AppBottomSection.home,
-        onSelected: _handleBottomNavigation,
-      ),
+      currentSection: AppBottomSection.home,
+      onNavigationSelected: _handleBottomNavigation,
+      contentMaxWidth: 1040,
       // floatingActionButton: context.watch<AuthService>().canCreate
       //     ? FloatingActionButton(
       //         onPressed: _showQuickAddOptions,
@@ -1020,88 +1020,98 @@ class _HomescreenState extends State<Homescreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Dashboard Grid
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1.4,
-                    children: [
-                      if (auth.isMember)
-                        _buildModernActionCard(
-                          context,
-                          title: "Patients",
-                          icon: Icons.people_alt_rounded,
-                          palette: ModulePalettes.patients,
-                          page: const ModuleTheme(
-                            palette: ModulePalettes.patients,
-                            child: PatientListPage(),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = constraints.maxWidth;
+                      final columns = width >= 900
+                          ? 4
+                          : width >= 620
+                          ? 3
+                          : 2;
+
+                      return GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: columns,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: columns >= 3 ? 1.5 : 1.4,
+                        children: [
+                          if (auth.isMember)
+                            _buildModernActionCard(
+                              context,
+                              title: "Patients",
+                              icon: Icons.people_alt_rounded,
+                              palette: ModulePalettes.patients,
+                              page: const ModuleTheme(
+                                palette: ModulePalettes.patients,
+                                child: PatientListPage(),
+                              ),
+                            ),
+                          if (auth.canAccessNHC)
+                            _buildModernActionCard(
+                              context,
+                              title: "Visit Assessment\n(NHC)",
+                              icon: Icons.assignment_rounded,
+                              palette: ModulePalettes.patients,
+                              page: const VisitAssessmentVisitPickerScreen(),
+                            ),
+                          _buildModernActionCard(
+                            context,
+                            title: "Home Visits",
+                            icon: Icons.home_rounded,
+                            palette: ModulePalettes.homeVisits,
+                            page: const ModuleTheme(
+                              palette: ModulePalettes.homeVisits,
+                              child: HomeVisitListPage(),
+                            ),
                           ),
-                        ),
-                      if (auth.canAccessNHC)
-                        _buildModernActionCard(
-                          context,
-                          title: "Visit Assessment\n(NHC)",
-                          icon: Icons.assignment_rounded,
-                          palette: ModulePalettes
-                              .patients, // Reusing patients palette or another suitable one
-                          page: const VisitAssessmentVisitPickerScreen(),
-                        ),
-                      _buildModernActionCard(
-                        context,
-                        title: "Home Visits",
-                        icon: Icons.home_rounded,
-                        palette: ModulePalettes.homeVisits,
-                        page: const ModuleTheme(
-                          palette: ModulePalettes.homeVisits,
-                          child: HomeVisitListPage(),
-                        ),
-                      ),
-                      if (auth.isMember)
-                        _buildModernActionCard(
-                          context,
-                          title: "Social Support",
-                          icon: Icons.volunteer_activism_rounded,
-                          palette: ModulePalettes.socialSupport,
-                          page: const ModuleTheme(
-                            palette: ModulePalettes.socialSupport,
-                            child: SocialSupportListPage(),
+                          if (auth.isMember)
+                            _buildModernActionCard(
+                              context,
+                              title: "Social Support",
+                              icon: Icons.volunteer_activism_rounded,
+                              palette: ModulePalettes.socialSupport,
+                              page: const ModuleTheme(
+                                palette: ModulePalettes.socialSupport,
+                                child: SocialSupportListPage(),
+                              ),
+                            ),
+                          if (auth.isMember)
+                            _buildModernActionCard(
+                              context,
+                              title: "Volunteers",
+                              icon: Icons.badge_rounded,
+                              palette: ModulePalettes.volunteers,
+                              page: const ModuleTheme(
+                                palette: ModulePalettes.volunteers,
+                                child: VolunteerListPage(),
+                              ),
+                            ),
+                          _buildModernActionCard(
+                            context,
+                            title: "Equipment Supply",
+                            icon: Icons.inventory_2_rounded,
+                            palette: ModulePalettes.equipmentSupply,
+                            page: const ModuleTheme(
+                              palette: ModulePalettes.equipmentSupply,
+                              child: EquipmentSupplyListPage(),
+                            ),
                           ),
-                        ),
-                      if (auth.isMember)
-                        _buildModernActionCard(
-                          context,
-                          title: "Volunteers",
-                          icon: Icons.badge_rounded,
-                          palette: ModulePalettes.volunteers,
-                          page: const ModuleTheme(
-                            palette: ModulePalettes.volunteers,
-                            child: VolunteerListPage(),
-                          ),
-                        ),
-                      _buildModernActionCard(
-                        context,
-                        title: "Equipment Supply",
-                        icon: Icons.inventory_2_rounded,
-                        palette: ModulePalettes.equipmentSupply,
-                        page: const ModuleTheme(
-                          palette: ModulePalettes.equipmentSupply,
-                          child: EquipmentSupplyListPage(),
-                        ),
-                      ),
-                      if (auth.canAccessMedicine)
-                        _buildModernActionCard(
-                          context,
-                          title: "Medicine Supply",
-                          icon: Icons.medication_liquid_rounded,
-                          palette: ModulePalettes.medicineSupply,
-                          page: const ModuleTheme(
-                            palette: ModulePalettes.medicineSupply,
-                            child: MedicineSupplyListPage(),
-                          ),
-                        ),
-                    ],
+                          if (auth.canAccessMedicine)
+                            _buildModernActionCard(
+                              context,
+                              title: "Medicine Supply",
+                              icon: Icons.medication_liquid_rounded,
+                              palette: ModulePalettes.medicineSupply,
+                              page: const ModuleTheme(
+                                palette: ModulePalettes.medicineSupply,
+                                child: MedicineSupplyListPage(),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 18),

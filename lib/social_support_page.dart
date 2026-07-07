@@ -6,6 +6,7 @@ import 'package:oruma_app/models/volunteer.dart';
 import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/services/social_support_service.dart';
 import 'package:oruma_app/services/volunteer_service.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 
 const _supportPrimary = Color(0xFF8A2454);
 const _supportDark = Color(0xFF64143A);
@@ -166,7 +167,7 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(
+      return AdaptiveAppScaffold(
         backgroundColor: Colors.grey.shade50,
         appBar: AppBar(
           backgroundColor: _supportDark,
@@ -179,10 +180,11 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
         body: const Center(
           child: CircularProgressIndicator(color: _supportPrimary),
         ),
+        contentMaxWidth: 900,
       );
     }
 
-    return Scaffold(
+    return AdaptiveAppScaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         backgroundColor: _supportDark,
@@ -240,6 +242,7 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
           ],
         ),
       ),
+      contentMaxWidth: 900,
       bottomNavigationBar: SafeArea(
         top: false,
         child: Container(
