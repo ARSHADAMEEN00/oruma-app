@@ -384,28 +384,32 @@ class VisitAssessmentController extends ChangeNotifier {
     try {
       var value = _assessment;
       final shouldResetAfterSubmit = _createsHomeVisitOnSubmit;
+      final previousHomeVisitId = value.homeVisitId.trim();
 
-      if (value.homeVisitId.trim().isEmpty) {
-        final homeVisit = await _repository.createHomeVisitForAssessment(value);
-        final homeVisitId = homeVisit.id;
-        if (homeVisitId == null || homeVisitId.isEmpty) {
-          throw StateError('Could not create a linked home visit.');
-        }
-        value = value.copyWith(
-          homeVisitId: homeVisitId,
-          visitDate: DateTime.tryParse(homeVisit.visitDate) ?? value.visitDate,
-          visitMode: homeVisit.visitMode.trim().isNotEmpty
-              ? homeVisit.visitMode
-              : value.visitMode,
-          team: homeVisit.team?.trim().isNotEmpty == true
-              ? homeVisit.team!
-              : value.team,
-          patientAddress: homeVisit.address.trim().isNotEmpty
-              ? homeVisit.address
-              : value.patientAddress,
-        );
-        _assessment = value;
+      final homeVisit = await _repository.ensureHomeVisitForAssessment(value);
+      final homeVisitId = homeVisit.id;
+      if (homeVisitId == null || homeVisitId.isEmpty) {
+        throw StateError('Could not create a linked home visit.');
+      }
+      value = value.copyWith(
+        homeVisitId: homeVisitId,
+        visitDate: DateTime.tryParse(homeVisit.visitDate) ?? value.visitDate,
+        visitMode: homeVisit.visitMode.trim().isNotEmpty
+            ? homeVisit.visitMode
+            : value.visitMode,
+        team: homeVisit.team?.trim().isNotEmpty == true
+            ? homeVisit.team!
+            : value.team,
+        patientAddress: homeVisit.address.trim().isNotEmpty
+            ? homeVisit.address
+            : value.patientAddress,
+      );
+      _assessment = value;
+      if (previousHomeVisitId != homeVisitId) {
         await _repository.clearLocalDraft(originalDraftKey);
+        if (previousHomeVisitId.isNotEmpty) {
+          await _repository.clearLocalDraft(previousHomeVisitId);
+        }
       }
 
       if (value.id == null) {

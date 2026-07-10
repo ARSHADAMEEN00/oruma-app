@@ -205,7 +205,7 @@ void main() {
       final patientFirst = assessment.copyWith(
         homeVisitId: '',
         patientAddress: 'Kadakkadan House, Nelloliparamba',
-        visitDate: DateTime(2026, 6, 26),
+        visitDate: DateTime(2026, 5, 12),
         visitMode: 'emergency',
         nursingDiagnosis: 'Routine follow-up.',
         carePlan: assessment.carePlan.copyWith(
@@ -231,7 +231,7 @@ void main() {
       expect(createdVisit.address, patientFirst.patientAddress);
       expect(createdVisit.visitMode, 'emergency');
       expect(createdVisit.team, patientFirst.team);
-      expect(DateTime.parse(createdVisit.visitDate), DateTime(2026, 6, 26));
+      expect(DateTime.parse(createdVisit.visitDate), DateTime(2026, 5, 12));
       expect(repository.clearedDrafts, contains('created-home-1'));
       expect(
         repository.clearedDrafts,
@@ -255,6 +255,43 @@ void main() {
       expect(controller.hasDraftInProgress, isFalse);
     },
   );
+
+  test('submit recreates home visit when linked visit was deleted', () async {
+    final staleLinked = assessment.copyWith(
+      id: 'draft-id',
+      homeVisitId: 'deleted-home',
+      patientAddress: 'Kadakkadan House, Nelloliparamba',
+      visitDate: DateTime(2026, 5, 12),
+      visitMode: 'monthly',
+      nursingDiagnosis: 'Routine follow-up.',
+      carePlan: assessment.carePlan.copyWith(
+        services: const {'healthEducation'},
+      ),
+      nurseName: 'Nurse A',
+      confirmed: true,
+    );
+    final repository = _FakeVisitAssessmentRepository(
+      deletedHomeVisitIds: {'deleted-home'},
+      history: const [],
+    );
+    final controller = VisitAssessmentController(
+      initialAssessment: staleLinked,
+      repository: repository,
+    );
+    addTearDown(controller.dispose);
+
+    final ok = await controller.submit();
+
+    expect(ok, isTrue);
+    expect(repository.createdHomeVisits, hasLength(1));
+    final replacement = repository.createdHomeVisits.single;
+    expect(replacement.id, 'created-home-1');
+    expect(replacement.visitMode, 'monthly');
+    expect(DateTime.parse(replacement.visitDate), DateTime(2026, 5, 12));
+    expect(controller.assessment.homeVisitId, 'created-home-1');
+    expect(controller.assessment.status, 'submitted');
+    expect(repository.clearedDrafts, contains('deleted-home'));
+  });
 
   testWidgets('visit assessment opens with reference step header', (
     tester,
@@ -644,11 +681,14 @@ class _FakeVisitAssessmentRepository extends VisitAssessmentRepository {
   _FakeVisitAssessmentRepository({
     this.localDraft,
     this.remoteForVisit,
+    Set<String> deletedHomeVisitIds = const {},
     List<VisitAssessment> history = const [],
-  }) : history = [...history];
+  }) : deletedHomeVisitIds = {...deletedHomeVisitIds},
+       history = [...history];
 
   VisitAssessment? localDraft;
   VisitAssessment? remoteForVisit;
+  final Set<String> deletedHomeVisitIds;
   List<VisitAssessment> history;
   final clearedDrafts = <String>[];
   final savedLocalDrafts = <VisitAssessment>[];
@@ -711,6 +751,26 @@ class _FakeVisitAssessmentRepository extends VisitAssessmentRepository {
   @override
   Future<VisitAssessment> syncDraft(VisitAssessment assessment) async =>
       assessment.id == null ? assessment.copyWith(id: 'draft-id') : assessment;
+
+  @override
+  Future<HomeVisit> ensureHomeVisitForAssessment(
+    VisitAssessment assessment,
+  ) async {
+    final homeVisitId = assessment.homeVisitId.trim();
+    if (homeVisitId.isNotEmpty && !deletedHomeVisitIds.contains(homeVisitId)) {
+      return HomeVisit(
+        id: homeVisitId,
+        patientId: assessment.patientId,
+        patientName: assessment.patientName,
+        address: assessment.patientAddress,
+        visitDate: assessment.visitDate.toIso8601String(),
+        visitMode: assessment.visitMode,
+        team: assessment.team,
+        notes: 'Created from Visit (NHC) assessment',
+      );
+    }
+    return createHomeVisitForAssessment(assessment);
+  }
 
   @override
   Future<HomeVisit> createHomeVisitForAssessment(

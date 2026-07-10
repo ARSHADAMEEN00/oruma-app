@@ -47,6 +47,23 @@ class HomeVisitService {
     throw Exception(result.error ?? 'Failed to fetch home visit');
   }
 
+  /// Get a single home visit by ID, returning null when it was deleted.
+  static Future<HomeVisit?> findHomeVisitById(String id) async {
+    final result = await ApiService.get<Map<String, dynamic>>(
+      '${ApiConfig.homeVisitsEndpoint}/$id',
+    );
+
+    if (result.isSuccess && result.data != null) {
+      return HomeVisit.fromJson(result.data!);
+    }
+
+    if (result.statusCode == 404) {
+      return null;
+    }
+
+    throw Exception(result.error ?? 'Failed to fetch home visit');
+  }
+
   /// Create a new home visit and invalidate the home visits cache.
   static Future<HomeVisit> createHomeVisit(HomeVisit homeVisit) async {
     final result = await ApiService.post<Map<String, dynamic>>(

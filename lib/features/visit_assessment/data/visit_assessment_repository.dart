@@ -151,6 +151,17 @@ class VisitAssessmentRepository {
   Future<VisitAssessment> submit(VisitAssessment assessment) =>
       VisitAssessmentService.submit(assessment);
 
+  Future<HomeVisit> ensureHomeVisitForAssessment(
+    VisitAssessment assessment,
+  ) async {
+    final homeVisitId = assessment.homeVisitId.trim();
+    if (homeVisitId.isNotEmpty) {
+      final existing = await HomeVisitService.findHomeVisitById(homeVisitId);
+      if (existing != null) return existing;
+    }
+    return createHomeVisitForAssessment(assessment);
+  }
+
   Future<HomeVisit> createHomeVisitForAssessment(VisitAssessment assessment) {
     final visit = HomeVisit(
       patientId: assessment.patientId,
