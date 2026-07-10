@@ -30,6 +30,7 @@ void main() {
 
   test('visit assessment JSON round-trip retains v2 fields', () {
     final value = assessment.copyWith(
+      visitMode: 'emergency',
       previousVisitConcerns: 'Previous difficulty is improving.',
       vitals: assessment.vitals.copyWith(respiratoryRhythm: 'IR'),
       carePlan: assessment.carePlan.copyWith(
@@ -51,6 +52,7 @@ void main() {
 
     expect(decoded.homeVisitId, assessment.homeVisitId);
     expect(decoded.patientId, assessment.patientId);
+    expect(decoded.visitMode, 'emergency');
     expect(decoded.visitType, 'NHC');
     expect(decoded.previousVisitConcerns, value.previousVisitConcerns);
     expect(decoded.vitals.respiratoryRhythm, 'IR');
@@ -204,6 +206,7 @@ void main() {
         homeVisitId: '',
         patientAddress: 'Kadakkadan House, Nelloliparamba',
         visitDate: DateTime(2026, 6, 26),
+        visitMode: 'emergency',
         nursingDiagnosis: 'Routine follow-up.',
         carePlan: assessment.carePlan.copyWith(
           services: const {'healthEducation'},
@@ -226,6 +229,7 @@ void main() {
       expect(createdVisit.patientId, patientFirst.patientId);
       expect(createdVisit.patientName, patientFirst.patientName);
       expect(createdVisit.address, patientFirst.patientAddress);
+      expect(createdVisit.visitMode, 'emergency');
       expect(createdVisit.team, patientFirst.team);
       expect(DateTime.parse(createdVisit.visitDate), DateTime(2026, 6, 26));
       expect(repository.clearedDrafts, contains('created-home-1'));
@@ -272,7 +276,30 @@ void main() {
     expect(find.text('Step 1 of 7'), findsOneWidget);
     expect(find.text('Visit Information'), findsOneWidget);
     expect(find.text('Muhammed Ali'), findsOneWidget);
-    expect(find.text('NHC'), findsWidgets);
+    expect(find.text('Visit Mode'), findsOneWidget);
+  });
+
+  testWidgets('visit header shows visit mode chips and updates selection', (
+    tester,
+  ) async {
+    final repository = _FakeVisitAssessmentRepository();
+    final controller = VisitAssessmentController(
+      initialAssessment: assessment,
+      repository: repository,
+    );
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(home: VisitAssessmentFlowScreen(controller: controller)),
+    );
+
+    expect(find.text('Visit Mode'), findsOneWidget);
+    expect(controller.assessment.visitMode, 'new');
+
+    await tester.tap(find.byKey(const ValueKey('visit-mode-emergency')));
+    await tester.pumpAndSettle();
+
+    expect(controller.assessment.visitMode, 'emergency');
   });
 
   testWidgets('physical examination is step two and supports Malayalam', (
@@ -484,6 +511,7 @@ void main() {
   ) async {
     final value = assessment.copyWith(
       patientAge: '54',
+      visitMode: 'emergency',
       previousVisitConcerns: 'ശ്വാസ ബുദ്ധിമുട്ട് കുറഞ്ഞു. Appetite better.',
       vitals: assessment.vitals.copyWith(
         pulse: 72,
@@ -694,7 +722,7 @@ class _FakeVisitAssessmentRepository extends VisitAssessmentRepository {
       patientName: assessment.patientName,
       address: assessment.patientAddress,
       visitDate: assessment.visitDate.toIso8601String(),
-      visitMode: 'new',
+      visitMode: assessment.visitMode,
       team: assessment.team,
       notes: 'Created from Visit (NHC) assessment',
     );

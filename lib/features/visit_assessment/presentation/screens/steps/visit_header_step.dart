@@ -3,6 +3,14 @@ import 'package:intl/intl.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/providers/visit_assessment_controller.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_widgets.dart';
 
+const _visitModeOptions = <({String value, String label, IconData icon})>[
+  (value: 'new', label: 'New', icon: Icons.add_circle_outline),
+  (value: 'monthly', label: 'Monthly', icon: Icons.calendar_month_outlined),
+  (value: 'emergency', label: 'Emergency', icon: Icons.emergency),
+  (value: 'dhc_visit', label: 'DHC', icon: Icons.home_work_outlined),
+  (value: 'vhc_visit', label: 'VHC', icon: Icons.local_hospital_outlined),
+];
+
 class VisitHeaderStep extends StatelessWidget {
   const VisitHeaderStep({super.key, required this.controller});
 
@@ -97,6 +105,9 @@ class VisitHeaderStep extends StatelessWidget {
           onChanged: (value) =>
               controller.update((item) => item.copyWith(team: value)),
         ),
+        const SizedBox(height: 14),
+        const AssessmentLabel('Visit Mode'),
+        _visitModeChips(),
         const SizedBox(height: 17),
         const AssessmentLabel('Visit Type'),
         AssessmentSegment(
@@ -107,6 +118,50 @@ class VisitHeaderStep extends StatelessWidget {
               controller.update((item) => item.copyWith(visitType: value)),
         ),
       ],
+    );
+  }
+
+  Widget _visitModeChips() {
+    final selected = controller.assessment.visitMode;
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _visitModeOptions.map((option) {
+        final isSelected = selected == option.value;
+        final isEmergency = option.value == 'emergency';
+        final selectedColor = isEmergency ? assessmentDanger : assessmentGreen;
+        return ChoiceChip(
+          key: ValueKey('visit-mode-${option.value}'),
+          selected: isSelected,
+          showCheckmark: false,
+          avatar: Icon(
+            option.icon,
+            size: 16,
+            color: isSelected
+                ? selectedColor
+                : isEmergency
+                ? assessmentDanger
+                : assessmentMuted,
+          ),
+          label: Text(option.label),
+          labelStyle: TextStyle(
+            color: isSelected ? selectedColor : assessmentText,
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
+          backgroundColor: Colors.white,
+          selectedColor: selectedColor.withValues(alpha: 0.09),
+          side: BorderSide(
+            color: isSelected ? selectedColor : assessmentBorder,
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          onSelected: (_) => controller.update(
+            (item) => item.copyWith(visitMode: option.value),
+          ),
+        );
+      }).toList(),
     );
   }
 

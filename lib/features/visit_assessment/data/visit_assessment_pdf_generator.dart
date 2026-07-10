@@ -63,6 +63,14 @@ class VisitAssessmentPdfGenerator {
     'medicineSupport': 'Medicine Support',
   };
 
+  static const _visitModeLabels = <String, String>{
+    'new': 'New',
+    'monthly': 'Monthly',
+    'emergency': 'Emergency',
+    'dhc_visit': 'DHC',
+    'vhc_visit': 'VHC',
+  };
+
   static Future<Uint8List> generate(VisitAssessment assessment) async {
     final pageOne = await _renderPage(
       (canvas) => _paintPageOne(canvas, assessment),
@@ -146,6 +154,14 @@ class VisitAssessmentPdfGenerator {
       const Rect.fromLTWH(875, 95, 58, 25),
       size: 25,
       weight: FontWeight.w800,
+      align: TextAlign.center,
+    );
+    _fitText(
+      canvas,
+      _visitModeLabel(assessment.visitMode),
+      const Rect.fromLTWH(952, 96, 158, 24),
+      size: 17,
+      weight: FontWeight.w700,
       align: TextAlign.center,
     );
 
@@ -1088,6 +1104,12 @@ class VisitAssessmentPdfGenerator {
     ..strokeWidth = width;
 
   static String _date(DateTime value) => DateFormat('dd/MM/yyyy').format(value);
+
+  static String _visitModeLabel(String value) {
+    final key = value.trim();
+    if (key.isEmpty) return _visitModeLabels['new']!;
+    return _visitModeLabels[key] ?? key.toUpperCase();
+  }
 
   static String _number(num? value) {
     if (value == null) return '';

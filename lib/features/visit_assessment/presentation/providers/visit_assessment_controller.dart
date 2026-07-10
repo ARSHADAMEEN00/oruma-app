@@ -394,6 +394,9 @@ class VisitAssessmentController extends ChangeNotifier {
         value = value.copyWith(
           homeVisitId: homeVisitId,
           visitDate: DateTime.tryParse(homeVisit.visitDate) ?? value.visitDate,
+          visitMode: homeVisit.visitMode.trim().isNotEmpty
+              ? homeVisit.visitMode
+              : value.visitMode,
           team: homeVisit.team?.trim().isNotEmpty == true
               ? homeVisit.team!
               : value.team,
@@ -499,6 +502,7 @@ class VisitAssessmentController extends ChangeNotifier {
       regNo: value.regNo,
       visitDate: value.visitDate,
       team: value.team,
+      visitMode: value.visitMode,
       visitType: value.visitType,
       nurseName: value.nurseName,
       nurseId: value.nurseId,
@@ -518,6 +522,7 @@ class VisitAssessmentController extends ChangeNotifier {
       regNo: _newAssessmentSeed.regNo,
       visitDate: DateTime(now.year, now.month, now.day),
       team: _newAssessmentSeed.team,
+      visitMode: _newAssessmentSeed.visitMode,
       visitType: _newAssessmentSeed.visitType,
       nurseName: _newAssessmentSeed.nurseName,
       nurseId: _newAssessmentSeed.nurseId,

@@ -159,7 +159,9 @@ class VisitAssessmentRepository {
           ? assessment.patientAddress.trim()
           : 'Address not recorded',
       visitDate: assessment.visitDate.toIso8601String(),
-      visitMode: 'new',
+      visitMode: assessment.visitMode.trim().isNotEmpty
+          ? assessment.visitMode
+          : 'new',
       team: assessment.team.trim().isNotEmpty ? assessment.team.trim() : null,
       notes: 'Created from Visit (NHC) assessment',
     );
