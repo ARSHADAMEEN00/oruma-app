@@ -98,7 +98,8 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
     if (_searchQuery.isEmpty) return true;
     final q = _searchQuery.toLowerCase();
     return supply.patientName.toLowerCase().contains(q) ||
-        supply.medicineName.toLowerCase().contains(q);
+        supply.medicineName.toLowerCase().contains(q) ||
+        supply.medicineSummary.toLowerCase().contains(q);
   }
 
   void _handleBottomNavigation(BuildContext context, AppBottomSection section) {
@@ -219,7 +220,7 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: _tabs.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
               final tab = _tabs[index];
               final isSelected = _selectedTab == tab;
@@ -319,7 +320,7 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: filteredList.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final supply = filteredList[index];
           return _buildSupplyCard(supply, auth);
@@ -334,7 +335,7 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
       builder: (context) => AlertDialog(
         title: const Text('Delete Supply'),
         content: Text(
-          'Are you sure you want to delete the supply record for ${supply.medicineName}?',
+          'Are you sure you want to delete this medicine supply record?',
         ),
         actions: [
           TextButton(
@@ -623,6 +624,8 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
                       supply.status?.toUpperCase() ?? 'GIVEN',
                     ),
                     _buildDetailRow('Quantity', '${supply.qtyGiven}'),
+                    if (supply.items.isNotEmpty)
+                      _buildDetailRow('Medicines', supply.medicineSummary),
                     _buildDetailRow(
                       'Date',
                       '${supply.givenAt.day}/${supply.givenAt.month}/${supply.givenAt.year}',
@@ -636,12 +639,21 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
                       _buildDetailRow('Prescribed By', supply.prescribedBy!),
                     if (supply.staffNote != null)
                       _buildDetailRow('Staff Note', supply.staffNote!),
+                    if (supply.items.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Batch Details',
+                        style: TextStyle(fontSize: 16, color: _medicineGreen),
+                      ),
+                      const SizedBox(height: 12),
+                      ...supply.items.map(_buildSupplyItemRow),
+                    ],
 
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Divider(
                         height: 1,
-                        color: Colors.grey.withOpacity(0.2),
+                        color: Colors.grey.withValues(alpha: 0.2),
                       ),
                     ),
 
@@ -665,7 +677,7 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Divider(
                         height: 1,
-                        color: Colors.grey.withOpacity(0.2),
+                        color: Colors.grey.withValues(alpha: 0.2),
                       ),
                     ),
 
@@ -731,6 +743,76 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
     );
   }
 
+  Widget _buildSupplyItemRow(MedicineSupplyItem item) {
+    final expiry = item.expiryDate;
+    final unit = item.qtyUnit.trim();
+    final qty = unit.isEmpty ? '${item.qtyGiven}' : '${item.qtyGiven} $unit';
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _cardBg.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _iconBg.withValues(alpha: 0.7)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.inventory_2_outlined,
+            color: _medicineGreen,
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.medicineName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: _medicineGreen,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '${item.batchNumber} • Exp ${expiry == null ? 'Not recorded' : '${expiry.day}/${expiry.month}/${expiry.year}'}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            qty,
+            style: const TextStyle(
+              color: _medicineGreen,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _quantityStatusText(MedicineSupply supply) {
+    if (supply.status != 'returned') return 'Qty: ${supply.qtyGiven}';
+
+    final returnedText =
+        'Given: ${supply.qtyGiven} • Ret: ${supply.qtyReturned ?? supply.qtyGiven}';
+    final returnedAt = supply.returnedAt;
+    if (returnedAt == null) return returnedText;
+
+    return '$returnedText (${returnedAt.day}/${returnedAt.month}/${returnedAt.year})';
+  }
+
   Widget _buildSupplyCard(MedicineSupply supply, AuthService auth) {
     Color statusColor = _medicineGreen;
     if (supply.status == 'cancelled') statusColor = Colors.red;
@@ -742,7 +824,7 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -873,13 +955,13 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          supply.medicineName,
+                          supply.medicineSummary,
                           style: TextStyle(
                             color: Colors.grey.shade600,
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                           ),
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 14),
@@ -892,12 +974,7 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              supply.status == 'returned'
-                                  ? 'Given: ${supply.qtyGiven} • Ret: ${supply.qtyReturned ?? supply.qtyGiven}' +
-                                        (supply.returnedAt != null
-                                            ? ' (${supply.returnedAt!.day}/${supply.returnedAt!.month}/${supply.returnedAt!.year})'
-                                            : '')
-                                  : 'Qty: ${supply.qtyGiven}',
+                              _quantityStatusText(supply),
                               style: TextStyle(
                                 color: supply.status == 'returned'
                                     ? Colors.orange.shade800

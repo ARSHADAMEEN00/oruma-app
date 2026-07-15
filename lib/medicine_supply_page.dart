@@ -30,15 +30,12 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
 
   List<Patient> _patients = [];
   List<Medicine> _medicines = [];
+  final List<_SupplyItemRow> _rows = [];
   bool _loadingData = true;
   bool _saving = false;
 
   Patient? _selectedPatient;
-  Medicine? _selectedMedicine;
 
-  final TextEditingController _qtyController = TextEditingController();
-
-  // Optional fields
   bool _showMore = false;
   final String _status = 'given';
   final TextEditingController _noteController = TextEditingController();
@@ -50,7 +47,19 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
   @override
   void initState() {
     super.initState();
+    _addRow(settle: false);
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    for (final row in _rows) {
+      row.dispose();
+    }
+    _noteController.dispose();
+    _prescribedByController.dispose();
+    _supplyDaysController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -75,13 +84,20 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
     }
   }
 
-  @override
-  void dispose() {
-    _qtyController.dispose();
-    _noteController.dispose();
-    _prescribedByController.dispose();
-    _supplyDaysController.dispose();
-    super.dispose();
+  void _addRow({bool settle = true}) {
+    _rows.add(_SupplyItemRow());
+    if (settle && mounted) setState(() {});
+  }
+
+  void _removeRow(_SupplyItemRow row) {
+    if (_rows.length == 1) {
+      row.clear();
+      setState(() {});
+      return;
+    }
+
+    setState(() => _rows.remove(row));
+    row.dispose();
   }
 
   Future<void> _save() async {
@@ -93,25 +109,10 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
       ).showSnackBar(const SnackBar(content: Text('Please select a patient')));
       return;
     }
-    if (_selectedMedicine == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a medicine')));
-      return;
-    }
-    final qtyGiven = int.tryParse(_qtyController.text.trim());
-    if (qtyGiven == null || qtyGiven <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid quantity')),
-      );
-      return;
-    }
-    if (qtyGiven > _selectedMedicine!.qty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Not enough medicine stock available')),
-      );
-      return;
-    }
+
+    final items = _collectSupplyItems();
+    if (items == null) return;
+
     final supplyDays = int.tryParse(_supplyDaysController.text.trim());
     if (_supplyDaysController.text.trim().isNotEmpty &&
         (supplyDays == null || supplyDays < 0)) {
@@ -128,15 +129,17 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
       final staffId = authService.user?['_id'] ?? authService.user?['id'];
 
       if (staffId == null) {
-        throw Exception("You must be logged in to supply medicine.");
+        throw Exception('You must be logged in to supply medicine.');
       }
 
+      final totalQty = items.fold<int>(0, (sum, item) => sum + item.qtyGiven);
       final supply = MedicineSupply(
         patientId: _selectedPatient!.id,
-        medicineId: _selectedMedicine!.id!,
+        medicineId: items.first.medicineId,
         givenByStaff: staffId,
         givenAt: _givenAt,
-        qtyGiven: qtyGiven,
+        qtyGiven: totalQty,
+        items: items,
         status: _status,
         staffNote: _noteController.text.isEmpty ? null : _noteController.text,
         prescribedBy: _prescribedByController.text.isEmpty
@@ -160,9 +163,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              e.toString().replaceFirst(RegExp(r'^Exception:\s*'), ''),
-            ),
+            content: Text(_friendlyError(e)),
             backgroundColor: Colors.red,
           ),
         );
@@ -170,6 +171,77 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  List<MedicineSupplyItem>? _collectSupplyItems() {
+    final items = <MedicineSupplyItem>[];
+    final usedByBatch = <String, int>{};
+    String? firstError;
+
+    setState(() {
+      for (final row in _rows) {
+        row.error = null;
+      }
+    });
+
+    for (var index = 0; index < _rows.length; index += 1) {
+      final row = _rows[index];
+      if (row.isBlank) continue;
+
+      final medicine = row.selectedMedicine;
+      final batch = row.selectedBatch;
+      final quantity = int.tryParse(row.qtyController.text.trim());
+
+      if (medicine?.id == null) {
+        row.error = 'Select a medicine';
+      } else if (batch == null) {
+        row.error = 'Select a batch';
+      } else if (quantity == null || quantity <= 0) {
+        row.error = 'Enter a quantity greater than zero';
+      } else {
+        final medicineId = medicine!.id!;
+        final batchId = batch.id ?? 'legacy:$medicineId';
+        final alreadyUsed = usedByBatch[batchId] ?? 0;
+        final available = batch.quantity.floor();
+        if (alreadyUsed + quantity > available) {
+          row.error =
+              'Only ${available - alreadyUsed} ${_unitLabel(batch.qtyUnit)} left in this batch';
+        } else {
+          usedByBatch[batchId] = alreadyUsed + quantity;
+          items.add(
+            MedicineSupplyItem(
+              medicineId: medicineId,
+              stockEntryId: batch.id,
+              qtyGiven: quantity,
+            ),
+          );
+        }
+      }
+
+      if (row.error != null) {
+        firstError ??= 'Row ${index + 1}: ${row.error}';
+      }
+    }
+
+    if (firstError != null) {
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(firstError), backgroundColor: Colors.red),
+      );
+      return null;
+    }
+
+    if (items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Add at least one medicine batch'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return null;
+    }
+
+    return items;
   }
 
   Future<void> _pickGivenDate() async {
@@ -180,117 +252,6 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
       lastDate: DateTime.now(),
     );
     if (date != null) setState(() => _givenAt = date);
-  }
-
-  void _showMedicineDetails() {
-    if (_selectedMedicine == null) return;
-    final medicine = _selectedMedicine!;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: _iconBg,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.medication, color: _medicineGreen),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        medicine.name,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          color: Colors.black,
-                        ),
-                      ),
-                      Text(
-                        medicine.code,
-                        style: const TextStyle(color: _medicineGreen),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildDetailRow(
-              'Category',
-              medicine.category
-                  .split('_')
-                  .map((e) => e[0].toUpperCase() + e.substring(1))
-                  .join(' '),
-            ),
-            _buildDetailRow('Formulation', medicine.formulation ?? 'Not set'),
-            _buildDetailRow(
-              'Stock Available',
-              '${medicine.qty} ${medicine.qtyUnit ?? ""}',
-            ),
-            _buildDetailRow(
-              'Expiry Date',
-              medicine.expiryDate != null
-                  ? DateFormat('dd MMM yyyy').format(medicine.expiryDate!)
-                  : 'Not set',
-            ),
-            _buildDetailRow('Notes', medicine.description ?? 'None'),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: _medicineGreen),
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Close'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(label, style: const TextStyle(color: Colors.grey)),
-          ),
-          Expanded(flex: 3, child: Text(value)),
-        ],
-      ),
-    );
   }
 
   Widget _formIntro() {
@@ -324,7 +285,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Supply medicine to a patient. Add optional details like supply days or notes if needed.',
+                  'Select one or more medicine batches and record the quantity supplied to the patient.',
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 12,
@@ -477,251 +438,30 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
             const SizedBox(height: 16),
             _formCard(
               title: 'Supply details',
-              subtitle: 'Patient and medicine information.',
+              subtitle: 'Patient and supply date.',
               icon: Icons.person_add_alt_1_outlined,
               children: [
-                Autocomplete<Patient>(
-                  displayStringForOption: _patientOptionLabel,
-                  optionsBuilder: (textEditingValue) {
-                    if (textEditingValue.text.isEmpty) {
-                      return const Iterable<Patient>.empty();
-                    }
-                    final query = textEditingValue.text.toLowerCase();
-                    return _patients.where(
-                      (p) =>
-                          p.name.toLowerCase().contains(query) ||
-                          (p.registerId?.toLowerCase().contains(query) ??
-                              false) ||
-                          p.place.toLowerCase().contains(query),
-                    );
-                  },
-                  onSelected: (selection) =>
-                      setState(() => _selectedPatient = selection),
-                  fieldViewBuilder:
-                      (context, controller, focusNode, onEditingComplete) {
-                        return TextFormField(
-                          controller: controller,
-                          focusNode: focusNode,
-                          onEditingComplete: onEditingComplete,
-                          decoration: _inputDecoration(
-                            'Patient',
-                            Icons.person_search_outlined,
-                            hint: 'Search patient...',
-                          ),
-                          validator: (value) => _selectedPatient == null
-                              ? 'Please select a patient'
-                              : null,
-                        );
-                      },
-                ),
-                if (_selectedPatient != null)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _cardBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _iconBg),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.person,
-                          color: _medicineGreen,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _selectedPatient!.name,
-                                style: const TextStyle(
-                                  color: _medicineDarkGreen,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                [
-                                  if (_selectedPatient!
-                                          .registerId
-                                          ?.isNotEmpty ==
-                                      true)
-                                    'Reg No: ${_selectedPatient!.registerId}',
-                                  if (_selectedPatient!.place.isNotEmpty)
-                                    'Place: ${_selectedPatient!.place}',
-                                  if (_selectedPatient!.phone.isNotEmpty)
-                                    'Ph: ${_selectedPatient!.phone}',
-                                ].join(' • '),
-                                style: const TextStyle(
-                                  color: _medicineDarkGreen,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              if (_selectedPatient!.address.isNotEmpty) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  _selectedPatient!.address,
-                                  style: const TextStyle(
-                                    color: _medicineDarkGreen,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () => setState(() => _selectedPatient = null),
-                          child: const Icon(
-                            Icons.close,
-                            color: _medicineGreen,
-                            size: 20,
-                          ),
-                        ),
-                      ],
+                _patientField(),
+                if (_selectedPatient != null) _selectedPatientCard(),
+                InkWell(
+                  onTap: _pickGivenDate,
+                  borderRadius: BorderRadius.circular(14),
+                  child: InputDecorator(
+                    decoration: _inputDecoration('Date', Icons.event_outlined),
+                    child: Text(
+                      DateFormat('dd MMM yyyy').format(_givenAt),
+                      style: const TextStyle(fontSize: 15),
                     ),
                   ),
-
-                Autocomplete<Medicine>(
-                  displayStringForOption: (option) => option.name,
-                  optionsBuilder: (textEditingValue) {
-                    if (textEditingValue.text.isEmpty) {
-                      return const Iterable<Medicine>.empty();
-                    }
-                    return _medicines.where(
-                      (m) => m.name.toLowerCase().contains(
-                        textEditingValue.text.toLowerCase(),
-                      ),
-                    );
-                  },
-                  onSelected: (selection) => setState(() {
-                    _selectedMedicine = selection;
-                    if (selection.expiryDate != null) {
-                      final diff = selection.expiryDate!
-                          .difference(DateTime.now())
-                          .inDays;
-                      _supplyDaysController.text = (diff >= 0 ? diff : 0)
-                          .toString();
-                    } else {
-                      _supplyDaysController.clear();
-                    }
-                  }),
-                  fieldViewBuilder:
-                      (context, controller, focusNode, onEditingComplete) {
-                        return TextFormField(
-                          controller: controller,
-                          focusNode: focusNode,
-                          onEditingComplete: onEditingComplete,
-                          decoration: _inputDecoration(
-                            'Medicine',
-                            Icons.medication_outlined,
-                            hint: 'Search medicine...',
-                          ),
-                          validator: (value) => _selectedMedicine == null
-                              ? 'Please select a medicine'
-                              : null,
-                        );
-                      },
-                ),
-
-                if (_selectedMedicine != null)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _cardBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _iconBg),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.medication_liquid,
-                          color: _medicineGreen,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _selectedMedicine!.name,
-                                style: const TextStyle(
-                                  color: _medicineDarkGreen,
-                                ),
-                              ),
-                              Text(
-                                'Stock: ${_selectedMedicine!.qty}',
-                                style: TextStyle(
-                                  color: _medicineDarkGreen.withValues(
-                                    alpha: 0.8,
-                                  ),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        InkWell(
-                          onTap: _showMedicineDetails,
-                          child: const Icon(
-                            Icons.info_outline,
-                            color: _medicineGreen,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        InkWell(
-                          onTap: () => setState(() => _selectedMedicine = null),
-                          child: const Icon(
-                            Icons.close,
-                            color: _medicineGreen,
-                            size: 20,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: _textField(
-                        _qtyController,
-                        'Quantity',
-                        hint: 'e.g. 10',
-                        icon: Icons.inventory_2_outlined,
-                        keyboardType: TextInputType.number,
-                        required: true,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      flex: 4,
-                      child: InkWell(
-                        onTap: _pickGivenDate,
-                        borderRadius: BorderRadius.circular(14),
-                        child: InputDecorator(
-                          decoration: _inputDecoration(
-                            'Date',
-                            Icons.event_outlined,
-                          ),
-                          child: Text(
-                            DateFormat('dd MMM yyyy').format(_givenAt),
-                            style: const TextStyle(fontSize: 15),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ],
+            ),
+            const SizedBox(height: 14),
+            _formCard(
+              title: 'Medicine batches',
+              subtitle: 'Add one or more batch quantities.',
+              icon: Icons.inventory_2_outlined,
+              children: [_supplyRows()],
             ),
             const SizedBox(height: 14),
             InkWell(
@@ -750,7 +490,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Status, prescribed by, supply days, and notes',
+                            'Prescribed by, supply days, and notes',
                             style: TextStyle(
                               color: Color(0xFF5F786F),
                               fontSize: 12,
@@ -817,7 +557,7 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
           color: Colors.white,
-          child: FilledButton(
+          child: FilledButton.icon(
             onPressed: _saving ? null : _save,
             style: FilledButton.styleFrom(
               backgroundColor: _medicineGreen,
@@ -826,19 +566,485 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: _saving
+            icon: _saving
                 ? const SizedBox(
-                    width: 22,
-                    height: 22,
+                    width: 20,
+                    height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       color: Colors.white,
                     ),
                   )
-                : const Text(
-                    'Save Supply Record',
-                    style: TextStyle(fontSize: 16),
+                : const Icon(Icons.save_outlined),
+            label: Text(
+              _saving ? 'Saving' : 'Save Supply Record',
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _patientField() {
+    return Autocomplete<Patient>(
+      displayStringForOption: _patientOptionLabel,
+      optionsBuilder: (textEditingValue) {
+        if (textEditingValue.text.isEmpty) {
+          return const Iterable<Patient>.empty();
+        }
+        final query = textEditingValue.text.toLowerCase();
+        return _patients.where(
+          (p) =>
+              p.name.toLowerCase().contains(query) ||
+              (p.registerId?.toLowerCase().contains(query) ?? false) ||
+              p.place.toLowerCase().contains(query),
+        );
+      },
+      onSelected: (selection) => setState(() => _selectedPatient = selection),
+      fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+        return TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          onEditingComplete: onEditingComplete,
+          decoration: _inputDecoration(
+            'Patient',
+            Icons.person_search_outlined,
+            hint: 'Search patient...',
+          ),
+          validator: (value) =>
+              _selectedPatient == null ? 'Please select a patient' : null,
+        );
+      },
+    );
+  }
+
+  Widget _selectedPatientCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _iconBg),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.person, color: _medicineGreen, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _selectedPatient!.name,
+                  style: const TextStyle(
+                    color: _medicineDarkGreen,
+                    fontWeight: FontWeight.w600,
                   ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  [
+                    if (_selectedPatient!.registerId?.isNotEmpty == true)
+                      'Reg No: ${_selectedPatient!.registerId}',
+                    if (_selectedPatient!.place.isNotEmpty)
+                      'Place: ${_selectedPatient!.place}',
+                    if (_selectedPatient!.phone.isNotEmpty)
+                      'Ph: ${_selectedPatient!.phone}',
+                  ].join(' • '),
+                  style: const TextStyle(
+                    color: _medicineDarkGreen,
+                    fontSize: 12,
+                  ),
+                ),
+                if (_selectedPatient!.address.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    _selectedPatient!.address,
+                    style: const TextStyle(
+                      color: _medicineDarkGreen,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Clear patient',
+            onPressed: () => setState(() => _selectedPatient = null),
+            icon: const Icon(Icons.close, color: _medicineGreen, size: 20),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _supplyRows() {
+    return Column(
+      children: [
+        for (var index = 0; index < _rows.length; index += 1) ...[
+          _supplyRowCard(_rows[index], index),
+          if (index != _rows.length - 1) const SizedBox(height: 12),
+        ],
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => _addRow(),
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Add medicine batch'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _supplyRowCard(_SupplyItemRow row, int index) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FBFA),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: row.error == null ? Colors.grey.shade200 : Colors.red.shade300,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Medicine ${index + 1}',
+                  style: const TextStyle(
+                    color: _medicineDarkGreen,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Remove medicine',
+                onPressed: () => _removeRow(row),
+                icon: const Icon(Icons.close, size: 20),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          _medicineField(row),
+          if (row.selectedMedicine != null) ...[
+            const SizedBox(height: 12),
+            _selectedMedicineSummary(row),
+            const SizedBox(height: 12),
+            _batchPicker(row),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: row.qtyController,
+              keyboardType: TextInputType.number,
+              decoration: _inputDecoration(
+                'Quantity from selected batch',
+                Icons.inventory_2_outlined,
+                hint: 'e.g. 10',
+              ),
+              onChanged: (_) {
+                if (row.error != null) setState(() => row.error = null);
+              },
+            ),
+          ],
+          if (row.error != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              row.error!,
+              style: TextStyle(
+                color: Colors.red.shade700,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _medicineField(_SupplyItemRow row) {
+    return RawAutocomplete<Medicine>(
+      textEditingController: row.medicineController,
+      focusNode: row.medicineFocusNode,
+      displayStringForOption: _medicineOptionLabel,
+      optionsBuilder: (value) => _medicineOptions(value.text),
+      onSelected: (selection) {
+        setState(() {
+          row.selectedMedicine = selection;
+          row.selectedBatch = null;
+          row.medicineController.text = _medicineOptionLabel(selection);
+          row.error = null;
+        });
+      },
+      fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+        return TextFormField(
+          controller: controller,
+          focusNode: focusNode,
+          textInputAction: TextInputAction.next,
+          textCapitalization: TextCapitalization.words,
+          onChanged: (value) {
+            final selected = row.selectedMedicine;
+            if (selected != null &&
+                value.trim() != _medicineOptionLabel(selected)) {
+              setState(() {
+                row.selectedMedicine = null;
+                row.selectedBatch = null;
+              });
+            }
+          },
+          decoration: _inputDecoration(
+            'Medicine',
+            Icons.medication_outlined,
+            hint: 'Search medicine...',
+          ),
+        );
+      },
+      optionsViewBuilder: (context, onSelected, options) {
+        final optionList = options.toList();
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 8,
+            borderRadius: BorderRadius.circular(14),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 280, maxWidth: 330),
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                shrinkWrap: true,
+                itemCount: optionList.length,
+                separatorBuilder: (_, _) =>
+                    Divider(height: 1, color: Colors.grey.shade100),
+                itemBuilder: (context, index) {
+                  final option = optionList[index];
+                  return ListTile(
+                    dense: true,
+                    leading: const Icon(
+                      Icons.medication_liquid_outlined,
+                      color: _medicineGreen,
+                    ),
+                    title: Text(
+                      option.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: Text(
+                      '${option.code} • Stock ${_stockText(option)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    onTap: () => onSelected(option),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Iterable<Medicine> _medicineOptions(String value) {
+    final query = value.trim().toLowerCase();
+    if (query.isEmpty) return _medicines.take(10);
+
+    return _medicines
+        .where((medicine) {
+          final haystack = [
+            medicine.name,
+            medicine.code,
+            medicine.barcode,
+            ...medicine.brandNames,
+          ].whereType<String>().join(' ').toLowerCase();
+          return haystack.contains(query);
+        })
+        .take(10);
+  }
+
+  Widget _selectedMedicineSummary(_SupplyItemRow row) {
+    final medicine = row.selectedMedicine!;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _iconBg),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.medication_liquid, color: _medicineGreen, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  medicine.name,
+                  style: const TextStyle(color: _medicineDarkGreen),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Stock ${_stockText(medicine)} • ${medicine.batches.length} batches',
+                  style: TextStyle(
+                    color: _medicineDarkGreen.withValues(alpha: 0.8),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Clear medicine',
+            onPressed: () {
+              setState(() {
+                row.selectedMedicine = null;
+                row.selectedBatch = null;
+                row.medicineController.clear();
+              });
+            },
+            icon: const Icon(Icons.close, color: _medicineGreen, size: 20),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _batchPicker(_SupplyItemRow row) {
+    final batches = row.selectedMedicine!.batches;
+    if (batches.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Text(
+          'No stock batches available',
+          style: TextStyle(
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Select batch',
+          style: TextStyle(
+            color: Colors.grey.shade700,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ...batches.map((batch) => _batchOption(row, batch)),
+      ],
+    );
+  }
+
+  Widget _batchOption(_SupplyItemRow row, MedicineBatch batch) {
+    final selected = row.selectedBatch?.id == batch.id;
+    final isEmpty = batch.isEmpty;
+    final warning = !isEmpty && batch.expiresWithin60Days;
+    final color = isEmpty
+        ? Colors.grey.shade600
+        : warning
+        ? Colors.red.shade700
+        : _medicineGreen;
+    final background = isEmpty
+        ? Colors.grey.shade100
+        : warning
+        ? Colors.red.shade50
+        : selected
+        ? _cardBg
+        : Colors.white;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: isEmpty
+            ? null
+            : () {
+                setState(() {
+                  row.selectedBatch = batch;
+                  row.error = null;
+                });
+              },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected
+                  ? _medicineGreen
+                  : warning
+                  ? Colors.red.shade300
+                  : Colors.grey.shade200,
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                selected
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
+                color: color,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      batch.batchNumber?.trim().isNotEmpty == true
+                          ? batch.batchNumber!.trim()
+                          : 'No batch number',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Exp ${_formatDate(batch.expiryDate)}',
+                      style: TextStyle(
+                        color: color.withValues(alpha: 0.78),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${_number(batch.quantity)} ${_unitLabel(batch.qtyUnit)}',
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -851,5 +1057,71 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
       if (patient.place.isNotEmpty) patient.place,
     ].whereType<String>().join(' • ');
     return details.isEmpty ? patient.name : '${patient.name} - $details';
+  }
+
+  String _medicineOptionLabel(Medicine medicine) {
+    final netContent = medicine.netContent?.trim();
+    if (netContent == null || netContent.isEmpty) return medicine.name;
+    return '${medicine.name} $netContent';
+  }
+
+  String _stockText(Medicine medicine) {
+    return '${_number(medicine.qty)} ${_unitLabel(medicine.qtyUnit)}'.trim();
+  }
+
+  String _number(double value) {
+    return value == value.roundToDouble()
+        ? value.toInt().toString()
+        : value.toString();
+  }
+
+  String _unitLabel(String? value) {
+    return switch (value?.trim().toLowerCase()) {
+      'tab' => 'Tab',
+      'bottle' => 'Bottle',
+      'gel' => 'Gel',
+      'piece' => 'Piece',
+      null || '' => 'units',
+      _ => value!.trim(),
+    };
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'Not recorded';
+    return DateFormat('dd MMM yyyy').format(date.toLocal());
+  }
+
+  String _friendlyError(Object error) {
+    return error.toString().replaceFirst(RegExp(r'^Exception:\s*'), '');
+  }
+}
+
+class _SupplyItemRow {
+  final TextEditingController medicineController = TextEditingController();
+  final TextEditingController qtyController = TextEditingController();
+  final FocusNode medicineFocusNode = FocusNode();
+
+  Medicine? selectedMedicine;
+  MedicineBatch? selectedBatch;
+  String? error;
+
+  bool get isBlank =>
+      selectedMedicine == null &&
+      selectedBatch == null &&
+      medicineController.text.trim().isEmpty &&
+      qtyController.text.trim().isEmpty;
+
+  void clear() {
+    medicineController.clear();
+    qtyController.clear();
+    selectedMedicine = null;
+    selectedBatch = null;
+    error = null;
+  }
+
+  void dispose() {
+    medicineController.dispose();
+    qtyController.dispose();
+    medicineFocusNode.dispose();
   }
 }

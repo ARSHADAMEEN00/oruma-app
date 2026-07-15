@@ -59,6 +59,7 @@ class MedicineSupplyService {
     if (result.isSuccess && result.data != null) {
       AppCache.invalidatePrefix(_prefix);
       AppCache.invalidatePrefix('medicines:');
+      AppCache.invalidatePrefix('medicine_stock_entries:');
       return MedicineSupply.fromJson(result.data!);
     }
 
@@ -78,6 +79,7 @@ class MedicineSupplyService {
     if (result.isSuccess && result.data != null) {
       AppCache.invalidatePrefix(_prefix);
       AppCache.invalidatePrefix('medicines:');
+      AppCache.invalidatePrefix('medicine_stock_entries:');
       return MedicineSupply.fromJson(result.data!);
     }
 
@@ -93,6 +95,7 @@ class MedicineSupplyService {
     if (result.isSuccess) {
       AppCache.invalidatePrefix(_prefix);
       AppCache.invalidatePrefix('medicines:');
+      AppCache.invalidatePrefix('medicine_stock_entries:');
       return true;
     }
 

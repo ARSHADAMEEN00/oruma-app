@@ -41,6 +41,7 @@ class MedicineStockEntry {
   final dynamic medicineId;
   final String medicineName;
   final double quantity;
+  final double originalQuantity;
   final String qtyUnit;
   final DateTime entryDate;
   final DateTime expiryDate;
@@ -55,6 +56,7 @@ class MedicineStockEntry {
     this.medicineId,
     required this.medicineName,
     required this.quantity,
+    required this.originalQuantity,
     required this.qtyUnit,
     required this.entryDate,
     required this.expiryDate,
@@ -73,6 +75,10 @@ class MedicineStockEntry {
           json['medicineName']?.toString() ??
           _medicineNameFromJson(json['medicineId']),
       quantity: _toDouble(json['quantity']) ?? 0,
+      originalQuantity:
+          _toDouble(json['originalQuantity']) ??
+          _toDouble(json['quantity']) ??
+          0,
       qtyUnit: json['qtyUnit']?.toString() ?? 'units',
       entryDate: _toDate(json['entryDate']) ?? DateTime.now(),
       expiryDate: _toDate(json['expiryDate']) ?? DateTime.now(),

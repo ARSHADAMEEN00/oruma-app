@@ -262,9 +262,14 @@ class _MedicineStockHistoryPageState extends State<MedicineStockHistoryPage> {
                   children: [
                     _detailChip(
                       Icons.add_box_outlined,
-                      '+${_number(entry.quantity)} ${_unitLabel(entry.qtyUnit)}',
+                      'Avail ${_number(entry.quantity)} ${_unitLabel(entry.qtyUnit)}',
                       strong: true,
                     ),
+                    if (entry.originalQuantity != entry.quantity)
+                      _detailChip(
+                        Icons.playlist_add_check_outlined,
+                        'Received ${_number(entry.originalQuantity)}',
+                      ),
                     _detailChip(
                       Icons.event_available_outlined,
                       _formatDate(entry.entryDate),

@@ -1,3 +1,60 @@
+class MedicineSupplyItem {
+  final dynamic medicineId;
+  final dynamic stockEntryId;
+  final int qtyGiven;
+
+  const MedicineSupplyItem({
+    required this.medicineId,
+    this.stockEntryId,
+    required this.qtyGiven,
+  });
+
+  factory MedicineSupplyItem.fromJson(Map<String, dynamic> json) {
+    return MedicineSupplyItem(
+      medicineId: json['medicineId'],
+      stockEntryId: json['stockEntryId'],
+      qtyGiven: (json['qtyGiven'] is num)
+          ? (json['qtyGiven'] as num).toInt()
+          : int.tryParse(json['qtyGiven']?.toString() ?? '0') ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'medicineId': MedicineSupply._getId(medicineId),
+      if (MedicineSupply._getId(stockEntryId) != null)
+        'stockEntryId': MedicineSupply._getId(stockEntryId),
+      'qtyGiven': qtyGiven,
+    };
+  }
+
+  String get medicineName {
+    if (medicineId is Map) {
+      return medicineId['name']?.toString() ?? 'Unknown';
+    }
+    return 'Unknown';
+  }
+
+  String get batchNumber {
+    if (stockEntryId is Map) {
+      return stockEntryId['batchNumber']?.toString() ?? 'No batch';
+    }
+    return 'No batch';
+  }
+
+  String get qtyUnit {
+    if (stockEntryId is Map) return stockEntryId['qtyUnit']?.toString() ?? '';
+    return '';
+  }
+
+  DateTime? get expiryDate {
+    if (stockEntryId is Map && stockEntryId['expiryDate'] != null) {
+      return DateTime.tryParse(stockEntryId['expiryDate'].toString());
+    }
+    return null;
+  }
+}
+
 /// MedicineSupply model that matches the v2 backend schema.
 class MedicineSupply {
   final String? id;
@@ -6,6 +63,7 @@ class MedicineSupply {
   final dynamic givenByStaff; // Can be String ID or Map
   final DateTime givenAt;
   final int qtyGiven;
+  final List<MedicineSupplyItem> items;
   final String? status;
   final int? qtyReturned;
   final DateTime? returnedAt;
@@ -23,6 +81,7 @@ class MedicineSupply {
     required this.givenByStaff,
     required this.givenAt,
     required this.qtyGiven,
+    this.items = const [],
     this.status = 'given',
     this.qtyReturned,
     this.returnedAt,
@@ -41,18 +100,29 @@ class MedicineSupply {
       patientId: json['patientId'],
       medicineId: json['medicineId'],
       givenByStaff: json['givenByStaff'],
-      givenAt: json['givenAt'] != null 
+      givenAt: json['givenAt'] != null
           ? DateTime.tryParse(json['givenAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
       qtyGiven: (json['qtyGiven'] is num)
           ? (json['qtyGiven'] as num).toInt()
           : int.tryParse(json['qtyGiven']?.toString() ?? '0') ?? 0,
+      items: (json['items'] as List<dynamic>? ?? const [])
+          .whereType<Map>()
+          .map(
+            (item) =>
+                MedicineSupplyItem.fromJson(Map<String, dynamic>.from(item)),
+          )
+          .toList(),
       status: json['status']?.toString(),
       qtyReturned: (json['qtyReturned'] is num || json['qty_returned'] is num)
           ? ((json['qtyReturned'] ?? json['qty_returned']) as num).toInt()
-          : int.tryParse((json['qtyReturned'] ?? json['qty_returned'])?.toString() ?? ''),
+          : int.tryParse(
+              (json['qtyReturned'] ?? json['qty_returned'])?.toString() ?? '',
+            ),
       returnedAt: (json['returnedAt'] ?? json['returned_at']) != null
-          ? DateTime.tryParse((json['returnedAt'] ?? json['returned_at']).toString())
+          ? DateTime.tryParse(
+              (json['returnedAt'] ?? json['returned_at']).toString(),
+            )
           : null,
       staffNote: json['staffNote']?.toString(),
       prescribedBy: json['prescribedBy']?.toString(),
@@ -78,18 +148,36 @@ class MedicineSupply {
       'givenAt': givenAt.toIso8601String(),
       'qtyGiven': qtyGiven,
     };
-    
-    if (status != null) map['status'] = status;
-    if (qtyReturned != null) map['qtyReturned'] = qtyReturned;
-    if (returnedAt != null) map['returnedAt'] = returnedAt!.toIso8601String();
-    if (staffNote != null) map['staffNote'] = staffNote;
-    if (prescribedBy != null) map['prescribedBy'] = prescribedBy;
-    if (doctorPrescription != null) map['doctorPrescription'] = doctorPrescription;
-    if (supplyDays != null) map['supplyDays'] = supplyDays;
-    
+
+    if (items.isNotEmpty) {
+      map['items'] = items.map((item) => item.toJson()).toList();
+    }
+
+    if (status != null) {
+      map['status'] = status;
+    }
+    if (qtyReturned != null) {
+      map['qtyReturned'] = qtyReturned;
+    }
+    if (returnedAt != null) {
+      map['returnedAt'] = returnedAt!.toIso8601String();
+    }
+    if (staffNote != null) {
+      map['staffNote'] = staffNote;
+    }
+    if (prescribedBy != null) {
+      map['prescribedBy'] = prescribedBy;
+    }
+    if (doctorPrescription != null) {
+      map['doctorPrescription'] = doctorPrescription;
+    }
+    if (supplyDays != null) {
+      map['supplyDays'] = supplyDays;
+    }
+
     return map;
   }
-  
+
   static String? _getId(dynamic field) {
     if (field == null) return null;
     if (field is String) return field;
@@ -105,12 +193,32 @@ class MedicineSupply {
   }
 
   String get medicineName {
+    if (items.isNotEmpty) {
+      final firstName = items.first.medicineName;
+      if (items.length == 1) return firstName;
+      return '$firstName + ${items.length - 1} more';
+    }
     if (medicineId is Map) return medicineId['name']?.toString() ?? 'Unknown';
     return 'Unknown';
   }
 
+  String get medicineSummary {
+    if (items.isEmpty) return medicineName;
+    return items
+        .map((item) {
+          final unit = item.qtyUnit.trim();
+          final qty = unit.isEmpty
+              ? '${item.qtyGiven}'
+              : '${item.qtyGiven} $unit';
+          return '${item.medicineName} ($qty)';
+        })
+        .join(', ');
+  }
+
   String get staffName {
-    if (givenByStaff is Map) return givenByStaff['name']?.toString() ?? 'Unknown';
+    if (givenByStaff is Map) {
+      return givenByStaff['name']?.toString() ?? 'Unknown';
+    }
     return 'Unknown';
   }
 
@@ -121,6 +229,7 @@ class MedicineSupply {
     dynamic givenByStaff,
     DateTime? givenAt,
     int? qtyGiven,
+    List<MedicineSupplyItem>? items,
     String? status,
     int? qtyReturned,
     DateTime? returnedAt,
@@ -136,6 +245,7 @@ class MedicineSupply {
       givenByStaff: givenByStaff ?? this.givenByStaff,
       givenAt: givenAt ?? this.givenAt,
       qtyGiven: qtyGiven ?? this.qtyGiven,
+      items: items ?? this.items,
       status: status ?? this.status,
       qtyReturned: qtyReturned ?? this.qtyReturned,
       returnedAt: returnedAt ?? this.returnedAt,

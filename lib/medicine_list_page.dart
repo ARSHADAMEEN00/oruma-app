@@ -270,20 +270,6 @@ class _MedicineListPageState extends State<MedicineListPage> {
                       ? 'Not recorded'
                       : medicine.brandNames.join(', '),
                 ),
-                _detailRow(
-                  Icons.event_outlined,
-                  'Expiry date',
-                  medicine.expiryDate == null
-                      ? 'Not recorded'
-                      : DateFormat(
-                          'dd MMM yyyy',
-                        ).format(medicine.expiryDate!.toLocal()),
-                ),
-                _detailRow(
-                  Icons.confirmation_number_outlined,
-                  'Batch number',
-                  _displayValue(medicine.batchNumber),
-                ),
                 if (medicine.description?.trim().isNotEmpty == true)
                   _detailRow(
                     Icons.notes_outlined,
@@ -296,6 +282,32 @@ class _MedicineListPageState extends State<MedicineListPage> {
                   medicine.createdBy?.name ?? 'Not recorded',
                 ),
               ]),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Batches',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '${medicine.batches.length}',
+                    style: const TextStyle(
+                      color: _medicineDarkGreen,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              if (medicine.batches.isEmpty)
+                _emptyBatchesCard()
+              else
+                ...medicine.batches.map(_batchCard),
               if (medicine.photos.isNotEmpty) ...[
                 const SizedBox(height: 18),
                 const Text(
@@ -366,6 +378,151 @@ class _MedicineListPageState extends State<MedicineListPage> {
               isImage ? 'Photo ${index + 1}' : photo,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyBatchesCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAF9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Text(
+        'No stock batches added yet',
+        style: TextStyle(
+          color: Colors.grey.shade600,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _batchCard(MedicineBatch batch) {
+    final isEmpty = batch.isEmpty;
+    final expiryWarning = !isEmpty && batch.expiresWithin60Days;
+    final color = isEmpty
+        ? Colors.grey.shade600
+        : expiryWarning
+        ? Colors.red.shade700
+        : _medicineGreen;
+    final background = isEmpty
+        ? Colors.grey.shade100
+        : expiryWarning
+        ? Colors.red.shade50
+        : _medicineSurface;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isEmpty
+              ? Colors.grey.shade300
+              : expiryWarning
+              ? Colors.red.shade300
+              : _medicineIconBackground,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.inventory_2_outlined, color: color, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _displayValue(batch.batchNumber),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: color, fontWeight: FontWeight.w900),
+                ),
+              ),
+              _batchQtyPill(batch, color),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _batchChip(
+                Icons.event_outlined,
+                'Exp ${_formatDate(batch.expiryDate)}',
+                color,
+              ),
+              _batchChip(
+                Icons.playlist_add_check_outlined,
+                'Received ${_number(batch.originalQuantity)} ${_stockUnitLabel(batch.qtyUnit)}',
+                color,
+              ),
+              if (batch.entryDate != null)
+                _batchChip(
+                  Icons.login_outlined,
+                  'Entry ${_formatDate(batch.entryDate)}',
+                  color,
+                ),
+            ],
+          ),
+          if (batch.note?.trim().isNotEmpty == true) ...[
+            const SizedBox(height: 10),
+            Text(
+              batch.note!.trim(),
+              style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _batchQtyPill(MedicineBatch batch, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Text(
+        '${_number(batch.quantity)} ${_stockUnitLabel(batch.qtyUnit)}',
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+
+  Widget _batchChip(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
@@ -582,12 +739,12 @@ class _MedicineListPageState extends State<MedicineListPage> {
                               Icons.science_outlined,
                               _strengthText(medicine),
                             ),
-                            if (medicine.expiryDate != null)
+                            if (medicine.earliestExpiryDate != null)
                               _inlineDetail(
                                 Icons.event_outlined,
-                                DateFormat(
-                                  'MMM yyyy',
-                                ).format(medicine.expiryDate!.toLocal()),
+                                DateFormat('MMM yyyy').format(
+                                  medicine.earliestExpiryDate!.toLocal(),
+                                ),
                                 color: expiryWarning
                                     ? Colors.red.shade700
                                     : null,
@@ -680,17 +837,20 @@ class _MedicineListPageState extends State<MedicineListPage> {
   }
 
   Widget _stockPill(Medicine medicine) {
-    final lowStock = medicine.qty <= 10;
-    final expired =
-        medicine.expiryDate != null &&
-        medicine.expiryDate!.isBefore(DateTime.now());
-    final color = expired
+    final noStock = medicine.qty <= 0;
+    final lowStock = medicine.qty > 0 && medicine.qty <= 10;
+    final expiryWarning = _hasExpiryWarning(medicine);
+    final color = noStock
+        ? Colors.grey
+        : expiryWarning
         ? Colors.red
         : lowStock
         ? Colors.red
         : _medicineGreen;
-    final label = expired
-        ? 'Expired'
+    final label = noStock
+        ? 'No stock'
+        : expiryWarning
+        ? 'Expiring'
         : lowStock
         ? 'Low stock'
         : 'In stock';
@@ -727,8 +887,13 @@ class _MedicineListPageState extends State<MedicineListPage> {
   }
 
   Widget _stockHighlight(Medicine medicine) {
-    final lowStock = medicine.qty <= 10;
-    final color = lowStock ? Colors.red.shade700 : _medicineGreen;
+    final noStock = medicine.qty <= 0;
+    final lowStock = medicine.qty > 0 && medicine.qty <= 10;
+    final color = noStock
+        ? Colors.grey.shade700
+        : lowStock
+        ? Colors.red.shade700
+        : _medicineGreen;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
@@ -867,16 +1032,15 @@ class _MedicineListPageState extends State<MedicineListPage> {
   }
 
   bool _hasExpiryWarning(Medicine medicine) {
-    final expiry = medicine.expiryDate;
-    if (expiry == null) return false;
-    final today = DateTime.now();
-    final expiryDate = DateTime(expiry.year, expiry.month, expiry.day);
-    final warningLimit = DateTime(
-      today.year,
-      today.month,
-      today.day,
-    ).add(const Duration(days: 60));
-    return !expiryDate.isAfter(warningLimit);
+    if (medicine.expiringBatchCount > 0) return true;
+    return medicine.batches.any(
+      (batch) => batch.quantity > 0 && batch.expiresWithin60Days,
+    );
+  }
+
+  String _formatDate(DateTime? value) {
+    if (value == null) return 'Not recorded';
+    return DateFormat('dd MMM yyyy').format(value.toLocal());
   }
 
   String _number(double value) {
@@ -928,29 +1092,22 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     'drops',
   ];
   static const strengthUnits = ['mg', 'mcg', 'g', 'IU', 'mEq', '%'];
-  static const stockUnits = ['tab', 'bottle', 'gel', 'piece'];
-
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _imagePicker = ImagePicker();
   late final TextEditingController _codeController;
   late final TextEditingController _nameController;
   late final TextEditingController _strengthController;
-  late final TextEditingController _qtyController;
   late final TextEditingController _netContentController;
   late final TextEditingController _barcodeController;
   late final TextEditingController _brandController;
-  late final TextEditingController _batchController;
   late final TextEditingController _descriptionController;
 
   String _category = 'other';
   String? _formulation;
   String? _strengthUnit = 'mg';
-  String _qtyUnit = 'tab';
-  DateTime? _expiryDate;
   bool _isActive = true;
   bool _showMore = false;
   bool _saving = false;
-  bool _showExpiryError = false;
   List<Medicine> _existingMedicines = [];
   List<String> _photos = [];
 
@@ -984,24 +1141,16 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     _strengthController = TextEditingController(
       text: medicine?.strength == null ? '' : _number(medicine!.strength!),
     );
-    _qtyController = TextEditingController(
-      text: medicine == null ? '' : _number(medicine.qty),
-    );
-    _qtyUnit = stockUnits.contains(medicine?.qtyUnit?.toLowerCase())
-        ? medicine!.qtyUnit!.toLowerCase()
-        : 'tab';
     _netContentController = TextEditingController(text: medicine?.netContent);
     _barcodeController = TextEditingController(text: medicine?.barcode);
     _brandController = TextEditingController(
       text: medicine?.brandNames.join(', '),
     );
-    _batchController = TextEditingController(text: medicine?.batchNumber);
     _descriptionController = TextEditingController(text: medicine?.description);
     _photos = List<String>.from(medicine?.photos ?? const []);
     _category = medicine?.category ?? 'other';
     _formulation = medicine?.formulation;
     _strengthUnit = medicine?.strengthUnit ?? 'mg';
-    _expiryDate = medicine?.expiryDate;
     _isActive = medicine?.isActive ?? true;
     _showMore = _editing;
     _codeController.addListener(_refreshDuplicateHints);
@@ -1015,11 +1164,9 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
       _codeController,
       _nameController,
       _strengthController,
-      _qtyController,
       _netContentController,
       _barcodeController,
       _brandController,
-      _batchController,
       _descriptionController,
     ]) {
       controller.dispose();
@@ -1043,10 +1190,6 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_expiryDate == null) {
-      setState(() => _showExpiryError = true);
-      return;
-    }
     setState(() => _saving = true);
 
     final medicine = Medicine(
@@ -1057,15 +1200,11 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
       strengthUnit: _strengthController.text.trim().isEmpty
           ? null
           : _strengthUnit,
-      qty: double.tryParse(_qtyController.text.trim()) ?? 0,
-      qtyUnit: _qtyUnit,
       netContent: _emptyToNull(_netContentController.text),
       barcode: _emptyToNull(_barcodeController.text),
       brandNames: _splitValues(_brandController.text, RegExp(r'[,;\n]')),
       category: _category,
       formulation: _formulation,
-      expiryDate: _expiryDate,
-      batchNumber: _emptyToNull(_batchController.text),
       description: _emptyToNull(_descriptionController.text),
       photos: _photos,
       isActive: _isActive,
@@ -1096,21 +1235,6 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
           backgroundColor: Colors.red,
         ),
       );
-    }
-  }
-
-  Future<void> _pickExpiryDate() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _expiryDate ?? DateTime.now().add(const Duration(days: 365)),
-      firstDate: DateTime.now().subtract(const Duration(days: 3650)),
-      lastDate: DateTime.now().add(const Duration(days: 3650)),
-    );
-    if (date != null) {
-      setState(() {
-        _expiryDate = date;
-        _showExpiryError = false;
-      });
     }
   }
 
@@ -1337,48 +1461,12 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                     ),
                   ],
                 ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _textField(
-                        _qtyController,
-                        'Quantity',
-                        hint: '100',
-                        icon: Icons.inventory_2_outlined,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _dropdown(
-                        label: 'Stock unit',
-                        value: _qtyUnit,
-                        values: stockUnits,
-                        labels: const {
-                          'tab': 'Tab',
-                          'bottle': 'Bottle',
-                          'gel': 'Gel',
-                          'piece': 'Piece',
-                        },
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _qtyUnit = value);
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
                 _textField(
                   _netContentController,
                   'Net Content',
                   hint: 'e.g. 250 ml or 250 g',
                   icon: Icons.local_drink_outlined,
                 ),
-                _expiryDateField(required: true),
               ],
             ),
             const SizedBox(height: 14),
@@ -1408,7 +1496,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Brand, category, batch and photos',
+                            'Brand, category, photos, and status',
                             style: TextStyle(
                               color: Color(0xFF5F786F),
                               fontSize: 12,
@@ -1465,11 +1553,6 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                       allowEmpty: true,
                       onChanged: (value) =>
                           setState(() => _formulation = value),
-                    ),
-                    _textField(
-                      _batchController,
-                      'Batch / lot number',
-                      icon: Icons.confirmation_number_outlined,
                     ),
                     _textField(
                       _descriptionController,
@@ -1561,7 +1644,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Start with the essentials. Add clinical and batch details only when needed.',
+                  'Start with the essentials. Add stock entries to create batches and quantities.',
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 12,
@@ -1694,50 +1777,6 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
         ),
       ],
       onChanged: onChanged,
-    );
-  }
-
-  Widget _expiryDateField({bool required = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InkWell(
-          onTap: _pickExpiryDate,
-          borderRadius: BorderRadius.circular(14),
-          child: InputDecorator(
-            decoration: _inputDecoration(
-              required ? 'Expiry date *' : 'Expiry date',
-              Icons.event_outlined,
-              supportingText: _showExpiryError && _expiryDate == null
-                  ? 'Expiry date is required'
-                  : null,
-              supportingColor: Colors.red.shade700,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _expiryDate == null
-                        ? 'Select expiry date'
-                        : DateFormat('dd MMM yyyy').format(_expiryDate!),
-                    style: TextStyle(
-                      color: _expiryDate == null
-                          ? Colors.grey.shade600
-                          : Colors.black87,
-                    ),
-                  ),
-                ),
-                if (_expiryDate != null)
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () => setState(() => _expiryDate = null),
-                    icon: const Icon(Icons.close, size: 18),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 

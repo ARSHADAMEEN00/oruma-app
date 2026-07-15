@@ -10,11 +10,17 @@ class MedicineStockService {
   static const _keyHistory = 'medicine_stock_entries:history';
   static const _ttl = Duration(minutes: 5);
 
-  static Future<List<MedicineStockEntry>> getHistory({String? search}) async {
+  static Future<List<MedicineStockEntry>> getHistory({
+    String? search,
+    String? medicineId,
+  }) async {
     final trimmed = search?.trim();
+    final trimmedMedicineId = medicineId?.trim();
     final hasSearch = trimmed != null && trimmed.isNotEmpty;
-    if (hasSearch) {
-      return _fetchHistory(search: trimmed);
+    final hasMedicineFilter =
+        trimmedMedicineId != null && trimmedMedicineId.isNotEmpty;
+    if (hasSearch || hasMedicineFilter) {
+      return _fetchHistory(search: trimmed, medicineId: trimmedMedicineId);
     }
 
     return AppCache.get<List<MedicineStockEntry>>(
@@ -26,10 +32,18 @@ class MedicineStockService {
 
   static Future<List<MedicineStockEntry>> _fetchHistory({
     String? search,
+    String? medicineId,
   }) async {
     var url = ApiConfig.v2MedicineStockEntriesEndpoint;
+    final params = <String, String>{};
     if (search != null && search.trim().isNotEmpty) {
-      url += '?search=${Uri.encodeQueryComponent(search.trim())}';
+      params['search'] = search.trim();
+    }
+    if (medicineId != null && medicineId.trim().isNotEmpty) {
+      params['medicineId'] = medicineId.trim();
+    }
+    if (params.isNotEmpty) {
+      url += '?${Uri(queryParameters: params).query}';
     }
 
     final result = await ApiService.get<List<dynamic>>(url);
