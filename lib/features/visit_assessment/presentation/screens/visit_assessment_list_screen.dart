@@ -450,8 +450,9 @@ class _VisitAssessmentListScreenState extends State<VisitAssessmentListScreen> {
 
   Future<void> _openDraftFlow(
     BuildContext context,
-    VisitAssessmentController targetController,
-  ) async {
+    VisitAssessmentController targetController, {
+    bool allowVisitDateChange = true,
+  }) async {
     if (targetController.assessment.timeFrom.isEmpty) {
       final now = DateTime.now();
       targetController.update(
@@ -472,7 +473,10 @@ class _VisitAssessmentListScreenState extends State<VisitAssessmentListScreen> {
         reverseTransitionDuration: const Duration(milliseconds: 220),
         pageBuilder: (_, animation, _) => FadeTransition(
           opacity: animation,
-          child: VisitAssessmentFlowScreen(controller: targetController),
+          child: VisitAssessmentFlowScreen(
+            controller: targetController,
+            allowVisitDateChange: allowVisitDateChange,
+          ),
         ),
       ),
     );
@@ -496,7 +500,7 @@ class _VisitAssessmentListScreenState extends State<VisitAssessmentListScreen> {
       return;
     }
 
-    await _openDraftFlow(context, editController);
+    await _openDraftFlow(context, editController, allowVisitDateChange: false);
     if (!usesCurrentController) {
       editController.dispose();
     }

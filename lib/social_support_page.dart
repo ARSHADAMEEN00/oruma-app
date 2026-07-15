@@ -468,7 +468,10 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
           name.isEmpty ||
           volunteer.name.trim().toLowerCase() == name;
       final samePhone =
-          phone == null || phone.isEmpty || volunteer.phone.trim() == phone;
+          phone == null ||
+          phone.isEmpty ||
+          volunteer.phone.trim() == phone ||
+          volunteer.phone2.trim() == phone;
       if (sameName && samePhone) return volunteer;
     }
     return null;
@@ -555,7 +558,11 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
                   ),
                 ),
                 Text(
-                  '${volunteer.phone} - ${volunteer.locationLabel}',
+                  [
+                    volunteer.phone,
+                    if (volunteer.phone2.trim().isNotEmpty) volunteer.phone2,
+                    volunteer.locationLabel,
+                  ].join(' - '),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: _supportDark, fontSize: 12),
@@ -666,6 +673,7 @@ class _SocialSupportPageState extends State<SocialSupportPage> {
   String _volunteerLabel(Volunteer volunteer) {
     final details = [
       if (volunteer.phone.isNotEmpty) volunteer.phone,
+      if (volunteer.phone2.isNotEmpty) volunteer.phone2,
       if (volunteer.place.isNotEmpty) volunteer.place,
       if (volunteer.ward.isNotEmpty) 'Ward ${volunteer.ward}',
     ].join(' - ');

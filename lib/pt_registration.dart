@@ -59,6 +59,7 @@ class _patientrigisterState extends State<patientrigister> {
   List<Volunteer> volunteers = [];
   Volunteer? _selectedVolunteer;
   String? _selectedWardTitle;
+  int _volunteerFieldVersion = 0;
 
   @override
   void initState() {
@@ -160,7 +161,10 @@ class _patientrigisterState extends State<patientrigister> {
           name.isEmpty ||
           volunteer.name.trim().toLowerCase() == name;
       final samePhone =
-          phone == null || phone.isEmpty || volunteer.phone.trim() == phone;
+          phone == null ||
+          phone.isEmpty ||
+          volunteer.phone.trim() == phone ||
+          volunteer.phone2.trim() == phone;
       if (sameName && samePhone) return volunteer;
     }
     return null;
@@ -1048,8 +1052,7 @@ class _patientrigisterState extends State<patientrigister> {
       children: [
         Autocomplete<Volunteer>(
           key: ValueKey(
-            _selectedVolunteer?.id ??
-                '${volunteerNameController.text}-${volunteerContactController.text}',
+            'patient-volunteer-autocomplete-$_volunteerFieldVersion',
           ),
           displayStringForOption: _volunteerLabel,
           optionsBuilder: (textEditingValue) {
@@ -1066,27 +1069,48 @@ class _patientrigisterState extends State<patientrigister> {
           },
           fieldViewBuilder:
               (context, controller, focusNode, onEditingComplete) {
-                if (_selectedVolunteer != null && controller.text.isEmpty) {
-                  controller.text = _volunteerLabel(_selectedVolunteer!);
+                if (_selectedVolunteer != null) {
+                  final selectedLabel = _volunteerLabel(_selectedVolunteer!);
+                  if (controller.text != selectedLabel) {
+                    controller.value = TextEditingValue(
+                      text: selectedLabel,
+                      selection: TextSelection.collapsed(
+                        offset: selectedLabel.length,
+                      ),
+                    );
+                  }
                 }
                 return TextFormField(
                   controller: controller,
                   focusNode: focusNode,
                   onEditingComplete: onEditingComplete,
+                  onChanged: (value) {
+                    final selected = _selectedVolunteer;
+                    setState(() {
+                      if (selected != null &&
+                          value.trim() != _volunteerLabel(selected)) {
+                        _selectedVolunteer = null;
+                        volunteerNameController.clear();
+                        volunteerContactController.clear();
+                      }
+                    });
+                  },
                   decoration: _buildInputDecoration(
                     "Volunteer",
                     Icons.volunteer_activism_outlined,
                   ).copyWith(hintText: "Search volunteer"),
+                  validator: (value) {
+                    if ((value ?? '').trim().isEmpty) return null;
+                    return _selectedVolunteer == null
+                        ? 'Select an existing volunteer'
+                        : null;
+                  },
                 );
               },
         ),
         if (_selectedVolunteer != null) ...[
           const SizedBox(height: 10),
           _selectedVolunteerCard(),
-        ] else if (volunteerNameController.text.trim().isNotEmpty ||
-            volunteerContactController.text.trim().isNotEmpty) ...[
-          const SizedBox(height: 10),
-          _legacyVolunteerCard(),
         ],
       ],
     );
@@ -1117,7 +1141,11 @@ class _patientrigisterState extends State<patientrigister> {
                   ),
                 ),
                 Text(
-                  '${volunteer.phone} - ${volunteer.locationLabel}',
+                  [
+                    volunteer.phone,
+                    if (volunteer.phone2.trim().isNotEmpty) volunteer.phone2,
+                    volunteer.locationLabel,
+                  ].join(' - '),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
@@ -1130,47 +1158,7 @@ class _patientrigisterState extends State<patientrigister> {
             onPressed: () {
               setState(() {
                 _selectedVolunteer = null;
-                volunteerNameController.clear();
-                volunteerContactController.clear();
-              });
-            },
-            icon: const Icon(Icons.close, color: _patientPrimary),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _legacyVolunteerCard() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _patientIconBackground),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.info_outline, color: _patientPrimary),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              [
-                if (volunteerNameController.text.trim().isNotEmpty)
-                  volunteerNameController.text.trim(),
-                if (volunteerContactController.text.trim().isNotEmpty)
-                  volunteerContactController.text.trim(),
-              ].join(' - '),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Clear volunteer',
-            onPressed: () {
-              setState(() {
-                _selectedVolunteer = null;
+                _volunteerFieldVersion++;
                 volunteerNameController.clear();
                 volunteerContactController.clear();
               });
@@ -1185,6 +1173,7 @@ class _patientrigisterState extends State<patientrigister> {
   String _volunteerLabel(Volunteer volunteer) {
     final details = [
       if (volunteer.phone.isNotEmpty) volunteer.phone,
+      if (volunteer.phone2.isNotEmpty) volunteer.phone2,
       if (volunteer.place.isNotEmpty) volunteer.place,
       if (volunteer.ward.isNotEmpty) 'Ward ${volunteer.ward}',
     ].join(' - ');
@@ -1221,12 +1210,8 @@ class _patientrigisterState extends State<patientrigister> {
           locationLink: locationLinkController.text.trim().isEmpty
               ? null
               : locationLinkController.text.trim(),
-          volunteerName: volunteerNameController.text.trim().isEmpty
-              ? null
-              : volunteerNameController.text.trim(),
-          volunteerContact: volunteerContactController.text.trim().isEmpty
-              ? null
-              : volunteerContactController.text.trim(),
+          volunteerName: _selectedVolunteer?.name,
+          volunteerContact: _selectedVolunteer?.phone,
           volunteerId: _selectedVolunteer?.id,
           disease: _selectedDiseases,
           plan: _selectedPlan!,

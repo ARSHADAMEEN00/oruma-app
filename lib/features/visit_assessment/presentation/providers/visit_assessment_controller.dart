@@ -21,6 +21,7 @@ class VisitAssessmentController extends ChangeNotifier {
   VisitAssessment _assessment;
   Timer? _autoSaveTimer;
   Timer? _localSaveDebounce;
+  final Set<String> _draftKeysSeen = {};
   bool _disposed = false;
   bool _hasUserChanges = false;
 
@@ -49,7 +50,9 @@ class VisitAssessmentController extends ChangeNotifier {
     _notify();
 
     final initialDraftKey = _draftKey;
+    _rememberDraftKeysFor(_assessment, extraKeys: [initialDraftKey]);
     final local = await _repository.loadLocalDraft(initialDraftKey);
+    var usingLocalDraft = false;
     VisitAssessment? remote;
     if (_assessment.homeVisitId.trim().isNotEmpty) {
       try {
@@ -63,16 +66,17 @@ class VisitAssessmentController extends ChangeNotifier {
     if (remote != null && (remote.status == 'submitted' || remote.isComplete)) {
       _assessment = remote;
       _hasUserChanges = false;
-      await _repository.clearLocalDraft(initialDraftKey);
-      await _repository.clearLocalDraft(remote.homeVisitId);
+      await _clearLocalDraftsFor(remote, extraKeys: [initialDraftKey]);
     } else if (local != null && remote != null) {
       final localTime =
           local.updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
       final remoteTime =
           remote.updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-      _assessment = localTime.isAfter(remoteTime) ? local : remote;
+      usingLocalDraft = localTime.isAfter(remoteTime);
+      _assessment = usingLocalDraft ? local : remote;
       _hasUserChanges = true;
     } else {
+      usingLocalDraft = local != null;
       _assessment = local ?? remote ?? _assessment;
       _hasUserChanges =
           local != null ||
@@ -81,7 +85,16 @@ class VisitAssessmentController extends ChangeNotifier {
               !_assessment.isComplete);
     }
 
-    _setHistory(await _repository.getHistory(_assessment.patientId));
+    final history = await _repository.getHistory(_assessment.patientId);
+    if (usingLocalDraft &&
+        local != null &&
+        _hasSubmittedMatch(local, history)) {
+      await _clearLocalDraftsFor(local, extraKeys: [initialDraftKey]);
+      _assessment = _freshAssessment();
+      _hasUserChanges = false;
+    }
+    _rememberDraftKeysFor(_assessment);
+    _setHistory(history);
     isLoading = false;
     _startAutoSave();
     _notify();
@@ -111,9 +124,11 @@ class VisitAssessmentController extends ChangeNotifier {
   }
 
   void update(VisitAssessment Function(VisitAssessment value) transform) {
+    final previousDraftKey = _draftKey;
     _assessment = transform(
       _assessment,
     ).copyWith(updatedAt: DateTime.now(), status: 'draft', isComplete: false);
+    _rememberDraftKeysFor(_assessment, extraKeys: [previousDraftKey]);
     _hasUserChanges = true;
     syncState = AssessmentSyncState.idle;
     syncMessage = null;
@@ -265,6 +280,9 @@ class VisitAssessmentController extends ChangeNotifier {
         if (_assessment.team.trim().isEmpty) {
           return 'Select or enter the visiting team.';
         }
+        if (_assessment.nurseName.trim().isEmpty) {
+          return 'Nurse name is required.';
+        }
         return null;
       case 1:
         return null;
@@ -341,6 +359,7 @@ class VisitAssessmentController extends ChangeNotifier {
 
     final localValue = _assessment.copyWith(updatedAt: DateTime.now());
     _assessment = localValue;
+    _rememberDraftKeysFor(localValue);
     await _repository.saveLocalDraft(localValue);
 
     if (localValue.homeVisitId.trim().isEmpty) {
@@ -353,6 +372,7 @@ class VisitAssessmentController extends ChangeNotifier {
     try {
       final synced = await _repository.syncDraft(localValue);
       _assessment = synced;
+      _rememberDraftKeysFor(synced);
       await _repository.saveLocalDraft(synced);
       syncState = AssessmentSyncState.saved;
       syncMessage = 'Draft saved';
@@ -381,10 +401,13 @@ class VisitAssessmentController extends ChangeNotifier {
     syncMessage = 'Submitting assessment…';
     _notify();
     final originalDraftKey = _draftKey;
+    _rememberDraftKeysFor(_assessment, extraKeys: [originalDraftKey]);
     try {
       var value = _assessment;
       final shouldResetAfterSubmit = _createsHomeVisitOnSubmit;
       final previousHomeVisitId = value.homeVisitId.trim();
+      final previousPatientDateKey =
+          VisitAssessmentRepository.patientDateDraftKeyFor(value);
 
       final homeVisit = await _repository.ensureHomeVisitForAssessment(value);
       final homeVisitId = homeVisit.id;
@@ -405,16 +428,29 @@ class VisitAssessmentController extends ChangeNotifier {
             : value.patientAddress,
       );
       _assessment = value;
+      _rememberDraftKeysFor(
+        value,
+        extraKeys: [
+          originalDraftKey,
+          previousHomeVisitId,
+          previousPatientDateKey,
+        ],
+      );
       if (previousHomeVisitId != homeVisitId) {
-        await _repository.clearLocalDraft(originalDraftKey);
-        if (previousHomeVisitId.isNotEmpty) {
-          await _repository.clearLocalDraft(previousHomeVisitId);
-        }
+        await _clearLocalDraftsFor(
+          value,
+          extraKeys: [
+            originalDraftKey,
+            previousHomeVisitId,
+            previousPatientDateKey,
+          ],
+        );
       }
 
       if (value.id == null) {
         value = await _repository.syncDraft(value);
         _assessment = value;
+        _rememberDraftKeysFor(value);
       }
       final submitted = await _repository.submit(
         value.copyWith(status: 'submitted', isComplete: true),
@@ -422,8 +458,7 @@ class VisitAssessmentController extends ChangeNotifier {
       _autoSaveTimer?.cancel();
       _localSaveDebounce?.cancel();
       _hasUserChanges = false;
-      await _repository.clearLocalDraft(originalDraftKey);
-      await _repository.clearLocalDraft(submitted.homeVisitId);
+      await _clearLocalDraftsFor(submitted, extraKeys: [originalDraftKey]);
       await _repository.cacheAssessmentInHistory(submitted);
       final history = await _repository.getHistory(submitted.patientId);
       _setHistory(_mergeHistory(history, submitted));
@@ -437,9 +472,11 @@ class VisitAssessmentController extends ChangeNotifier {
     } catch (_) {
       if (hasDraftInProgress) {
         await _repository.saveLocalDraft(_assessment);
+        _rememberDraftKeysFor(_assessment);
         final currentDraftKey = _draftKey;
         if (_createsHomeVisitOnSubmit && currentDraftKey != originalDraftKey) {
           await _repository.saveLocalDraftForKey(originalDraftKey, _assessment);
+          _draftKeysSeen.add(originalDraftKey);
         }
       }
       syncState = AssessmentSyncState.offline;
@@ -494,6 +531,58 @@ class VisitAssessmentController extends ChangeNotifier {
     return a.patientId == b.patientId &&
         VisitAssessmentRepository.patientDateDraftKeyFor(a) ==
             VisitAssessmentRepository.patientDateDraftKeyFor(b);
+  }
+
+  bool _hasSubmittedMatch(
+    VisitAssessment draft,
+    List<VisitAssessment> history,
+  ) {
+    return history.any(
+      (item) =>
+          (item.status == 'submitted' || item.isComplete) &&
+          _isSubmittedVersionOfDraft(item, draft),
+    );
+  }
+
+  bool _isSubmittedVersionOfDraft(
+    VisitAssessment submitted,
+    VisitAssessment draft,
+  ) {
+    if (submitted.id != null && draft.id != null && submitted.id == draft.id) {
+      return true;
+    }
+    final submittedHomeVisitId = submitted.homeVisitId.trim();
+    final draftHomeVisitId = draft.homeVisitId.trim();
+    if (submittedHomeVisitId.isNotEmpty && draftHomeVisitId.isNotEmpty) {
+      return submittedHomeVisitId == draftHomeVisitId;
+    }
+    return submitted.patientId == draft.patientId &&
+        VisitAssessmentRepository.patientDateDraftKeyFor(submitted) ==
+            VisitAssessmentRepository.patientDateDraftKeyFor(draft);
+  }
+
+  void _rememberDraftKeysFor(
+    VisitAssessment assessment, {
+    Iterable<String> extraKeys = const [],
+  }) {
+    _draftKeysSeen.addAll(extraKeys.where((key) => key.trim().isNotEmpty));
+    _draftKeysSeen.add(VisitAssessmentRepository.draftKeyFor(assessment));
+    _draftKeysSeen.add(
+      VisitAssessmentRepository.patientDateDraftKeyFor(assessment),
+    );
+    if (assessment.homeVisitId.trim().isNotEmpty) {
+      _draftKeysSeen.add(assessment.homeVisitId);
+    }
+  }
+
+  Future<void> _clearLocalDraftsFor(
+    VisitAssessment assessment, {
+    Iterable<String> extraKeys = const [],
+  }) {
+    return _repository.clearLocalDraftsForAssessment(
+      assessment,
+      extraKeys: {..._draftKeysSeen, ...extraKeys},
+    );
   }
 
   static VisitAssessment _identitySeed(VisitAssessment value) {

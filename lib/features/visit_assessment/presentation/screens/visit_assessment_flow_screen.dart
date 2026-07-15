@@ -14,9 +14,14 @@ import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 
 class VisitAssessmentFlowScreen extends StatelessWidget {
-  const VisitAssessmentFlowScreen({super.key, required this.controller});
+  const VisitAssessmentFlowScreen({
+    super.key,
+    required this.controller,
+    this.allowVisitDateChange = true,
+  });
 
   final VisitAssessmentController controller;
+  final bool allowVisitDateChange;
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +136,10 @@ class VisitAssessmentFlowScreen extends StatelessWidget {
 
   Widget _step() {
     return switch (controller.currentStep) {
-      0 => VisitHeaderStep(controller: controller),
+      0 => VisitHeaderStep(
+        controller: controller,
+        allowVisitDateChange: allowVisitDateChange,
+      ),
       1 => PhysicalExamStep(controller: controller),
       2 => VitalsStep(controller: controller),
       3 => MedicinesStep(controller: controller),

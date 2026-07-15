@@ -213,7 +213,7 @@ class _VolunteerListPageState extends State<VolunteerListPage> {
             controller: _searchController,
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
-              hintText: 'Search name, phone, place or ward',
+              hintText: 'Search name, phone, address, place or ward',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: _searchController.text.isEmpty
                   ? null
@@ -418,6 +418,20 @@ class _VolunteerListPageState extends State<VolunteerListPage> {
                   ),
                   const SizedBox(height: 8),
                   _inlineDetail(Icons.call_outlined, volunteer.phone),
+                  if (volunteer.phone2.trim().isNotEmpty) ...[
+                    const SizedBox(height: 5),
+                    _inlineDetail(
+                      Icons.phone_iphone_outlined,
+                      volunteer.phone2,
+                    ),
+                  ],
+                  if (volunteer.address.trim().isNotEmpty) ...[
+                    const SizedBox(height: 5),
+                    _inlineDetail(
+                      Icons.home_outlined,
+                      volunteer.address.trim(),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -509,7 +523,9 @@ class _VolunteerListPageState extends State<VolunteerListPage> {
                         ),
                       ),
                       Text(
-                        volunteer.phone,
+                        volunteer.phone2.trim().isEmpty
+                            ? volunteer.phone
+                            : '${volunteer.phone} / ${volunteer.phone2}',
                         style: const TextStyle(
                           color: _volunteerPrimary,
                           fontWeight: FontWeight.w700,
@@ -530,6 +546,22 @@ class _VolunteerListPageState extends State<VolunteerListPage> {
             _detailLine(Icons.apartment_outlined, 'Ward', volunteer.wardLabel),
             const SizedBox(height: 10),
             _detailLine(Icons.place_outlined, 'Place', volunteer.place),
+            if (volunteer.address.trim().isNotEmpty) ...[
+              const SizedBox(height: 10),
+              _detailLine(
+                Icons.home_outlined,
+                'Address',
+                volunteer.address.trim(),
+              ),
+            ],
+            if (volunteer.phone2.trim().isNotEmpty) ...[
+              const SizedBox(height: 10),
+              _detailLine(
+                Icons.phone_iphone_outlined,
+                'Second Phone',
+                volunteer.phone2.trim(),
+              ),
+            ],
             if (auth.canEdit) ...[
               const SizedBox(height: 18),
               FilledButton.icon(
@@ -629,7 +661,9 @@ class _VolunteerFormPageState extends State<VolunteerFormPage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
+  late final TextEditingController _phone2Controller;
   late final TextEditingController _placeController;
+  late final TextEditingController _addressController;
   List<String> _villages = [];
   List<WardConfig> _allWards = [];
   List<String> _wardOptions = [];
@@ -647,7 +681,9 @@ class _VolunteerFormPageState extends State<VolunteerFormPage> {
     final volunteer = widget.volunteer;
     _nameController = TextEditingController(text: volunteer?.name);
     _phoneController = TextEditingController(text: volunteer?.phone);
+    _phone2Controller = TextEditingController(text: volunteer?.phone2);
     _placeController = TextEditingController(text: volunteer?.place);
+    _addressController = TextEditingController(text: volunteer?.address);
     _selectedVillage = volunteer?.village;
     _selectedWard = volunteer?.ward;
     _loadConfig();
@@ -657,7 +693,9 @@ class _VolunteerFormPageState extends State<VolunteerFormPage> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _phone2Controller.dispose();
     _placeController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -713,8 +751,10 @@ class _VolunteerFormPageState extends State<VolunteerFormPage> {
       village: _selectedVillage!,
       ward: normalizeWardNumberValue(_selectedWard),
       place: _placeController.text.trim(),
+      address: _addressController.text.trim(),
       name: _nameController.text.trim(),
       phone: _phoneController.text.trim(),
+      phone2: _phone2Controller.text.trim(),
     );
 
     try {
@@ -860,6 +900,13 @@ class _VolunteerFormPageState extends State<VolunteerFormPage> {
                       ? 'Place is required'
                       : null,
                 ),
+                TextFormField(
+                  controller: _addressController,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: _inputDecoration('Address', Icons.home_outlined),
+                  minLines: 1,
+                  maxLines: 3,
+                ),
               ],
             ),
             const SizedBox(height: 14),
@@ -881,6 +928,14 @@ class _VolunteerFormPageState extends State<VolunteerFormPage> {
                   validator: (value) => value?.trim().isEmpty == true
                       ? 'Phone is required'
                       : null,
+                ),
+                TextFormField(
+                  controller: _phone2Controller,
+                  keyboardType: TextInputType.phone,
+                  decoration: _inputDecoration(
+                    'Second Phone',
+                    Icons.phone_iphone_outlined,
+                  ),
                 ),
               ],
             ),

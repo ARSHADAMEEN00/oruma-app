@@ -70,6 +70,21 @@ class VisitAssessmentRepository {
     await prefs.remove('$_draftPrefix$draftKey');
   }
 
+  Future<void> clearLocalDraftsForAssessment(
+    VisitAssessment assessment, {
+    Iterable<String> extraKeys = const [],
+  }) async {
+    final keys = <String>{
+      ...extraKeys.where((key) => key.trim().isNotEmpty),
+      draftKeyFor(assessment),
+      patientDateDraftKeyFor(assessment),
+      if (assessment.homeVisitId.trim().isNotEmpty) assessment.homeVisitId,
+    };
+    for (final key in keys) {
+      await clearLocalDraft(key);
+    }
+  }
+
   Future<List<VisitAssessment>> loadCachedHistory(String patientId) async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString('$_historyPrefix$patientId');
@@ -114,11 +129,7 @@ class VisitAssessmentRepository {
         .where((item) => !_isSameAssessment(item, assessment))
         .toList();
     await cacheHistory(assessment.patientId, filtered);
-    await clearLocalDraft(draftKeyFor(assessment));
-    await clearLocalDraft(patientDateDraftKeyFor(assessment));
-    if (assessment.homeVisitId.trim().isNotEmpty) {
-      await clearLocalDraft(assessment.homeVisitId);
-    }
+    await clearLocalDraftsForAssessment(assessment);
   }
 
   Future<List<VisitAssessment>> getHistory(String patientId) async {

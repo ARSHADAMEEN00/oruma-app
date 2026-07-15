@@ -256,6 +256,88 @@ void main() {
     },
   );
 
+  test('initialization clears stale patient-date draft after submit', () async {
+    final visitDate = DateTime(2026, 5, 12);
+    final staleDraft = assessment.copyWith(
+      homeVisitId: '',
+      visitDate: visitDate,
+      nursingDiagnosis: 'Already submitted elsewhere.',
+      status: 'draft',
+      isComplete: false,
+      updatedAt: DateTime(2026, 5, 12, 12),
+    );
+    final submitted = staleDraft.copyWith(
+      id: 'submitted-id',
+      homeVisitId: 'created-home-1',
+      status: 'submitted',
+      isComplete: true,
+      submittedAt: DateTime(2026, 5, 12, 12, 30),
+    );
+    final repository = _FakeVisitAssessmentRepository(
+      localDraft: staleDraft,
+      history: [submitted],
+    );
+    final controller = VisitAssessmentController(
+      initialAssessment: staleDraft,
+      repository: repository,
+    );
+    addTearDown(controller.dispose);
+
+    await controller.initialize();
+
+    expect(controller.hasDraftInProgress, isFalse);
+    expect(controller.assessment.id, isNull);
+    expect(controller.assessment.homeVisitId, isEmpty);
+    expect(controller.assessment.nursingDiagnosis, isEmpty);
+    expect(controller.previousAssessments, hasLength(1));
+    expect(controller.previousAssessments.single.id, 'submitted-id');
+    expect(
+      repository.clearedDrafts,
+      contains(VisitAssessmentRepository.patientDateDraftKeyFor(staleDraft)),
+    );
+  });
+
+  test(
+    'patient-first submit clears draft keys from changed visit dates',
+    () async {
+      final patientFirst = assessment.copyWith(
+        homeVisitId: '',
+        patientAddress: 'Kadakkadan House, Nelloliparamba',
+        visitDate: DateTime(2026, 5, 12),
+        nursingDiagnosis: 'Routine follow-up.',
+        carePlan: assessment.carePlan.copyWith(
+          services: const {'healthEducation'},
+        ),
+        nurseName: 'Nurse A',
+        confirmed: true,
+      );
+      final repository = _FakeVisitAssessmentRepository(history: const []);
+      final controller = VisitAssessmentController(
+        initialAssessment: patientFirst,
+        repository: repository,
+      );
+      addTearDown(controller.dispose);
+
+      final originalDateKey = VisitAssessmentRepository.patientDateDraftKeyFor(
+        patientFirst,
+      );
+      controller.update(
+        (item) => item.copyWith(visitDate: DateTime(2026, 5, 13)),
+      );
+      final changedDateKey = VisitAssessmentRepository.patientDateDraftKeyFor(
+        controller.assessment,
+      );
+
+      final ok = await controller.submit();
+
+      expect(ok, isTrue);
+      expect(repository.clearedDrafts, contains(originalDateKey));
+      expect(repository.clearedDrafts, contains(changedDateKey));
+      expect(repository.clearedDrafts, contains('created-home-1'));
+      expect(controller.hasDraftInProgress, isFalse);
+    },
+  );
+
   test('submit recreates home visit when linked visit was deleted', () async {
     final staleLinked = assessment.copyWith(
       id: 'draft-id',
@@ -313,7 +395,12 @@ void main() {
     expect(find.text('Step 1 of 7'), findsOneWidget);
     expect(find.text('Visit Information'), findsOneWidget);
     expect(find.text('Muhammed Ali'), findsOneWidget);
-    expect(find.text('Visit Mode'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('visit-nurse-name')),
+      120,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expect(find.byKey(const ValueKey('visit-nurse-name')), findsOneWidget);
   });
 
   testWidgets('visit header shows visit mode chips and updates selection', (
@@ -332,11 +419,52 @@ void main() {
 
     expect(find.text('Visit Mode'), findsOneWidget);
     expect(controller.assessment.visitMode, 'new');
+    expect(controller.assessment.nurseName, isEmpty);
 
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('visit-nurse-name')),
+      120,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey('visit-nurse-name')),
+      'Nurse B',
+    );
+    await tester.pump();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('visit-mode-emergency')),
+      120,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(find.byKey(const ValueKey('visit-mode-emergency')));
     await tester.pumpAndSettle();
 
     expect(controller.assessment.visitMode, 'emergency');
+    expect(controller.assessment.nurseName, 'Nurse B');
+  });
+
+  testWidgets('visit assessment edit flow locks visit date', (tester) async {
+    final controller = VisitAssessmentController(initialAssessment: assessment);
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: VisitAssessmentFlowScreen(
+          controller: controller,
+          allowVisitDateChange: false,
+        ),
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('visit-date-field')), findsOneWidget);
+    expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('visit-date-field')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DatePickerDialog), findsNothing);
+    expect(controller.assessment.visitDate, DateTime(2026, 6, 23));
   });
 
   testWidgets('physical examination is step two and supports Malayalam', (

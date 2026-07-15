@@ -12,9 +12,14 @@ const _visitModeOptions = <({String value, String label, IconData icon})>[
 ];
 
 class VisitHeaderStep extends StatelessWidget {
-  const VisitHeaderStep({super.key, required this.controller});
+  const VisitHeaderStep({
+    super.key,
+    required this.controller,
+    this.allowVisitDateChange = true,
+  });
 
   final VisitAssessmentController controller;
+  final bool allowVisitDateChange;
 
   @override
   Widget build(BuildContext context) {
@@ -78,10 +83,16 @@ class VisitHeaderStep extends StatelessWidget {
         const SizedBox(height: 14),
         const AssessmentLabel('Visit Date', required: true),
         AssessmentTextField(
+          key: const ValueKey('visit-date-field'),
           initialValue: DateFormat('dd MMM yyyy').format(assessment.visitDate),
           readOnly: true,
-          suffixIcon: const Icon(Icons.calendar_today_outlined, size: 17),
-          onTap: () => _pickDate(context),
+          suffixIcon: Icon(
+            allowVisitDateChange
+                ? Icons.calendar_today_outlined
+                : Icons.lock_outline,
+            size: 17,
+          ),
+          onTap: allowVisitDateChange ? () => _pickDate(context) : null,
         ),
         const SizedBox(height: 14),
         Row(
@@ -104,6 +115,16 @@ class VisitHeaderStep extends StatelessWidget {
           suffixIcon: const Icon(Icons.groups_outlined, size: 18),
           onChanged: (value) =>
               controller.update((item) => item.copyWith(team: value)),
+        ),
+        const SizedBox(height: 14),
+        const AssessmentLabel('Name of Nurse', required: true),
+        AssessmentTextField(
+          key: const ValueKey('visit-nurse-name'),
+          initialValue: assessment.nurseName,
+          hint: 'Enter nurse name',
+          suffixIcon: const Icon(Icons.badge_outlined, size: 18),
+          onChanged: (value) =>
+              controller.update((item) => item.copyWith(nurseName: value)),
         ),
         const SizedBox(height: 14),
         const AssessmentLabel('Visit Mode'),

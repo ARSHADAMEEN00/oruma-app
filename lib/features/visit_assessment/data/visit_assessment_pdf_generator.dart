@@ -158,7 +158,7 @@ class VisitAssessmentPdfGenerator {
     );
     _fitText(
       canvas,
-      _visitModeLabel(assessment.visitMode),
+      '${_visitModeLabel(assessment.visitMode)} Visit',
       const Rect.fromLTWH(952, 96, 158, 24),
       size: 17,
       weight: FontWeight.w700,
@@ -759,9 +759,10 @@ class VisitAssessmentPdfGenerator {
       _fitText(
         canvas,
         value,
-        Rect.fromLTWH(planX + 125, y + 5, planW - 138, rowH - 10),
+        Rect.fromLTWH(planX + 125, y + 8, planW - 138, rowH - 12),
         size: 16,
         color: _ink,
+        align: TextAlign.center,
       );
       row++;
     }
@@ -869,16 +870,6 @@ class VisitAssessmentPdfGenerator {
       y: 1584,
       lineWidth: 330,
       valueWidth: 260,
-      size: 22,
-    );
-    _lineField(
-      canvas,
-      label: 'Team',
-      value: assessment.team,
-      x: 90,
-      y: 1642,
-      lineWidth: 350,
-      valueWidth: 320,
       size: 22,
     );
   }

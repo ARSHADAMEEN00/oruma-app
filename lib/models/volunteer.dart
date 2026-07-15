@@ -5,8 +5,10 @@ class Volunteer {
   final String village;
   final String ward;
   final String place;
+  final String address;
   final String name;
   final String phone;
+  final String phone2;
   final dynamic createdBy;
   final dynamic updatedBy;
   final DateTime? createdAt;
@@ -17,8 +19,10 @@ class Volunteer {
     required this.village,
     required this.ward,
     required this.place,
+    this.address = '',
     required this.name,
     required this.phone,
+    this.phone2 = '',
     this.createdBy,
     this.updatedBy,
     this.createdAt,
@@ -31,8 +35,10 @@ class Volunteer {
       village: json['village']?.toString() ?? '',
       ward: normalizeWardNumberValue(json['ward']),
       place: json['place']?.toString() ?? '',
+      address: json['address']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       phone: json['phone']?.toString() ?? '',
+      phone2: json['phone2']?.toString() ?? '',
       createdBy: json['createdBy'],
       updatedBy: json['updatedBy'],
       createdAt: json['createdAt'] != null
@@ -49,8 +55,10 @@ class Volunteer {
       'village': village,
       'ward': normalizeWardNumberValue(ward),
       'place': place,
+      'address': address,
       'name': name,
       'phone': phone,
+      'phone2': phone2,
     };
   }
 
@@ -59,8 +67,10 @@ class Volunteer {
     String? village,
     String? ward,
     String? place,
+    String? address,
     String? name,
     String? phone,
+    String? phone2,
     dynamic createdBy,
     dynamic updatedBy,
     DateTime? createdAt,
@@ -71,8 +81,10 @@ class Volunteer {
       village: village ?? this.village,
       ward: ward ?? this.ward,
       place: place ?? this.place,
+      address: address ?? this.address,
       name: name ?? this.name,
       phone: phone ?? this.phone,
+      phone2: phone2 ?? this.phone2,
       createdBy: createdBy ?? this.createdBy,
       updatedBy: updatedBy ?? this.updatedBy,
       createdAt: createdAt ?? this.createdAt,
@@ -96,6 +108,8 @@ class Volunteer {
     return [
       name,
       phone,
+      phone2,
+      address,
       place,
       village,
       ward,
