@@ -5,9 +5,11 @@ import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/services/config_service.dart';
 import 'package:oruma_app/models/config.dart';
 import 'package:oruma_app/models/volunteer.dart';
+import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/volunteer_service.dart';
 import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 const _patientCardBackground = Color(0xFFE6F1FB);
 const _patientIconBackground = Color(0xFFB5D4F4);
@@ -292,7 +294,7 @@ class _patientrigisterState extends State<patientrigister> {
                       "Village",
                       Icons.location_city,
                     ),
-                    value: popupSelectedVillage,
+                    initialValue: popupSelectedVillage,
                     items: villages
                         .map((v) => DropdownMenuItem(value: v, child: Text(v)))
                         .toList(),
@@ -503,6 +505,7 @@ class _patientrigisterState extends State<patientrigister> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.patient != null;
+    final canManageConfig = context.watch<AuthService>().isAdmin;
 
     // Show loading indicator while config is loading
     if (_isLoadingConfig) {
@@ -754,25 +757,28 @@ class _patientrigisterState extends State<patientrigister> {
                           },
                         );
                       }),
-                      ActionChip(
-                        label: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.add, size: 16, color: _patientPrimary),
-                            SizedBox(width: 4),
-                            Text(
-                              'Other',
-                              style: TextStyle(color: _patientPrimary),
+                      if (canManageConfig)
+                        ActionChip(
+                          label: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.add, size: 16, color: _patientPrimary),
+                              SizedBox(width: 4),
+                              Text(
+                                'Other',
+                                style: TextStyle(color: _patientPrimary),
+                              ),
+                            ],
+                          ),
+                          backgroundColor: _patientCardBackground,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: const BorderSide(
+                              color: _patientIconBackground,
                             ),
-                          ],
+                          ),
+                          onPressed: _showAddDiseaseDialog,
                         ),
-                        backgroundColor: _patientCardBackground,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: const BorderSide(color: _patientIconBackground),
-                        ),
-                        onPressed: _showAddDiseaseDialog,
-                      ),
                     ],
                   ),
                   if (_selectedDiseases.isEmpty)
@@ -843,7 +849,8 @@ class _patientrigisterState extends State<patientrigister> {
                       "Village",
                       Icons.location_city,
                     ),
-                    value: _selectedVillage,
+                    key: ValueKey(_selectedVillage),
+                    initialValue: _selectedVillage,
                     items: villages
                         .map((v) => DropdownMenuItem(value: v, child: Text(v)))
                         .toList(),
@@ -865,7 +872,10 @@ class _patientrigisterState extends State<patientrigister> {
                             "Ward Number",
                             Icons.apartment,
                           ),
-                          value: _selectedWardTitle,
+                          key: ValueKey(
+                            '${_selectedVillage ?? ''}:${_selectedWardTitle ?? ''}:${filteredWards.length}',
+                          ),
+                          initialValue: _selectedWardTitle,
                           hint: const Text("Select Ward Number"),
                           items: filteredWards
                               .map(
@@ -879,19 +889,21 @@ class _patientrigisterState extends State<patientrigister> {
                               setState(() => _selectedWardTitle = v),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Container(
-                        margin: const EdgeInsets.only(top: 8),
-                        child: IconButton(
-                          onPressed: _showAddWardDialog,
-                          icon: const Icon(
-                            Icons.add_circle,
-                            color: _patientPrimary,
-                            size: 30,
+                      if (canManageConfig) ...[
+                        const SizedBox(width: 12),
+                        Container(
+                          margin: const EdgeInsets.only(top: 8),
+                          child: IconButton(
+                            onPressed: _showAddWardDialog,
+                            icon: const Icon(
+                              Icons.add_circle,
+                              color: _patientPrimary,
+                              size: 30,
+                            ),
+                            tooltip: 'Add New Ward',
                           ),
-                          tooltip: 'Add New Ward',
                         ),
-                      ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -936,7 +948,7 @@ class _patientrigisterState extends State<patientrigister> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -987,7 +999,7 @@ class _patientrigisterState extends State<patientrigister> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

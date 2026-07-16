@@ -45,6 +45,7 @@ class ApiConfig {
   static String get v2SocialSupportEndpoint => '$baseUrl/v2/social-support';
   static String get v2VolunteersEndpoint => '$baseUrl/v2/volunteers';
   static String get meEndpoint => '$baseUrl/auth/me';
+  static String get staffEndpoint => '$baseUrl/auth/staff';
 
   /// Default headers for API requests
   static Map<String, String> get headers => {
