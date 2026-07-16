@@ -20,7 +20,15 @@ class ConfigPage extends StatefulWidget {
 class _ConfigPageState extends State<ConfigPage>
     with SingleTickerProviderStateMixin {
   static const _primaryColor = Color(0xFF1A237E);
-  static const _surfaceColor = Color(0xFFF5F7FB);
+  static const _surfaceColor = Color(0xFFF7F8FB);
+  static const _inkColor = Color(0xFF252A3A);
+  static const _mutedInkColor = Color(0xFF687082);
+  static const _lineColor = Color(0xFFE5E8F0);
+  static const _fieldFillColor = Color(0xFFFBFCFE);
+  static const _chipFillColor = Color(0xFFF3F6FB);
+  static const _chipLineColor = Color(0xFFE0E5EF);
+  static const _softAccentColor = Color(0xFFEFF2FB);
+  static const _removeIconColor = Color(0xFF8F6F75);
   static const _roles = ['admin', 'staff', 'member', 'user'];
 
   late final TabController _tabController;
@@ -40,6 +48,53 @@ class _ConfigPageState extends State<ConfigPage>
   final TextEditingController _planController = TextEditingController();
   final TextEditingController _wardController = TextEditingController();
   String? _selectedWardVillage;
+
+  static InputDecoration _fieldDecoration({
+    String? labelText,
+    String? hintText,
+    IconData? prefixIcon,
+    Widget? suffixIcon,
+  }) {
+    const borderRadius = BorderRadius.all(Radius.circular(14));
+    const enabledBorder = OutlineInputBorder(
+      borderRadius: borderRadius,
+      borderSide: BorderSide(color: _lineColor, width: 1),
+    );
+
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      filled: true,
+      fillColor: _fieldFillColor,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, size: 20),
+      suffixIcon: suffixIcon,
+      prefixIconColor: _mutedInkColor,
+      suffixIconColor: _mutedInkColor,
+      hintStyle: const TextStyle(color: _mutedInkColor, fontSize: 15),
+      labelStyle: const TextStyle(color: _mutedInkColor),
+      floatingLabelStyle: const TextStyle(
+        color: _primaryColor,
+        fontWeight: FontWeight.w700,
+      ),
+      enabledBorder: enabledBorder,
+      disabledBorder: enabledBorder,
+      border: enabledBorder,
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: Color(0xFFB9C1DD), width: 1.2),
+      ),
+      errorBorder: const OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: Color(0xFFE0A3A3), width: 1),
+      ),
+      focusedErrorBorder: const OutlineInputBorder(
+        borderRadius: borderRadius,
+        borderSide: BorderSide(color: Color(0xFFC97979), width: 1.2),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -363,9 +418,9 @@ class _ConfigPageState extends State<ConfigPage>
                             TextFormField(
                               controller: nameController,
                               textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
+                              decoration: _fieldDecoration(
                                 labelText: 'Full name',
-                                prefixIcon: Icon(Icons.person_outline),
+                                prefixIcon: Icons.person_outline,
                               ),
                               validator: (value) =>
                                   value?.trim().isEmpty ?? true
@@ -377,9 +432,9 @@ class _ConfigPageState extends State<ConfigPage>
                               controller: emailController,
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
-                              decoration: const InputDecoration(
+                              decoration: _fieldDecoration(
                                 labelText: 'Email',
-                                prefixIcon: Icon(Icons.mail_outline),
+                                prefixIcon: Icons.mail_outline,
                               ),
                               validator: (value) {
                                 final email = value?.trim() ?? '';
@@ -395,9 +450,9 @@ class _ConfigPageState extends State<ConfigPage>
                               controller: passwordController,
                               obscureText: obscurePassword,
                               textInputAction: TextInputAction.done,
-                              decoration: InputDecoration(
+                              decoration: _fieldDecoration(
                                 labelText: 'Temporary password',
-                                prefixIcon: const Icon(Icons.lock_outline),
+                                prefixIcon: Icons.lock_outline,
                                 suffixIcon: IconButton(
                                   tooltip: obscurePassword
                                       ? 'Show password'
@@ -427,9 +482,9 @@ class _ConfigPageState extends State<ConfigPage>
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
                               initialValue: selectedRole,
-                              decoration: const InputDecoration(
+                              decoration: _fieldDecoration(
                                 labelText: 'Role',
-                                prefixIcon: Icon(Icons.admin_panel_settings),
+                                prefixIcon: Icons.admin_panel_settings,
                               ),
                               items: _roles
                                   .map(
@@ -587,10 +642,10 @@ class _ConfigPageState extends State<ConfigPage>
     return RefreshIndicator(
       onRefresh: _fetchConfig,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
         children: [
           _buildOverviewHeader(config),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           _buildListSection(
             title: 'Villages',
             icon: Icons.location_city_outlined,
@@ -637,7 +692,7 @@ class _ConfigPageState extends State<ConfigPage>
                 child: Text(
                   'Configuration Hub',
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: _primaryColor,
                   ),
@@ -650,10 +705,10 @@ class _ConfigPageState extends State<ConfigPage>
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Wrap(
-            spacing: 10,
-            runSpacing: 10,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _MetricPill(
                 label: 'Villages',
@@ -702,7 +757,7 @@ class _ConfigPageState extends State<ConfigPage>
             hintText: hintText,
             onSubmitted: () => _addItem(listName, controller),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           if (items.isEmpty)
             _EmptyInlineState(label: 'No ${title.toLowerCase()} added yet')
           else
@@ -710,14 +765,10 @@ class _ConfigPageState extends State<ConfigPage>
               spacing: 8,
               runSpacing: 8,
               children: items.map((item) {
-                return InputChip(
+                return _ConfigChip(
                   label: Text(item),
-                  avatar: Icon(icon, size: 16, color: _primaryColor),
-                  deleteIcon: const Icon(Icons.close, size: 18),
+                  icon: icon,
                   onDeleted: () => _removeItem(listName, item),
-                  backgroundColor: const Color(0xFFEAF3FF),
-                  side: BorderSide(color: Colors.blueGrey.shade100),
-                  deleteIconColor: Colors.red.shade500,
                 );
               }).toList(),
             ),
@@ -745,9 +796,9 @@ class _ConfigPageState extends State<ConfigPage>
           DropdownButtonFormField<String>(
             key: ValueKey(_selectedWardVillage),
             initialValue: _selectedWardVillage,
-            decoration: const InputDecoration(
+            decoration: _fieldDecoration(
               labelText: 'Village',
-              prefixIcon: Icon(Icons.location_city_outlined),
+              prefixIcon: Icons.location_city_outlined,
             ),
             items: (_config?.villages ?? [])
                 .map(
@@ -759,7 +810,7 @@ class _ConfigPageState extends State<ConfigPage>
                 ? null
                 : (value) => setState(() => _selectedWardVillage = value),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           _AddInlineField(
             controller: _wardController,
             hintText: 'Add ward number',
@@ -768,7 +819,7 @@ class _ConfigPageState extends State<ConfigPage>
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             onSubmitted: _addWard,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           if (selectedVillage == null)
             const _EmptyInlineState(label: 'Add a village before adding wards')
           else if (selectedWards.isEmpty)
@@ -781,18 +832,10 @@ class _ConfigPageState extends State<ConfigPage>
               spacing: 8,
               runSpacing: 8,
               children: selectedWards.map((ward) {
-                return InputChip(
+                return _ConfigChip(
                   label: Text('Ward ${ward.number}'),
-                  avatar: const Icon(
-                    Icons.map_outlined,
-                    size: 16,
-                    color: _primaryColor,
-                  ),
-                  deleteIcon: const Icon(Icons.close, size: 18),
+                  icon: Icons.map_outlined,
                   onDeleted: () => _removeWard(ward),
-                  backgroundColor: const Color(0xFFEAF3FF),
-                  side: BorderSide(color: Colors.blueGrey.shade100),
-                  deleteIconColor: Colors.red.shade500,
                 );
               }).toList(),
             ),
@@ -818,7 +861,7 @@ class _ConfigPageState extends State<ConfigPage>
     return RefreshIndicator(
       onRefresh: _fetchStaff,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
         children: [
           _SectionCard(
             child: Column(
@@ -835,7 +878,7 @@ class _ConfigPageState extends State<ConfigPage>
                       child: Text(
                         'Staff Module',
                         style: TextStyle(
-                          fontSize: 22,
+                          fontSize: 20,
                           fontWeight: FontWeight.w800,
                           color: _primaryColor,
                         ),
@@ -848,10 +891,10 @@ class _ConfigPageState extends State<ConfigPage>
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
                     _MetricPill(
                       label: 'Total',
@@ -869,7 +912,7 @@ class _ConfigPageState extends State<ConfigPage>
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           if (_staff.isEmpty)
             const _EmptyStaffState()
           else
@@ -953,18 +996,19 @@ class _ConfigPageState extends State<ConfigPage>
                 initialValue: _roles.contains(staff.role)
                     ? staff.role
                     : 'staff',
-                decoration: InputDecoration(
+                decoration: _fieldDecoration(
                   labelText: 'Role',
-                  prefixIcon: isUpdating
+                  prefixIcon: isUpdating ? null : _roleIcon(staff.role),
+                  suffixIcon: isUpdating
                       ? const Padding(
-                          padding: EdgeInsets.all(14),
+                          padding: EdgeInsets.all(13),
                           child: SizedBox(
                             width: 18,
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         )
-                      : Icon(_roleIcon(staff.role)),
+                      : null,
                 ),
                 items: _roles
                     .map(
@@ -1067,31 +1111,28 @@ class _ConfigSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               _IconBadge(icon: icon, color: _ConfigPageState._primaryColor),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
                     color: _ConfigPageState._primaryColor,
                   ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEAF3FF),
+                  color: _ConfigPageState._softAccentColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -1104,7 +1145,7 @@ class _ConfigSection extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           child,
         ],
       ),
@@ -1124,11 +1165,12 @@ class _SectionCard extends StatelessWidget {
       margin: margin,
       elevation: 0,
       color: Colors.white,
+      surfaceTintColor: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: _ConfigPageState._lineColor),
       ),
-      child: Padding(padding: const EdgeInsets.all(18), child: child),
+      child: Padding(padding: const EdgeInsets.all(14), child: child),
     );
   }
 }
@@ -1160,26 +1202,79 @@ class _AddInlineField extends StatelessWidget {
             enabled: enabled,
             keyboardType: keyboardType,
             inputFormatters: inputFormatters,
-            decoration: InputDecoration(
+            decoration: _ConfigPageState._fieldDecoration(
               hintText: hintText,
-              prefixIcon: const Icon(Icons.edit_outlined),
+              prefixIcon: Icons.edit_outlined,
             ),
             onSubmitted: (_) => onSubmitted(),
           ),
         ),
-        const SizedBox(width: 10),
-        IconButton.filled(
-          tooltip: hintText,
-          onPressed: enabled ? onSubmitted : null,
-          icon: const Icon(Icons.add),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 44,
+          height: 44,
+          child: IconButton.filledTonal(
+            tooltip: hintText,
+            onPressed: enabled ? onSubmitted : null,
+            style: IconButton.styleFrom(
+              backgroundColor: _ConfigPageState._softAccentColor,
+              foregroundColor: _ConfigPageState._primaryColor,
+              disabledBackgroundColor: const Color(0xFFF1F2F5),
+              disabledForegroundColor: _ConfigPageState._mutedInkColor,
+              shape: const CircleBorder(),
+            ),
+            icon: const Icon(Icons.add_rounded, size: 24),
+          ),
         ),
       ],
     );
   }
 }
 
+class _ConfigChip extends StatelessWidget {
+  const _ConfigChip({
+    required this.label,
+    required this.icon,
+    required this.onDeleted,
+  });
+
+  final Widget label;
+  final IconData icon;
+  final VoidCallback onDeleted;
+
+  @override
+  Widget build(BuildContext context) {
+    return InputChip(
+      label: DefaultTextStyle.merge(
+        style: const TextStyle(
+          color: _ConfigPageState._inkColor,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        child: label,
+      ),
+      avatar: Icon(
+        icon,
+        size: 15,
+        color: _ConfigPageState._primaryColor.withValues(alpha: 0.84),
+      ),
+      deleteIcon: const Icon(Icons.close_rounded, size: 16),
+      onDeleted: onDeleted,
+      backgroundColor: _ConfigPageState._chipFillColor,
+      selectedColor: _ConfigPageState._softAccentColor,
+      deleteIconColor: _ConfigPageState._removeIconColor,
+      side: const BorderSide(color: _ConfigPageState._chipLineColor),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      labelPadding: const EdgeInsets.only(left: 2, right: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      visualDensity: const VisualDensity(horizontal: -1, vertical: -2),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+}
+
 class _IconBadge extends StatelessWidget {
-  const _IconBadge({required this.icon, required this.color, this.size = 46});
+  const _IconBadge({required this.icon, required this.color, this.size = 40});
 
   final IconData icon;
   final Color color;
@@ -1191,10 +1286,10 @@ class _IconBadge extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(14),
+        color: color.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(icon, color: color),
+      child: Icon(icon, color: color, size: size <= 40 ? 21 : 26),
     );
   }
 }
@@ -1213,26 +1308,33 @@ class _MetricPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F5FA),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        color: _ConfigPageState._fieldFillColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _ConfigPageState._lineColor),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: _ConfigPageState._primaryColor),
-          const SizedBox(width: 8),
+          Icon(icon, size: 16, color: _ConfigPageState._mutedInkColor),
+          const SizedBox(width: 7),
           Text(
             value,
             style: const TextStyle(
               fontWeight: FontWeight.w900,
               color: _ConfigPageState._primaryColor,
+              fontSize: 13,
             ),
           ),
           const SizedBox(width: 5),
-          Text(label, style: TextStyle(color: Colors.grey.shade700)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: _ConfigPageState._mutedInkColor,
+              fontSize: 13,
+            ),
+          ),
         ],
       ),
     );
