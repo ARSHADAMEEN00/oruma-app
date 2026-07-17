@@ -27,6 +27,7 @@ import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
+import 'package:oruma_app/widgets/unit_brand_avatar.dart';
 import 'package:intl/intl.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_visit_picker_screen.dart';
 
@@ -544,7 +545,8 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) {
-        final user = context.watch<AuthService>().user;
+        final auth = context.watch<AuthService>();
+        final user = auth.user;
         return SafeArea(
           top: false,
           child: Container(
@@ -569,14 +571,16 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  const CircleAvatar(
-                    radius: 40,
+                  const UnitBrandAvatar(
+                    size: 80,
+                    preferAppIcon: true,
                     backgroundColor: Color(0xFF1A237E),
-                    child: Icon(Icons.person, size: 40, color: Colors.white),
+                    iconColor: Colors.white,
+                    fallbackIcon: Icons.person,
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    "Team Oruma",
+                    auth.unitName,
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -648,198 +652,208 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => SafeArea(
-        top: false,
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.86,
-          ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1A237E), Color(0xFF0277BD)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.contact_support,
-                    size: 36,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  "Help & Support",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A237E),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[200]!),
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1A237E).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.business,
-                              color: Color(0xFF1A237E),
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Team Oruma",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                SizedBox(height: 2),
-                                Text(
-                                  "Kodur, Malappuram",
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      const Divider(height: 1),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.phone,
-                              color: Colors.green,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Contact Number",
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                SizedBox(height: 2),
-                                Text(
-                                  "999 55 66 067",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      final Uri phoneUri = Uri(
-                        scheme: 'tel',
-                        path: '9995566067',
-                      );
-                      if (await canLaunchUrl(phoneUri)) {
-                        await launchUrl(phoneUri);
-                      } else {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Could not launch phone dialer'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.call, size: 18),
-                    label: const Text(
-                      "Make a Call",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
+      builder: (context) {
+        final auth = context.watch<AuthService>();
+        final supportPhone = auth.unitSupportPhone;
+        final supportPhoneDial = auth.unitSupportPhoneDial;
+
+        return SafeArea(
+          top: false,
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.86,
+            ),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1A237E), Color(0xFF0277BD)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.contact_support,
+                      size: 36,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Help & Support",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A237E),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1A237E).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.business,
+                                color: Color(0xFF1A237E),
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    auth.unitName,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    auth.unitLocation,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Divider(height: 1),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.phone,
+                                color: Colors.green,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Contact Number",
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    supportPhone ?? 'Not added',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: supportPhoneDial == null
+                          ? null
+                          : () async {
+                              final Uri phoneUri = Uri(
+                                scheme: 'tel',
+                                path: supportPhoneDial,
+                              );
+                              if (await canLaunchUrl(phoneUri)) {
+                                await launchUrl(phoneUri);
+                              } else {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Could not launch phone dialer',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                      icon: const Icon(Icons.call, size: 18),
+                      label: const Text(
+                        "Make a Call",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -1049,14 +1063,12 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                         const SizedBox(width: 10),
                         GestureDetector(
                           onTap: () => _showUserProfile(context),
-                          child: const CircleAvatar(
-                            radius: 18,
+                          child: const UnitBrandAvatar(
+                            size: 36,
+                            preferAppIcon: true,
                             backgroundColor: Colors.white,
-                            child: Icon(
-                              Icons.person,
-                              color: Color(0xFF1A237E),
-                              size: 20,
-                            ),
+                            iconColor: Color(0xFF1A237E),
+                            fallbackIcon: Icons.person,
                           ),
                         ),
                       ],
@@ -1070,7 +1082,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "Team Oruma",
+                  auth.unitName,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -1078,15 +1090,17 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                   ),
                 ),
                 const SizedBox(height: 3),
-                const Text(
-                  "Kodur, Malappuram",
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                Text(
+                  auth.unitLocation,
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
-                const SizedBox(height: 1),
-                const Text(
-                  "Support: 999 55 66 067",
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
-                ),
+                if (auth.unitSupportPhone != null) ...[
+                  const SizedBox(height: 1),
+                  Text(
+                    "Support: ${auth.unitSupportPhone}",
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1602,7 +1616,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
     final user = auth.user;
     final userName = (user?['name']?.toString().trim().isNotEmpty ?? false)
         ? user!['name'].toString()
-        : 'Team Oruma';
+        : auth.unitName;
     final userDetail = (user?['email']?.toString().trim().isNotEmpty ?? false)
         ? user!['email'].toString()
         : 'Healthcare Management';
@@ -1623,26 +1637,10 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
               padding: const EdgeInsets.fromLTRB(22, 22, 14, 20),
               child: Row(
                 children: [
-                  Container(
-                    width: 58,
-                    height: 58,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE6F1FB),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFB5D4F4)),
-                    ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/logo/logo.png',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(
-                              Icons.local_hospital_outlined,
-                              color: Color(0xFF185FA5),
-                              size: 30,
-                            ),
-                      ),
-                    ),
+                  UnitBrandAvatar(
+                    size: 58,
+                    preferAppIcon: true,
+                    border: Border.all(color: const Color(0xFFB5D4F4)),
                   ),
                   const SizedBox(width: 14),
                   Expanded(

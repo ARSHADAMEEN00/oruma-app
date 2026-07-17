@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/providers/visit_assessment_controller.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/widgets/assessment_widgets.dart';
+import 'package:oruma_app/services/auth_service.dart';
+import 'package:provider/provider.dart';
 
 const _visitModeOptions = <({String value, String label, IconData icon})>[
   (value: 'new', label: 'New', icon: Icons.add_circle_outline),
@@ -23,6 +25,7 @@ class VisitHeaderStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthService>();
     final assessment = controller.assessment;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
@@ -109,7 +112,7 @@ class VisitHeaderStep extends StatelessWidget {
         const AssessmentLabel('Team', required: true),
         AssessmentTextField(
           initialValue: assessment.team.isEmpty
-              ? 'Team Oruma'
+              ? auth.unitName
               : assessment.team,
           hint: 'Enter team name',
           suffixIcon: const Icon(Icons.groups_outlined, size: 18),

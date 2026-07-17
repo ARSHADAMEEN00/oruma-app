@@ -102,6 +102,48 @@ class AuthService with ChangeNotifier {
   Map<String, dynamic>? _user;
   Map<String, dynamic>? get user => _user;
 
+  Map<String, dynamic>? get unit {
+    final value = _user?['unit'];
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return null;
+  }
+
+  String? get unitId => _cleanString(_user?['unitId'] ?? unit?['id']);
+
+  String get unitName =>
+      _firstText([unit?['name'], _user?['unitName']], fallback: 'Team Oruma');
+
+  String get unitLocation {
+    final locationParts = [
+      _cleanString(unit?['village']),
+      _cleanString(unit?['district']),
+    ].whereType<String>().toList();
+    if (locationParts.isNotEmpty) return locationParts.join(', ');
+    return _firstText([unit?['address']], fallback: 'Healthcare Management');
+  }
+
+  String? get unitLogo => _cleanString(unit?['logo']);
+  String? get unitAppIcon => _cleanString(unit?['appIcon']);
+
+  String? get unitSupportName =>
+      _cleanString(_supportValue('name')) ?? unitName;
+
+  String? get unitSupportEmail =>
+      _cleanString(_supportValue('email')) ??
+      _cleanString(unit?['contactEmail']);
+
+  String? get unitSupportPhone =>
+      _cleanString(_supportValue('phone')) ??
+      _cleanString(unit?['contactPhone']);
+
+  String? get unitSupportPhoneDial {
+    final phone = unitSupportPhone;
+    if (phone == null) return null;
+    final normalized = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    return normalized.isEmpty ? null : normalized;
+  }
+
   Future<void> fetchUserProfile() async {
     if (_token == null) return;
 
@@ -193,5 +235,25 @@ class AuthService with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
     await prefs.remove('auth_role');
+  }
+
+  Object? _supportValue(String key) {
+    final support = unit?['helpSupport'];
+    if (support is Map<String, dynamic>) return support[key];
+    if (support is Map) return support[key];
+    return null;
+  }
+
+  static String _firstText(List<Object?> values, {required String fallback}) {
+    for (final value in values) {
+      final cleaned = _cleanString(value);
+      if (cleaned != null) return cleaned;
+    }
+    return fallback;
+  }
+
+  static String? _cleanString(Object? value) {
+    final text = value?.toString().trim();
+    return text == null || text.isEmpty ? null : text;
   }
 }

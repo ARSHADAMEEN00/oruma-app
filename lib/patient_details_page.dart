@@ -1559,7 +1559,16 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
     if (_isPdfGenerating) return;
     setState(() => _isPdfGenerating = true);
     try {
-      final bytes = await PatientPdfGenerator.generate(_details);
+      final auth = context.read<AuthService>();
+      final bytes = await PatientPdfGenerator.generate(
+        _details,
+        brand: PatientReportBrand(
+          name: auth.unitName,
+          subtitle: auth.unitLocation,
+          supportPhone: auth.unitSupportPhone,
+          logoSource: auth.unitLogo ?? auth.unitAppIcon,
+        ),
+      );
       if (!mounted) return;
       await Printing.sharePdf(
         bytes: bytes,

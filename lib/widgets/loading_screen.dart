@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:oruma_app/services/auth_service.dart';
+import 'package:oruma_app/widgets/unit_brand_avatar.dart';
+import 'package:provider/provider.dart';
 
 class LoadingScreen extends StatefulWidget {
   final Duration duration;
@@ -48,16 +51,15 @@ class _LoadingScreenState extends State<LoadingScreen>
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthService>();
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1A237E),
-              Color(0xFF0277BD),
-            ],
+            colors: [Color(0xFF1A237E), Color(0xFF0277BD)],
           ),
         ),
         child: Center(
@@ -78,28 +80,20 @@ class _LoadingScreenState extends State<LoadingScreen>
                     color: Colors.white.withOpacity(0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/logo/logo.png',
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.local_hospital,
-                          size: 50,
-                          color: Colors.white,
-                        );
-                      },
-                    ),
+                  child: const UnitBrandAvatar(
+                    size: 80,
+                    preferAppIcon: true,
+                    backgroundColor: Colors.transparent,
+                    iconColor: Colors.white,
+                    fallbackIcon: Icons.local_hospital,
                   ),
                 ),
               ),
               const SizedBox(height: 32),
               // App Name
-              const Text(
-                'Team Oruma',
-                style: TextStyle(
+              Text(
+                auth.unitName,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 28,
                   fontWeight: FontWeight.bold,

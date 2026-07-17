@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
+import 'package:oruma_app/widgets/unit_brand_avatar.dart';
+import 'package:provider/provider.dart';
 
 class AdaptiveAppScaffold extends StatelessWidget {
   const AdaptiveAppScaffold({
@@ -367,18 +370,11 @@ class _RailBrand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final logo = ClipOval(
-      child: Image.asset(
-        'assets/logo/logo.png',
-        width: 38,
-        height: 38,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => const Icon(
-          Icons.local_hospital_outlined,
-          color: Color(0xFF185FA5),
-          size: 28,
-        ),
-      ),
+    final auth = context.watch<AuthService>();
+    const logo = UnitBrandAvatar(
+      size: 38,
+      preferAppIcon: true,
+      fallbackIcon: Icons.local_hospital_outlined,
     );
 
     if (!extended) {
@@ -394,10 +390,10 @@ class _RailBrand extends StatelessWidget {
           children: [
             logo,
             const SizedBox(width: 10),
-            const Flexible(
+            Flexible(
               fit: FlexFit.loose,
               child: Text(
-                'Team Oruma',
+                auth.unitName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(

@@ -8,24 +8,25 @@ class ApiConfig {
   ApiConfig._();
 
   /// Base URL for the API server.
-  /// Uses localhost:3000 for web/desktop development.
+  /// Uses localhost:5001 for web/desktop development.
   /// For mobile emulators, you may need to use:
-  /// - Android Emulator: 10.0.2.2:3000
-  /// - iOS Simulator: localhost:3000
+  /// - Android Emulator: http://10.0.2.2:5001/api
+  /// - iOS Simulator: http://localhost:5001/api
   static String get baseUrl {
     if (kDebugMode) {
       if (kIsWeb) {
-        return 'https://api-erp-palliative.osperb.com/api';
+        // Chrome: localhost resolves correctly
+        return 'http://localhost:5001/api';
       }
-      // For Android emulator use 10.0.2.2, for iOS/Desktop use localhost
-      return 'https://api-erp-palliative.osperb.com/api';
+      // Android emulator maps host localhost to 10.0.2.2
+      return 'http://10.0.2.2:5001/api';
     }
     return 'https://api-erp-palliative.osperb.com/api';
   }
 
   /// Health check endpoint
   static String get healthUrl => kDebugMode
-      ? 'https://api-erp-palliative.osperb.com/health'
+      ? 'http://localhost:5001/health'
       : 'https://api-erp-palliative.osperb.com/health';
 
   /// API Endpoints

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -53,19 +54,21 @@ class PatientPdfGenerator {
   static const String _orgSub = 'Kodur, Malappuram';
   static const String _phone1 = 'Office: 9495006193';
   static const String _phone2 = 'Home care: 9495006192';
-  static const String _pageFooter =
-      'Kodur Palliative Care Centre — Confidential Patient Report';
 
   // ═══════════════════════════════════════════════════════════════════════════
   // Public API
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static Future<Uint8List> generate(PatientDetails details) async {
-    final logoBytes = await _loadLogo();
+  static Future<Uint8List> generate(
+    PatientDetails details, {
+    PatientReportBrand? brand,
+  }) async {
+    final reportBrand = brand ?? const PatientReportBrand();
+    final logoBytes = await _loadLogo(reportBrand.logoSource);
     ui.Image? logo;
     if (logoBytes != null) logo = await _decodeImage(logoBytes);
 
-    final writer = _PageWriter(logo);
+    final writer = _PageWriter(logo, reportBrand);
     await writer.start();
 
     final p = details.patient;
@@ -375,7 +378,12 @@ class PatientPdfGenerator {
   // Low-level painters (work on a raw Canvas)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static void _paintPageHeader(Canvas c, ui.Image? logo, int page) {
+  static void _paintPageHeader(
+    Canvas c,
+    ui.Image? logo,
+    int page,
+    PatientReportBrand brand,
+  ) {
     c.drawRect(
       const Rect.fromLTWH(0, 0, _pw, _headerBottom),
       Paint()..color = _headerBg,
@@ -408,7 +416,7 @@ class PatientPdfGenerator {
 
     _text(
       c,
-      _orgName,
+      brand.orgName,
       const Rect.fromLTWH(160, 38, 600, 52),
       size: 40,
       weight: FontWeight.w800,
@@ -416,14 +424,14 @@ class PatientPdfGenerator {
     );
     _text(
       c,
-      _orgSub,
+      brand.orgSub,
       const Rect.fromLTWH(160, 92, 500, 30),
       size: 22,
       color: Colors.white.withValues(alpha: 0.82),
     );
     _text(
       c,
-      '$_phone1   |   $_phone2',
+      brand.phoneLine,
       const Rect.fromLTWH(160, 126, 700, 28),
       size: 19,
       color: Colors.white.withValues(alpha: 0.72),
@@ -789,7 +797,7 @@ class PatientPdfGenerator {
     );
   }
 
-  static void _paintPageFooter(Canvas c) {
+  static void _paintPageFooter(Canvas c, PatientReportBrand brand) {
     const footerY = _ph - 60.0;
     c.drawLine(
       const Offset(_marginL, footerY),
@@ -800,7 +808,7 @@ class PatientPdfGenerator {
     );
     _text(
       c,
-      _pageFooter,
+      brand.pageFooter,
       Rect.fromLTWH(_marginL, footerY + 10, _contentW, 28),
       size: 16,
       color: _muted,
@@ -884,10 +892,24 @@ class PatientPdfGenerator {
   // Asset helpers
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static Future<Uint8List?> _loadLogo() async {
+  static Future<Uint8List?> _loadLogo(String? source) async {
+    final dataUrlLogo = _decodeDataUrlImage(source);
+    if (dataUrlLogo != null) return dataUrlLogo;
+
     try {
       final data = await rootBundle.load('assets/logo/logo.png');
       return data.buffer.asUint8List();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Uint8List? _decodeDataUrlImage(String? source) {
+    if (source == null || !source.startsWith('data:image/')) return null;
+    final commaIndex = source.indexOf(',');
+    if (commaIndex < 0) return null;
+    try {
+      return base64Decode(source.substring(commaIndex + 1));
     } catch (_) {
       return null;
     }
@@ -970,6 +992,44 @@ class PatientPdfGenerator {
   };
 }
 
+class PatientReportBrand {
+  const PatientReportBrand({
+    this.name,
+    this.subtitle,
+    this.supportPhone,
+    this.contactPhone,
+    this.logoSource,
+  });
+
+  final String? name;
+  final String? subtitle;
+  final String? supportPhone;
+  final String? contactPhone;
+  final String? logoSource;
+
+  String get orgName => _clean(name) ?? PatientPdfGenerator._orgName;
+
+  String get orgSub => _clean(subtitle) ?? PatientPdfGenerator._orgSub;
+
+  String get phoneLine {
+    final phones = <String>[];
+    for (final phone in [_clean(supportPhone), _clean(contactPhone)]) {
+      if (phone != null && !phones.contains(phone)) phones.add(phone);
+    }
+    if (phones.isEmpty) {
+      return '${PatientPdfGenerator._phone1}   |   ${PatientPdfGenerator._phone2}';
+    }
+    return phones.join('   |   ');
+  }
+
+  String get pageFooter => '$orgName - Confidential Patient Report';
+
+  static String? _clean(String? value) {
+    final text = value?.trim();
+    return text == null || text.isEmpty ? null : text;
+  }
+}
+
 // ─── Page writer ─────────────────────────────────────────────────────────────
 
 /// Manages a sequence of canvas pages. Callers paint content by accessing
@@ -977,13 +1037,14 @@ class PatientPdfGenerator {
 /// start a fresh page.
 class _PageWriter {
   final ui.Image? _logo;
+  final PatientReportBrand _brand;
   final List<Uint8List> _pages = [];
 
   late ui.PictureRecorder _recorder;
   late Canvas _canvas;
   int _pageIndex = 0;
 
-  _PageWriter(this._logo);
+  _PageWriter(this._logo, this._brand);
 
   Canvas get canvas => _canvas;
   double y = PatientPdfGenerator._contentStart;
@@ -1014,13 +1075,13 @@ class _PageWriter {
       PatientPdfGenerator._rasterScale,
       PatientPdfGenerator._rasterScale,
     );
-    PatientPdfGenerator._paintPageHeader(_canvas, _logo, _pageIndex);
+    PatientPdfGenerator._paintPageHeader(_canvas, _logo, _pageIndex, _brand);
     y = PatientPdfGenerator._contentStart;
   }
 
   /// Rasterise the current page and collect it.
   Future<void> _flush() async {
-    PatientPdfGenerator._paintPageFooter(_canvas);
+    PatientPdfGenerator._paintPageFooter(_canvas, _brand);
     final picture = _recorder.endRecording();
     final img = await picture.toImage(
       PatientPdfGenerator._rasterW,
