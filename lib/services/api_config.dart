@@ -38,6 +38,8 @@ class ApiConfig {
   static String get equipmentEndpoint => '$baseUrl/equipment';
   static String get equipmentSuppliesEndpoint => '$baseUrl/equipment-supplies';
   static String get notificationsEndpoint => '$baseUrl/notifications';
+  static String get billingPortalEndpoint => '$baseUrl/billing/me';
+  static String get billingEnquiriesEndpoint => '$baseUrl/billing/enquiries';
   static String get medicineSuppliesEndpoint => '$baseUrl/medicine-supplies';
   static String get v2MedicineSuppliesEndpoint =>
       '$baseUrl/v2/medicine-supplies';

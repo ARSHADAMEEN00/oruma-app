@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:oruma_app/billing_plan_screen.dart';
 import 'package:oruma_app/eq_supply.dart';
 import 'package:oruma_app/equipment_list_page.dart';
 import 'package:oruma_app/equipment_supply_list_page.dart';
@@ -595,6 +596,18 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                     icon: Icons.settings_outlined,
                     title: "Settings",
                     onTap: () => Navigator.pop(context),
+                  ),
+                  _buildProfileMenuItem(
+                    icon: Icons.receipt_long_outlined,
+                    title: "Billing & Plan",
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const BillingPlanScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _buildProfileMenuItem(
                     icon: Icons.help_outline,
