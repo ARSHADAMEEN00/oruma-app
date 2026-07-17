@@ -42,9 +42,7 @@ class _LoginscreenState extends State<Loginscreen> {
       if (authService.isFirstLogin) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => const LoadingScreen(
-              nextScreen: Homescreen(),
-            ),
+            builder: (context) => const LoadingScreen(nextScreen: Homescreen()),
           ),
         );
       } else {
@@ -54,8 +52,10 @@ class _LoginscreenState extends State<Loginscreen> {
         );
       }
     } else if (!success && mounted) {
+      if (authService.isAccessBlocked) return;
       setState(() {
-        _errorMessage = 'Invalid email or password';
+        _errorMessage =
+            authService.loginErrorMessage ?? 'Invalid email or password';
       });
     }
   }

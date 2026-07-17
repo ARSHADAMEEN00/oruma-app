@@ -18,6 +18,18 @@ class AuthService with ChangeNotifier {
   bool _isFirstLogin = false;
   bool get isFirstLogin => _isFirstLogin;
 
+  bool _isAccessBlocked = false;
+  bool get isAccessBlocked => _isAccessBlocked;
+
+  String? _accessBlockedMessage;
+  String? get accessBlockedMessage => _accessBlockedMessage;
+
+  Map<String, dynamic>? _accessBlockedSupport;
+  Map<String, dynamic>? get accessBlockedSupport => _accessBlockedSupport;
+
+  String? _loginErrorMessage;
+  String? get loginErrorMessage => _loginErrorMessage;
+
   bool get isAuthenticated => _token != null;
   bool get isAdmin => _role == 'admin';
   bool get isStaff => _role == 'staff';
@@ -37,7 +49,7 @@ class AuthService with ChangeNotifier {
     _role = prefs.getString('auth_role');
     debugPrint('Auth service initialized. Role: $_role');
     if (_token != null) {
-      fetchUserProfile();
+      await fetchUserProfile();
     }
     notifyListeners();
   }
@@ -52,6 +64,10 @@ class AuthService with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        _isAccessBlocked = false;
+        _accessBlockedMessage = null;
+        _accessBlockedSupport = null;
+        _loginErrorMessage = null;
         _token = data['token'];
         _role = data['role']; // Get role from response
 
@@ -74,9 +90,11 @@ class AuthService with ChangeNotifier {
         notifyListeners();
         return true;
       }
+      await _handleAuthFailure(response);
       return false;
     } catch (e) {
       print('Login error: $e');
+      _loginErrorMessage = 'Unable to connect. Please try again.';
       return false;
     }
   }
@@ -96,8 +114,12 @@ class AuthService with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         _user = data;
+        _isAccessBlocked = false;
+        _accessBlockedMessage = null;
+        _accessBlockedSupport = null;
         notifyListeners();
       } else {
+        await _handleAuthFailure(response);
         print('Failed to fetch profile: ${response.statusCode}');
       }
     } catch (e) {
@@ -108,6 +130,11 @@ class AuthService with ChangeNotifier {
   Future<void> logout() async {
     _token = null;
     _role = null;
+    _user = null;
+    _isAccessBlocked = false;
+    _accessBlockedMessage = null;
+    _accessBlockedSupport = null;
+    _loginErrorMessage = null;
     // Clear all cached data so stale data cannot leak to another user session
     AppCache.clear();
     final prefs = await SharedPreferences.getInstance();
@@ -122,5 +149,49 @@ class AuthService with ChangeNotifier {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $_token',
     };
+  }
+
+  void clearAccessBlocked() {
+    _isAccessBlocked = false;
+    _accessBlockedMessage = null;
+    _accessBlockedSupport = null;
+    _loginErrorMessage = null;
+    notifyListeners();
+  }
+
+  Future<void> _handleAuthFailure(http.Response response) async {
+    Map<String, dynamic> data = {};
+    try {
+      data = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (_) {
+      data = {};
+    }
+
+    if (response.statusCode == 403 && data['code'] == 'TRIAL_ENDED') {
+      _token = null;
+      _role = null;
+      _user = null;
+      _isAccessBlocked = true;
+      _accessBlockedMessage =
+          data['error']?.toString() ??
+          'Trial period is ended. Contact support team to purchase a plan.';
+      final support = data['support'];
+      _accessBlockedSupport = support is Map
+          ? Map<String, dynamic>.from(support)
+          : null;
+      await _clearStoredCredentials();
+      AppCache.clear();
+    } else {
+      _loginErrorMessage =
+          data['error']?.toString() ?? 'Invalid email or password';
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> _clearStoredCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    await prefs.remove('auth_role');
   }
 }

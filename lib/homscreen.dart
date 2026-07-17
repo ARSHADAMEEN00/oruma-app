@@ -17,6 +17,8 @@ import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/loginscreen.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
+import 'package:oruma_app/services/notification_service.dart';
+import 'package:oruma_app/models/app_notification.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:oruma_app/config_page.dart';
@@ -34,26 +36,45 @@ class Homescreen extends StatefulWidget {
   State<Homescreen> createState() => _HomescreenState();
 }
 
-class _HomescreenState extends State<Homescreen> {
+class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final ScrollController _activeSuppliesScrollController = ScrollController();
   Timer? _activeSuppliesAutoSlideTimer;
-  int _activeSuppliesCount = 0;
   int _activeSuppliesPageIndex = 0;
   List<EquipmentSupply> _activeSupplies = [];
   bool _activeSuppliesLoading = true;
+  int _notificationCount = 0;
+  List<AppNotification> _notifications = [];
+  bool _notificationsLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadActiveSupplies();
+    WidgetsBinding.instance.addObserver(this);
+    _bootstrapAccess();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _activeSuppliesAutoSlideTimer?.cancel();
     _activeSuppliesScrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<AuthService>().fetchUserProfile();
+    }
+  }
+
+  Future<void> _bootstrapAccess() async {
+    final auth = context.read<AuthService>();
+    await auth.fetchUserProfile();
+    if (!mounted || auth.isAccessBlocked) return;
+    _loadActiveSupplies();
+    _loadNotifications();
   }
 
   Future<void> _loadActiveSupplies() async {
@@ -62,7 +83,6 @@ class _HomescreenState extends State<Homescreen> {
       if (!mounted) return;
       setState(() {
         _activeSupplies = supplies;
-        _activeSuppliesCount = supplies.length;
         _activeSuppliesLoading = false;
         _activeSuppliesPageIndex = 0;
       });
@@ -74,6 +94,29 @@ class _HomescreenState extends State<Homescreen> {
       if (!mounted) return;
       setState(() => _activeSuppliesLoading = false);
     }
+  }
+
+  Future<void> _loadNotifications({bool refresh = false}) async {
+    try {
+      final notifications = await NotificationService.getActiveNotifications(
+        refresh: refresh,
+      );
+      if (!mounted) return;
+      setState(() {
+        _notifications = notifications;
+        _notificationCount = notifications.length;
+        _notificationsLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _notificationsLoading = false);
+    }
+  }
+
+  Future<void> _openNotifications() async {
+    await _loadNotifications(refresh: true);
+    if (!mounted) return;
+    _showNotifications();
   }
 
   void _restartActiveSuppliesAutoSlide() {
@@ -107,13 +150,15 @@ class _HomescreenState extends State<Homescreen> {
   }
 
   void _showNotifications() {
+    final notifications = List<AppNotification>.from(_notifications);
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) => Container(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
+          maxHeight: MediaQuery.of(context).size.height * 0.64,
         ),
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -122,7 +167,6 @@ class _HomescreenState extends State<Homescreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle Bar
             Container(
               margin: const EdgeInsets.only(top: 12),
               width: 40,
@@ -132,7 +176,6 @@ class _HomescreenState extends State<Homescreen> {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            // Header
             Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
@@ -152,11 +195,11 @@ class _HomescreenState extends State<Homescreen> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.1),
+                      color: Colors.orange.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      "$_activeSuppliesCount Active",
+                      "$_notificationCount Active",
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -168,9 +211,15 @@ class _HomescreenState extends State<Homescreen> {
               ),
             ),
             const Divider(height: 1),
-            // Supplies List
             Flexible(
-              child: _activeSupplies.isEmpty
+              child: _notificationsLoading && notifications.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  : notifications.isEmpty
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.all(40),
@@ -198,7 +247,7 @@ class _HomescreenState extends State<Homescreen> {
                   : ListView.separated(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       shrinkWrap: true,
-                      itemCount: _activeSupplies.length,
+                      itemCount: notifications.length,
                       separatorBuilder: (context, index) => Divider(
                         height: 1,
                         indent: 20,
@@ -206,10 +255,8 @@ class _HomescreenState extends State<Homescreen> {
                         color: Colors.grey[200],
                       ),
                       itemBuilder: (context, index) {
-                        final supply = _activeSupplies[index];
-                        final daysSinceSupply = DateTime.now()
-                            .difference(supply.supplyDate)
-                            .inDays;
+                        final notification = notifications[index];
+                        final color = _notificationColor(notification);
 
                         return ListTile(
                           contentPadding: const EdgeInsets.symmetric(
@@ -220,17 +267,17 @@ class _HomescreenState extends State<Homescreen> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: Colors.orange.withOpacity(0.1),
+                              color: color.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(
-                              Icons.medical_services,
-                              color: Colors.orange,
+                            child: Icon(
+                              _notificationIcon(notification),
+                              color: color,
                               size: 24,
                             ),
                           ),
                           title: Text(
-                            supply.equipmentName,
+                            notification.title,
                             style: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 15,
@@ -244,21 +291,22 @@ class _HomescreenState extends State<Homescreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Icon(
-                                      Icons.person_outline,
+                                      Icons.info_outline,
                                       size: 14,
                                       color: Colors.grey[600],
                                     ),
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
-                                        _supplyRecipientName(supply),
+                                        notification.message,
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: Colors.grey[600],
                                         ),
-                                        maxLines: 1,
+                                        maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
@@ -274,7 +322,9 @@ class _HomescreenState extends State<Homescreen> {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      "$daysSinceSupply days ago",
+                                      _formatNotificationTime(
+                                        notification.triggeredAt,
+                                      ),
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Colors.grey[500],
@@ -291,22 +341,13 @@ class _HomescreenState extends State<Homescreen> {
                           ),
                           onTap: () {
                             Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ModuleTheme(
-                                  palette: ModulePalettes.equipmentSupply,
-                                  child: EquipmentSupplyListPage(),
-                                ),
-                              ),
-                            );
+                            _handleNotificationTap(notification);
                           },
                         );
                       },
                     ),
             ),
-            // View All Button
-            if (_activeSupplies.isNotEmpty)
+            if (notifications.isNotEmpty)
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -317,15 +358,7 @@ class _HomescreenState extends State<Homescreen> {
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ModuleTheme(
-                            palette: ModulePalettes.equipmentSupply,
-                            child: EquipmentSupplyListPage(),
-                          ),
-                        ),
-                      );
+                      _openNotifications();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1A237E),
@@ -337,7 +370,7 @@ class _HomescreenState extends State<Homescreen> {
                       elevation: 0,
                     ),
                     child: const Text(
-                      "View All Supplies",
+                      "Refresh Notifications",
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -350,6 +383,39 @@ class _HomescreenState extends State<Homescreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleNotificationTap(AppNotification notification) async {
+    if (notification.id != null) {
+      NotificationService.markRead(
+        notification.id!,
+      ).then((_) => _loadNotifications(refresh: true)).catchError((_) {});
+    }
+
+    if (notification.type == 'equipment_overdue') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const ModuleTheme(
+            palette: ModulePalettes.equipmentSupply,
+            child: EquipmentSupplyListPage(),
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (notification.type.startsWith('medicine_expiry')) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const ModuleTheme(
+            palette: ModulePalettes.medicineSupply,
+            child: MedicineListPage(),
+          ),
+        ),
+      );
+    }
   }
 
   // Helper widget to build the Quick Add Bottom Sheet
@@ -920,7 +986,7 @@ class _HomescreenState extends State<Homescreen> {
                         ),
                         const SizedBox(width: 10),
                         GestureDetector(
-                          onTap: _showNotifications,
+                          onTap: _openNotifications,
                           child: Stack(
                             clipBehavior: Clip.none,
                             children: [
@@ -936,7 +1002,7 @@ class _HomescreenState extends State<Homescreen> {
                                   size: 22,
                                 ),
                               ),
-                              if (_activeSuppliesCount > 0)
+                              if (_notificationCount > 0)
                                 Positioned(
                                   right: -2,
                                   top: -2,
@@ -952,9 +1018,9 @@ class _HomescreenState extends State<Homescreen> {
                                     ),
                                     child: Center(
                                       child: Text(
-                                        _activeSuppliesCount > 99
+                                        _notificationCount > 99
                                             ? '99+'
-                                            : _activeSuppliesCount.toString(),
+                                            : _notificationCount.toString(),
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 10,
@@ -1441,6 +1507,46 @@ class _HomescreenState extends State<Homescreen> {
   }
 
   String _formatSupplyDate(DateTime date) {
+    return DateFormat('d MMM yyyy').format(date);
+  }
+
+  Color _notificationColor(AppNotification notification) {
+    switch (notification.severity) {
+      case 'danger':
+        return Colors.red;
+      case 'warning':
+        return Colors.orange;
+      case 'success':
+        return Colors.green;
+      default:
+        return const Color(0xFF1A237E);
+    }
+  }
+
+  IconData _notificationIcon(AppNotification notification) {
+    switch (notification.type) {
+      case 'equipment_overdue':
+        return Icons.inventory_2_outlined;
+      case 'medicine_expiry_60':
+      case 'medicine_expiry_30':
+        return Icons.medication_outlined;
+      case 'subscription_renewal':
+        return Icons.event_repeat_outlined;
+      case 'subscription_paid':
+        return Icons.payments_outlined;
+      default:
+        return Icons.notifications_outlined;
+    }
+  }
+
+  String _formatNotificationTime(DateTime? date) {
+    if (date == null) return 'Just now';
+
+    final difference = DateTime.now().difference(date);
+    if (difference.inMinutes < 1) return 'Just now';
+    if (difference.inHours < 1) return '${difference.inMinutes} min ago';
+    if (difference.inDays < 1) return '${difference.inHours} hours ago';
+    if (difference.inDays < 7) return '${difference.inDays} days ago';
     return DateFormat('d MMM yyyy').format(date);
   }
 

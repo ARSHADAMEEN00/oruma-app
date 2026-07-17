@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:oruma_app/homscreen.dart';
 import 'package:oruma_app/loginscreen.dart';
 import 'package:oruma_app/services/auth_service.dart';
+import 'package:oruma_app/trial_ended_screen.dart';
 import 'package:oruma_app/widgets/slide_page_route.dart';
 import 'package:provider/provider.dart';
 
@@ -109,6 +110,10 @@ class MyApp extends StatelessWidget {
       darkTheme: lightTheme,
       home: Consumer<AuthService>(
         builder: (context, auth, _) {
+          if (auth.isAccessBlocked) {
+            return const TrialEndedScreen();
+          }
+
           return auth.isAuthenticated
               ? const Homescreen()
               : const Loginscreen();
@@ -130,12 +135,6 @@ class _OrumaPageTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    return buildSlideTransition(
-      context,
-      animation,
-      secondaryAnimation,
-      child,
-    );
+    return buildSlideTransition(context, animation, secondaryAnimation, child);
   }
 }
-
