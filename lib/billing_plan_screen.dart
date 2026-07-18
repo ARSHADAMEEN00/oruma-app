@@ -403,14 +403,14 @@ class _SummaryGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisExtent: 104,
+        mainAxisExtent: 112,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
       ),
       itemBuilder: (context, index) {
         final item = items[index];
         return _SectionCard(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -424,13 +424,13 @@ class _SummaryGrid extends StatelessWidget {
                   letterSpacing: 0.3,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 item.value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 21,
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF111827),
                 ),
@@ -697,30 +697,75 @@ class _PaymentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final openBills = rows
+        .where((row) => !row.isPayment && !row.isPaid && row.displayAmount > 0)
+        .toList();
+    final paymentHistory = rows
+        .where((row) => row.isPayment || row.isPaid)
+        .toList()
+        .reversed
+        .toList();
+
     return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _SectionTitle(
-            title: 'Payment history',
-            subtitle:
-                'Recent invoices, manual payments, and gateway-ready records.',
+            title: 'Payment details',
+            subtitle: 'Open bills and payments recorded for this unit.',
           ),
           const SizedBox(height: 12),
-          if (rows.isEmpty)
-            const _EmptyText('No payment records found.')
-          else
-            ...rows.take(8).map((row) {
-              return _ListRow(
-                title: row.label,
-                subtitle: '${row.recordType} • due ${date(row.dueDate)}',
-                trailing: currency(row.amount),
-                badge: row.status,
-              );
-            }),
+          if (openBills.isEmpty && paymentHistory.isEmpty)
+            const _EmptyText('No billing records found.')
+          else ...[
+            if (openBills.isNotEmpty) ...[
+              const _InlineLabel('Open bills'),
+              ...openBills.take(4).map((row) {
+                return _ListRow(
+                  title: row.label,
+                  subtitle: _openBillSubtitle(row),
+                  trailing: currency(row.displayAmount),
+                  badge: row.paidAmount > 0 ? 'partial due' : row.status,
+                );
+              }),
+              const SizedBox(height: 10),
+            ],
+            const _InlineLabel('Payment history'),
+            if (paymentHistory.isEmpty)
+              const _EmptyText('No payments recorded yet.')
+            else
+              ...paymentHistory.take(8).map((row) {
+                return _ListRow(
+                  title: row.label,
+                  subtitle: _historySubtitle(row),
+                  trailing: currency(row.amount),
+                  badge: row.status,
+                );
+              }),
+          ],
         ],
       ),
     );
+  }
+
+  String _openBillSubtitle(PaymentHistoryRow row) {
+    final pieces = <String>['invoice'];
+    if (row.amount > row.displayAmount) {
+      pieces.add('${currency(row.amount)} total');
+    }
+    if (row.paidAmount > 0) {
+      pieces.add('${currency(row.paidAmount)} paid');
+    }
+    pieces.add('due ${date(row.dueDate)}');
+    return pieces.join(' • ');
+  }
+
+  String _historySubtitle(PaymentHistoryRow row) {
+    final type = row.isPayment ? 'payment' : 'invoice';
+    final paidText = row.paidAt != null
+        ? 'paid ${date(row.paidAt)}'
+        : 'due ${date(row.dueDate)}';
+    return '$type • $paidText';
   }
 }
 
@@ -826,6 +871,28 @@ class _SectionTitle extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _InlineLabel extends StatelessWidget {
+  const _InlineLabel(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 4),
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: Colors.grey.shade600,
+          letterSpacing: 0.3,
+        ),
+      ),
     );
   }
 }

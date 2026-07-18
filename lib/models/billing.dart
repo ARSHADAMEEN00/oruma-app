@@ -276,6 +276,8 @@ class PaymentHistoryRow {
     this.dueDate,
     this.paidAt,
     this.amount = 0,
+    this.paidAmount = 0,
+    this.remainingAmount,
     this.method,
   });
 
@@ -284,9 +286,20 @@ class PaymentHistoryRow {
   final String recordType;
   final DateTime? dueDate;
   final double amount;
+  final double paidAmount;
+  final double? remainingAmount;
   final String status;
   final DateTime? paidAt;
   final String? method;
+
+  bool get isPayment => recordType.toLowerCase() == 'payment';
+
+  bool get isPaid => status.toLowerCase() == 'paid';
+
+  double get displayAmount {
+    if (isPayment || isPaid) return amount;
+    return remainingAmount ?? amount;
+  }
 
   factory PaymentHistoryRow.fromJson(Map<String, dynamic> json) {
     return PaymentHistoryRow(
@@ -295,6 +308,10 @@ class PaymentHistoryRow {
       recordType: _string(json['recordType'], fallback: 'invoice'),
       dueDate: _date(json['dueDate']),
       amount: _number(json['amount']),
+      paidAmount: _number(json['paidAmount']),
+      remainingAmount: json.containsKey('remainingAmount')
+          ? _number(json['remainingAmount'])
+          : null,
       status: _string(json['status'], fallback: 'pending'),
       paidAt: _date(json['paidAt']),
       method: _nullableString(json['method']),
