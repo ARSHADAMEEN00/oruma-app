@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oruma_app/services/api_config.dart';
 import 'package:oruma_app/services/app_cache.dart';
+import 'package:oruma_app/services/feature_permissions.dart';
 
 class AuthService with ChangeNotifier {
   // Use ApiConfig to get the correct base URL
@@ -27,6 +28,12 @@ class AuthService with ChangeNotifier {
   Map<String, dynamic>? _accessBlockedSupport;
   Map<String, dynamic>? get accessBlockedSupport => _accessBlockedSupport;
 
+  FeaturePermissionSnapshot? _featurePermissions;
+  FeaturePermissionSnapshot? get featurePermissions => _featurePermissions;
+
+  bool _featurePermissionsLoaded = false;
+  bool get featurePermissionsLoaded => _featurePermissionsLoaded;
+
   String? _loginErrorMessage;
   String? get loginErrorMessage => _loginErrorMessage;
 
@@ -40,8 +47,35 @@ class AuthService with ChangeNotifier {
       _role == 'admin' || _role == 'staff' || _role == 'member';
   bool get canEdit => _role == 'admin' || _role == 'staff' || _role == 'member';
   bool get canDelete => _role == 'admin';
-  bool get canAccessMedicine => !isMember;
-  bool get canAccessNHC => !isMember;
+  bool get canAccessPatients => hasFeature(AppFeature.patients);
+  bool get canAccessHomeVisits => hasFeature(AppFeature.homeVisits);
+  bool get canAccessVolunteers => hasFeature(AppFeature.volunteers);
+  bool get canAccessSocialSupport => hasFeature(AppFeature.socialSupport);
+  bool get canAccessEquipment => hasFeature(AppFeature.equipment);
+  bool get canAccessEquipmentDistribution =>
+      hasFeature(AppFeature.equipmentDistribution);
+  bool get canAccessMedicineMaster => hasFeature(AppFeature.medicineMaster);
+  bool get canAccessMedicineStock => hasFeature(AppFeature.medicineStock);
+  bool get canAccessMedicineSupply => hasFeature(AppFeature.medicineSupply);
+  bool get canAccessMedicine =>
+      canAccessMedicineMaster ||
+      canAccessMedicineStock ||
+      canAccessMedicineSupply;
+  bool get canAccessNHC => hasFeature(AppFeature.nhcAssessment);
+  bool get canAccessNHCReport => hasFeature(AppFeature.nhcPdf);
+  bool get canAccessPatientPdf => hasFeature(AppFeature.patientPdf);
+
+  Set<String> get enabledFeatureIds =>
+      _featurePermissions?.enabledFeatureIds ??
+      _stringSet(_user?['enabledFeatureIds'] ?? unit?['enabledFeatureIds']);
+
+  bool hasFeature(String featureId) {
+    if (_role == 'superadmin') return true;
+    if (_featurePermissionsLoaded) {
+      return _featurePermissions?.has(featureId) ?? false;
+    }
+    return _legacyFeatureAccess(featureId);
+  }
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
@@ -156,6 +190,8 @@ class AuthService with ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         _user = data;
+        _applyFeaturePermissions(data);
+        await refreshFeaturePermissions(notify: false);
         _isAccessBlocked = false;
         _accessBlockedMessage = null;
         _accessBlockedSupport = null;
@@ -169,10 +205,24 @@ class AuthService with ChangeNotifier {
     }
   }
 
+  Future<void> refreshFeaturePermissions({bool notify = true}) async {
+    if (_token == null) return;
+
+    final result = await const FeaturePermissionService()
+        .fetchFeaturePermissions();
+    if (result.isSuccess && result.data != null) {
+      _featurePermissions = result.data;
+      _featurePermissionsLoaded = true;
+      if (notify) notifyListeners();
+    }
+  }
+
   Future<void> logout() async {
     _token = null;
     _role = null;
     _user = null;
+    _featurePermissions = null;
+    _featurePermissionsLoaded = false;
     _isAccessBlocked = false;
     _accessBlockedMessage = null;
     _accessBlockedSupport = null;
@@ -213,6 +263,8 @@ class AuthService with ChangeNotifier {
       _token = null;
       _role = null;
       _user = null;
+      _featurePermissions = null;
+      _featurePermissionsLoaded = false;
       _isAccessBlocked = true;
       _accessBlockedMessage =
           data['error']?.toString() ??
@@ -237,6 +289,48 @@ class AuthService with ChangeNotifier {
     await prefs.remove('auth_role');
   }
 
+  void _applyFeaturePermissions(Map<String, dynamic> data) {
+    final direct = data['featurePermissions'];
+    final unitData = data['unit'];
+    final nested = unitData is Map ? unitData['featurePermissions'] : null;
+    final payload = direct is Map
+        ? direct
+        : nested is Map
+        ? nested
+        : null;
+
+    if (payload == null) return;
+    _featurePermissions = FeaturePermissionSnapshot.fromJson(
+      Map<String, dynamic>.from(payload),
+    );
+    _featurePermissionsLoaded = true;
+  }
+
+  bool _legacyFeatureAccess(String featureId) {
+    return switch (featureId) {
+      AppFeature.patients ||
+      AppFeature.homeVisits ||
+      AppFeature.volunteers ||
+      AppFeature.socialSupport ||
+      AppFeature.equipment ||
+      AppFeature.equipmentDistribution => true,
+      AppFeature.patientPdf => _legacyPlanAllowsPatientPdf(),
+      AppFeature.nhcAssessment ||
+      AppFeature.nhcPdf ||
+      AppFeature.medicineMaster ||
+      AppFeature.medicineStock ||
+      AppFeature.medicineSupply => !isMember,
+      _ => false,
+    };
+  }
+
+  bool _legacyPlanAllowsPatientPdf() {
+    final planId = _cleanString(
+      _user?['planId'] ?? unit?['planId'],
+    )?.toLowerCase();
+    return planId != null && planId != 'starter';
+  }
+
   Object? _supportValue(String key) {
     final support = unit?['helpSupport'];
     if (support is Map<String, dynamic>) return support[key];
@@ -255,5 +349,13 @@ class AuthService with ChangeNotifier {
   static String? _cleanString(Object? value) {
     final text = value?.toString().trim();
     return text == null || text.isEmpty ? null : text;
+  }
+
+  static Set<String> _stringSet(Object? value) {
+    if (value is! List) return {};
+    return value
+        .map((item) => item.toString().trim())
+        .where((item) => item.isNotEmpty)
+        .toSet();
   }
 }

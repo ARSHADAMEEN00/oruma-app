@@ -6,6 +6,7 @@ import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/services/home_visit_service.dart';
 import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/services/config_service.dart';
+import 'package:oruma_app/services/feature_permissions.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
@@ -14,6 +15,7 @@ import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_a
 import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
+import 'package:oruma_app/widgets/feature_permission_gate.dart';
 import 'package:oruma_app/widgets/reveal_action_fab.dart';
 
 class HomeVisitListPage extends StatefulWidget {
@@ -1179,32 +1181,40 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
                   ),
                 ),
               const SizedBox(height: 24),
-              FilledButton.icon(
-                onPressed: widget.visit.id == null
-                    ? null
-                    : () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => VisitAssessmentModuleScreen(
-                              visit: widget.visit,
-                              patient: patient,
+              if (context.read<AuthService>().canAccessNHC)
+                FilledButton.icon(
+                  onPressed: widget.visit.id == null
+                      ? null
+                      : () {
+                          if (!FeaturePermissionMiddleware.ensure(
+                            context,
+                            AppFeature.nhcAssessment,
+                            moduleName: 'Visit Assessment',
+                          )) {
+                            return;
+                          }
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => VisitAssessmentModuleScreen(
+                                visit: widget.visit,
+                                patient: patient,
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                icon: const Icon(Icons.assignment_outlined),
-                label: const Text('NHC / Visit Assessment'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF14865D),
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(52),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                          );
+                        },
+                  icon: const Icon(Icons.assignment_outlined),
+                  label: const Text('NHC / Visit Assessment'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF14865D),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(52),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-              ),
               const SizedBox(height: 12),
               Row(
                 children: [

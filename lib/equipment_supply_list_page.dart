@@ -9,7 +9,9 @@ import 'package:oruma_app/equipment_list_page.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
+import 'package:oruma_app/services/feature_permissions.dart';
 import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
+import 'package:oruma_app/widgets/feature_permission_gate.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:oruma_app/widgets/module_switch_tabs.dart';
 import 'package:oruma_app/widgets/reveal_action_fab.dart';
@@ -318,6 +320,8 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthService>();
+
     return AdaptiveAppScaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -335,6 +339,13 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
           color: _equipmentSupplyPrimary,
           onSelected: (index) {
             if (index == 1) {
+              if (!FeaturePermissionMiddleware.ensure(
+                context,
+                AppFeature.equipment,
+                moduleName: 'Equipment Inventory',
+              )) {
+                return;
+              }
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -416,7 +427,8 @@ class _EquipmentSupplyListPageState extends State<EquipmentSupplyListPage>
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
         ],
       ),
-      floatingActionButton: Provider.of<AuthService>(context).canCreate
+      floatingActionButton:
+          auth.canCreate && auth.canAccessEquipmentDistribution
           ? RevealActionFab(
               onPressed: _navigateToCreateSupply,
               backgroundColor: _equipmentSupplyPrimary,

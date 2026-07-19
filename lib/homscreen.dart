@@ -18,6 +18,7 @@ import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/loginscreen.dart';
 import 'package:oruma_app/services/equipment_supply_service.dart';
+import 'package:oruma_app/services/feature_permissions.dart';
 import 'package:oruma_app/services/notification_service.dart';
 import 'package:oruma_app/models/app_notification.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
@@ -26,6 +27,7 @@ import 'package:oruma_app/config_page.dart';
 import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
+import 'package:oruma_app/widgets/feature_permission_gate.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:oruma_app/widgets/unit_brand_avatar.dart';
 import 'package:intl/intl.dart';
@@ -75,7 +77,14 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
     final auth = context.read<AuthService>();
     await auth.fetchUserProfile();
     if (!mounted || auth.isAccessBlocked) return;
-    _loadActiveSupplies();
+    if (auth.canAccessEquipmentDistribution) {
+      _loadActiveSupplies();
+    } else {
+      setState(() {
+        _activeSupplies = [];
+        _activeSuppliesLoading = false;
+      });
+    }
     _loadNotifications();
   }
 
@@ -104,15 +113,29 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
         refresh: refresh,
       );
       if (!mounted) return;
+      final auth = context.read<AuthService>();
+      final visibleNotifications = notifications
+          .where((notification) => _canShowNotification(notification, auth))
+          .toList();
       setState(() {
-        _notifications = notifications;
-        _notificationCount = notifications.length;
+        _notifications = visibleNotifications;
+        _notificationCount = visibleNotifications.length;
         _notificationsLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() => _notificationsLoading = false);
     }
+  }
+
+  bool _canShowNotification(AppNotification notification, AuthService auth) {
+    if (notification.type == 'equipment_overdue') {
+      return auth.canAccessEquipmentDistribution;
+    }
+    if (notification.type.startsWith('medicine_expiry')) {
+      return auth.canAccessMedicineMaster || auth.canAccessMedicineStock;
+    }
+    return true;
   }
 
   Future<void> _openNotifications() async {
@@ -395,6 +418,13 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
     }
 
     if (notification.type == 'equipment_overdue') {
+      if (!FeaturePermissionMiddleware.ensure(
+        context,
+        AppFeature.equipmentDistribution,
+        moduleName: 'Equipment Supply',
+      )) {
+        return;
+      }
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -408,6 +438,13 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
     }
 
     if (notification.type.startsWith('medicine_expiry')) {
+      if (!FeaturePermissionMiddleware.ensure(
+        context,
+        AppFeature.medicineMaster,
+        moduleName: 'Medicine',
+      )) {
+        return;
+      }
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -422,6 +459,68 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
 
   // Helper widget to build the Quick Add Bottom Sheet
   void _showQuickAddOptions() {
+    final auth = context.read<AuthService>();
+    final actions = <Widget>[
+      if (auth.canAccessPatients)
+        _buildQuickActionItem(
+          icon: Icons.person_add_rounded,
+          label: "Patient",
+          color: Colors.blue,
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ModuleTheme(
+                  palette: ModulePalettes.patients,
+                  child: patientrigister(),
+                ),
+              ),
+            );
+          },
+        ),
+      if (auth.canAccessHomeVisits)
+        _buildQuickActionItem(
+          icon: Icons.add_home_work_rounded,
+          label: "Visit",
+          color: Colors.green,
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ModuleTheme(
+                  palette: ModulePalettes.homeVisits,
+                  child: HomeVisitListPage(),
+                ),
+              ),
+            );
+          },
+        ),
+      if (auth.canAccessEquipmentDistribution)
+        _buildQuickActionItem(
+          icon: Icons.medical_services_rounded,
+          label: "Supply",
+          color: Colors.orange,
+          onTap: () async {
+            Navigator.pop(context);
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ModuleTheme(
+                  palette: ModulePalettes.equipmentSupply,
+                  child: EqSupply(),
+                ),
+              ),
+            );
+            if (mounted &&
+                context.read<AuthService>().canAccessEquipmentDistribution) {
+              _loadActiveSupplies();
+            }
+          },
+        ),
+    ];
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -444,64 +543,16 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
               ),
             ),
             const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildQuickActionItem(
-                  icon: Icons.person_add_rounded,
-                  label: "Patient",
-                  color: Colors.blue,
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ModuleTheme(
-                          palette: ModulePalettes.patients,
-                          child: patientrigister(),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                _buildQuickActionItem(
-                  icon: Icons.add_home_work_rounded,
-                  label: "Visit",
-                  color: Colors.green,
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Navigate to Home Visit Form if available, or List
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ModuleTheme(
-                          palette: ModulePalettes.homeVisits,
-                          child: HomeVisitListPage(),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                _buildQuickActionItem(
-                  icon: Icons.medical_services_rounded,
-                  label: "Supply",
-                  color: Colors.orange,
-                  onTap: () async {
-                    Navigator.pop(context);
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ModuleTheme(
-                          palette: ModulePalettes.equipmentSupply,
-                          child: EqSupply(),
-                        ),
-                      ),
-                    );
-                    _loadActiveSupplies();
-                  },
-                ),
-              ],
-            ),
+            if (actions.isEmpty)
+              Text(
+                'No quick actions are enabled for this unit.',
+                style: TextStyle(color: Colors.grey.shade700),
+              )
+            else
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: actions,
+              ),
             const SizedBox(height: 20),
           ],
         ),
@@ -1130,7 +1181,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                         mainAxisSpacing: 12,
                         childAspectRatio: columns >= 3 ? 1.5 : 1.4,
                         children: [
-                          if (auth.isMember)
+                          if (auth.canAccessPatients)
                             _buildModernActionCard(
                               context,
                               title: "Patients",
@@ -1149,17 +1200,18 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                               palette: ModulePalettes.patients,
                               page: const VisitAssessmentVisitPickerScreen(),
                             ),
-                          _buildModernActionCard(
-                            context,
-                            title: "Home Visits",
-                            icon: Icons.home_rounded,
-                            palette: ModulePalettes.homeVisits,
-                            page: const ModuleTheme(
+                          if (auth.canAccessHomeVisits)
+                            _buildModernActionCard(
+                              context,
+                              title: "Home Visits",
+                              icon: Icons.home_rounded,
                               palette: ModulePalettes.homeVisits,
-                              child: HomeVisitListPage(),
+                              page: const ModuleTheme(
+                                palette: ModulePalettes.homeVisits,
+                                child: HomeVisitListPage(),
+                              ),
                             ),
-                          ),
-                          if (auth.isMember)
+                          if (auth.canAccessSocialSupport)
                             _buildModernActionCard(
                               context,
                               title: "Social Support",
@@ -1170,7 +1222,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                                 child: SocialSupportListPage(),
                               ),
                             ),
-                          if (auth.isMember)
+                          if (auth.canAccessVolunteers)
                             _buildModernActionCard(
                               context,
                               title: "Volunteers",
@@ -1181,17 +1233,18 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                                 child: VolunteerListPage(),
                               ),
                             ),
-                          _buildModernActionCard(
-                            context,
-                            title: "Equipment Supply",
-                            icon: Icons.inventory_2_rounded,
-                            palette: ModulePalettes.equipmentSupply,
-                            page: const ModuleTheme(
+                          if (auth.canAccessEquipmentDistribution)
+                            _buildModernActionCard(
+                              context,
+                              title: "Equipment Supply",
+                              icon: Icons.inventory_2_rounded,
                               palette: ModulePalettes.equipmentSupply,
-                              child: EquipmentSupplyListPage(),
+                              page: const ModuleTheme(
+                                palette: ModulePalettes.equipmentSupply,
+                                child: EquipmentSupplyListPage(),
+                              ),
                             ),
-                          ),
-                          if (auth.canAccessMedicine)
+                          if (auth.canAccessMedicineSupply)
                             _buildModernActionCard(
                               context,
                               title: "Medicine Supply",
@@ -1207,38 +1260,40 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                     },
                   ),
 
-                  const SizedBox(height: 18),
+                  if (auth.canAccessEquipmentDistribution) ...[
+                    const SizedBox(height: 18),
 
-                  // Active Supplies Section
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Active Supplies",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A237E),
+                    // Active Supplies Section
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Active Supplies",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1A237E),
+                          ),
                         ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ModuleTheme(
-                                palette: ModulePalettes.equipmentSupply,
-                                child: EquipmentSupplyListPage(),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ModuleTheme(
+                                  palette: ModulePalettes.equipmentSupply,
+                                  child: EquipmentSupplyListPage(),
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                        child: const Text("View All"),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  _buildActiveSuppliesList(context),
+                            );
+                          },
+                          child: const Text("View All"),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    _buildActiveSuppliesList(context),
+                  ],
                 ],
               ),
             ),
@@ -1699,163 +1754,174 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                     onTap: () => Navigator.pop(context),
                     isSelected: true,
                   ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.people_outline_rounded,
-                    title: "Patients",
-                    color: ModulePalettes.patients.primary,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ModuleTheme(
-                            palette: ModulePalettes.patients,
-                            child: PatientListPage(),
+                  if (auth.canAccessPatients)
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.people_outline_rounded,
+                      title: "Patients",
+                      color: ModulePalettes.patients.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ModuleTheme(
+                              palette: ModulePalettes.patients,
+                              child: PatientListPage(),
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.person_off_outlined,
-                    title: "Passed Away Patients",
-                    color: ModulePalettes.patients.primary,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ModuleTheme(
-                            palette: ModulePalettes.patients,
-                            child: DeceasedPatientListPage(),
+                        );
+                      },
+                    ),
+                  if (auth.canAccessPatients)
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.person_off_outlined,
+                      title: "Passed Away Patients",
+                      color: ModulePalettes.patients.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ModuleTheme(
+                              palette: ModulePalettes.patients,
+                              child: DeceasedPatientListPage(),
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.home_work_outlined,
-                    title: "Home Visits",
-                    color: ModulePalettes.homeVisits.primary,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ModuleTheme(
-                            palette: ModulePalettes.homeVisits,
-                            child: HomeVisitListPage(),
+                        );
+                      },
+                    ),
+                  if (auth.canAccessHomeVisits)
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.home_work_outlined,
+                      title: "Home Visits",
+                      color: ModulePalettes.homeVisits.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ModuleTheme(
+                              palette: ModulePalettes.homeVisits,
+                              child: HomeVisitListPage(),
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.volunteer_activism_outlined,
-                    title: "Social Support",
-                    color: ModulePalettes.socialSupport.primary,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ModuleTheme(
-                            palette: ModulePalettes.socialSupport,
-                            child: SocialSupportListPage(),
+                        );
+                      },
+                    ),
+                  if (auth.canAccessSocialSupport)
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.volunteer_activism_outlined,
+                      title: "Social Support",
+                      color: ModulePalettes.socialSupport.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ModuleTheme(
+                              palette: ModulePalettes.socialSupport,
+                              child: SocialSupportListPage(),
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.badge_outlined,
-                    title: "Volunteers",
-                    color: ModulePalettes.volunteers.primary,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ModuleTheme(
-                            palette: ModulePalettes.volunteers,
-                            child: VolunteerListPage(),
+                        );
+                      },
+                    ),
+                  if (auth.canAccessVolunteers)
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.badge_outlined,
+                      title: "Volunteers",
+                      color: ModulePalettes.volunteers.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ModuleTheme(
+                              palette: ModulePalettes.volunteers,
+                              child: VolunteerListPage(),
+                            ),
                           ),
+                        );
+                      },
+                    ),
+                  if (auth.canAccessEquipment ||
+                      auth.canAccessEquipmentDistribution ||
+                      auth.canAccessMedicine)
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(14, 14, 14, 7),
+                      child: Text(
+                        'INVENTORY',
+                        style: TextStyle(
+                          color: Color(0xFF9A9AA5),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.1,
                         ),
-                      );
-                    },
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(14, 14, 14, 7),
-                    child: Text(
-                      'INVENTORY',
-                      style: TextStyle(
-                        color: Color(0xFF9A9AA5),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.1,
                       ),
                     ),
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.inventory_2_outlined,
-                    title: "Equipment Inventory",
-                    color: ModulePalettes.equipmentSupply.primary,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ModuleTheme(
-                            palette: ModulePalettes.equipmentSupply,
-                            child: EquipmentListPage(),
+                  if (auth.canAccessEquipment)
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.inventory_2_outlined,
+                      title: "Equipment Inventory",
+                      color: ModulePalettes.equipmentSupply.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ModuleTheme(
+                              palette: ModulePalettes.equipmentSupply,
+                              child: EquipmentListPage(),
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.local_shipping_outlined,
-                    title: "Distributed",
-                    color: ModulePalettes.equipmentSupply.primary,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ModuleTheme(
-                            palette: ModulePalettes.equipmentSupply,
-                            child: EquipmentListPage(initialTab: 1),
+                        );
+                      },
+                    ),
+                  if (auth.canAccessEquipmentDistribution)
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.local_shipping_outlined,
+                      title: "Distributed",
+                      color: ModulePalettes.equipmentSupply.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ModuleTheme(
+                              palette: ModulePalettes.equipmentSupply,
+                              child: EquipmentListPage(initialTab: 1),
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.medical_services_outlined,
-                    title: "Supply Record",
-                    color: ModulePalettes.equipmentSupply.primary,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ModuleTheme(
-                            palette: ModulePalettes.equipmentSupply,
-                            child: EquipmentSupplyListPage(),
+                        );
+                      },
+                    ),
+                  if (auth.canAccessEquipmentDistribution)
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.medical_services_outlined,
+                      title: "Supply Record",
+                      color: ModulePalettes.equipmentSupply.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ModuleTheme(
+                              palette: ModulePalettes.equipmentSupply,
+                              child: EquipmentSupplyListPage(),
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                  if (auth.canAccessMedicine)
+                        );
+                      },
+                    ),
+                  if (auth.canAccessMedicineMaster)
                     _buildDrawerItem(
                       context,
                       icon: Icons.medication_liquid_outlined,
@@ -1874,7 +1940,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                         );
                       },
                     ),
-                  if (auth.canAccessMedicine)
+                  if (auth.canAccessMedicineSupply)
                     _buildDrawerItem(
                       context,
                       icon: Icons.vaccines_outlined,
@@ -1893,24 +1959,25 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                         );
                       },
                     ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.precision_manufacturing_outlined,
-                    title: "Equipments",
-                    color: ModulePalettes.equipmentSupply.primary,
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ModuleTheme(
-                            palette: ModulePalettes.equipmentSupply,
-                            child: EquipmentSupplyListPage(),
+                  if (auth.canAccessEquipmentDistribution)
+                    _buildDrawerItem(
+                      context,
+                      icon: Icons.precision_manufacturing_outlined,
+                      title: "Equipments",
+                      color: ModulePalettes.equipmentSupply.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ModuleTheme(
+                              palette: ModulePalettes.equipmentSupply,
+                              child: EquipmentSupplyListPage(),
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
+                        );
+                      },
+                    ),
                   if (auth.canAccessNHC)
                     _buildDrawerItem(
                       context,

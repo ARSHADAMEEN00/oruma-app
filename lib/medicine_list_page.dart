@@ -10,11 +10,13 @@ import 'package:oruma_app/medicine_stock_history_page.dart';
 import 'package:oruma_app/medicine_supply_list_page.dart';
 import 'package:oruma_app/models/medicine.dart';
 import 'package:oruma_app/services/auth_service.dart';
+import 'package:oruma_app/services/feature_permissions.dart';
 import 'package:oruma_app/services/medicine_service.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
+import 'package:oruma_app/widgets/feature_permission_gate.dart';
 import 'package:oruma_app/widgets/module_switch_tabs.dart';
 import 'package:oruma_app/widgets/reveal_action_fab.dart';
 
@@ -558,6 +560,13 @@ class _MedicineListPageState extends State<MedicineListPage> {
           color: _medicineDarkGreen,
           onSelected: (index) {
             if (index == 0) {
+              if (!FeaturePermissionMiddleware.ensure(
+                context,
+                AppFeature.medicineSupply,
+                moduleName: 'Medicine Supply',
+              )) {
+                return;
+              }
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -569,12 +578,13 @@ class _MedicineListPageState extends State<MedicineListPage> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            tooltip: 'Stock history',
-            onPressed: _openStockHistory,
-            icon: const Icon(Icons.history_outlined),
-          ),
-          if (auth.canCreate)
+          if (auth.canAccessMedicineStock)
+            IconButton(
+              tooltip: 'Stock history',
+              onPressed: _openStockHistory,
+              icon: const Icon(Icons.history_outlined),
+            ),
+          if (auth.canCreate && auth.canAccessMedicineMaster)
             IconButton(
               tooltip: 'Add medicine',
               onPressed: () => _openForm(),
@@ -582,7 +592,7 @@ class _MedicineListPageState extends State<MedicineListPage> {
             ),
         ],
       ),
-      floatingActionButton: auth.canCreate
+      floatingActionButton: auth.canCreate && auth.canAccessMedicineStock
           ? RevealActionFab(
               onPressed: _openStockEntry,
               backgroundColor: _medicineGreen,

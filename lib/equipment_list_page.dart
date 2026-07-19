@@ -10,7 +10,9 @@ import 'package:oruma_app/services/equipment_supply_service.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/services/auth_service.dart';
+import 'package:oruma_app/services/feature_permissions.dart';
 import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
+import 'package:oruma_app/widgets/feature_permission_gate.dart';
 import 'package:oruma_app/widgets/module_switch_tabs.dart';
 import 'package:oruma_app/widgets/module_theme.dart';
 import 'package:oruma_app/widgets/reveal_action_fab.dart';
@@ -92,17 +94,31 @@ class _EquipmentListPageState extends State<EquipmentListPage>
       setState(() {
         _currentIndex = _tabController.index;
       });
+      final auth = context.read<AuthService>();
       if (_currentIndex == 0) {
-        _fetchAvailableEquipment(search: _searchQuery);
+        if (auth.canAccessEquipment) {
+          _fetchAvailableEquipment(search: _searchQuery);
+        }
       } else {
-        _fetchDistributedEquipment();
+        if (auth.canAccessEquipmentDistribution) {
+          _fetchDistributedEquipment();
+        }
       }
     }
   }
 
   void _loadAllData() {
-    _fetchAvailableEquipment(search: _searchQuery);
-    _fetchDistributedEquipment();
+    final auth = context.read<AuthService>();
+    if (auth.canAccessEquipment) {
+      _fetchAvailableEquipment(search: _searchQuery);
+    } else {
+      setState(() => _loadingAvailable = false);
+    }
+    if (auth.canAccessEquipmentDistribution) {
+      _fetchDistributedEquipment();
+    } else {
+      setState(() => _loadingDistributed = false);
+    }
   }
 
   Future<void> _fetchAvailableEquipment({String? search}) async {
@@ -172,6 +188,13 @@ class _EquipmentListPageState extends State<EquipmentListPage>
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthService>();
+    final canUseFab =
+        auth.canCreate &&
+        (_currentIndex == 0
+            ? auth.canAccessEquipment
+            : auth.canAccessEquipmentDistribution);
+
     return AdaptiveAppScaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -189,6 +212,13 @@ class _EquipmentListPageState extends State<EquipmentListPage>
           color: _equipmentPrimary,
           onSelected: (index) {
             if (index == 0) {
+              if (!FeaturePermissionMiddleware.ensure(
+                context,
+                AppFeature.equipmentDistribution,
+                moduleName: 'Equipment Supply',
+              )) {
+                return;
+              }
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -231,13 +261,12 @@ class _EquipmentListPageState extends State<EquipmentListPage>
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              _fetchAvailableEquipment(search: _searchQuery);
-              _fetchDistributedEquipment();
+              _loadAllData();
             },
           ),
         ],
       ),
-      floatingActionButton: Provider.of<AuthService>(context).canCreate
+      floatingActionButton: canUseFab
           ? RevealActionFab(
               onPressed: _navigateToAdd,
               icon: Icons.add,

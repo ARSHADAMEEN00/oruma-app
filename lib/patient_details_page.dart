@@ -22,6 +22,16 @@ import 'package:printing/printing.dart';
 
 enum _PatientAction { markDeceased, delete }
 
+enum _PatientDetailsTab {
+  overview,
+  medical,
+  homeVisits,
+  equipment,
+  assessments,
+  medicines,
+  socialSupport,
+}
+
 const _patientCardBackground = Color(0xFFE6F1FB);
 const _patientIconBackground = Color(0xFFB5D4F4);
 const _patientPrimary = Color(0xFF185FA5);
@@ -35,11 +45,9 @@ class PatientDetailsPage extends StatefulWidget {
   State<PatientDetailsPage> createState() => _PatientDetailsPageState();
 }
 
-class _PatientDetailsPageState extends State<PatientDetailsPage>
-    with SingleTickerProviderStateMixin {
+class _PatientDetailsPageState extends State<PatientDetailsPage> {
   late Patient _currentPatient;
   late PatientDetails _details;
-  late final TabController _tabController;
 
   bool _detailsLoading = true;
   bool _isMutating = false;
@@ -51,14 +59,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
     super.initState();
     _currentPatient = widget.patient;
     _details = PatientDetails(patient: widget.patient);
-    _tabController = TabController(length: 7, vsync: this);
     _loadDetails();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadDetails({bool showLoader = true}) async {
@@ -251,6 +252,15 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
   }
 
   Future<void> _openVisitAssessments() async {
+    if (!context.read<AuthService>().canAccessNHC) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('NHC Visit Assessment is not enabled for this unit.'),
+        ),
+      );
+      return;
+    }
+
     final patientId = _currentPatient.id;
     if (patientId == null || patientId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -286,50 +296,72 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
     final auth = context.watch<AuthService>();
     final canShowMenu =
         auth.canDelete || (auth.canEdit && !_currentPatient.isDead);
+    final visibleTabs = _visiblePatientTabs(auth);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          NestedScrollView(
-            headerSliverBuilder: (context, innerBoxIsScrolled) => [
-              _buildCollapsibleAppBar(auth, canShowMenu),
-              if (_detailsLoading)
-                const SliverToBoxAdapter(
-                  child: LinearProgressIndicator(
-                    minHeight: 2,
-                    color: _patientPrimary,
-                    backgroundColor: _patientIconBackground,
+    return DefaultTabController(
+      length: visibleTabs.length,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Stack(
+          children: [
+            NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                _buildCollapsibleAppBar(auth, canShowMenu),
+                if (_detailsLoading)
+                  const SliverToBoxAdapter(
+                    child: LinearProgressIndicator(
+                      minHeight: 2,
+                      color: _patientPrimary,
+                      backgroundColor: _patientIconBackground,
+                    ),
+                  ),
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _PatientTabsHeaderDelegate(
+                    child: _buildTabs(visibleTabs),
                   ),
                 ),
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _PatientTabsHeaderDelegate(child: _buildTabs()),
-              ),
-            ],
-            body: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildOverviewTab(),
-                _buildMedicalTab(),
-                _buildHomeVisitsTab(),
-                _buildEquipmentTab(),
-                _buildAssessmentsTab(),
-                _buildMedicineSuppliesTab(),
-                _buildSocialSupportTab(),
               ],
-            ),
-          ),
-          if (_isMutating)
-            Positioned.fill(
-              child: ColoredBox(
-                color: Colors.white.withValues(alpha: 0.72),
-                child: const Center(child: CircularProgressIndicator()),
+              body: TabBarView(
+                children: visibleTabs.map(_buildTabView).toList(),
               ),
             ),
-        ],
+            if (_isMutating)
+              Positioned.fill(
+                child: ColoredBox(
+                  color: Colors.white.withValues(alpha: 0.72),
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+              ),
+          ],
+        ),
       ),
     );
+  }
+
+  List<_PatientDetailsTab> _visiblePatientTabs(AuthService auth) {
+    return [
+      if (auth.canAccessPatients) _PatientDetailsTab.overview,
+      if (auth.canAccessPatients) _PatientDetailsTab.medical,
+      if (auth.canAccessHomeVisits) _PatientDetailsTab.homeVisits,
+      if (auth.canAccessEquipment || auth.canAccessEquipmentDistribution)
+        _PatientDetailsTab.equipment,
+      if (auth.canAccessNHC) _PatientDetailsTab.assessments,
+      if (auth.canAccessMedicineSupply) _PatientDetailsTab.medicines,
+      if (auth.canAccessSocialSupport) _PatientDetailsTab.socialSupport,
+    ];
+  }
+
+  Widget _buildTabView(_PatientDetailsTab tab) {
+    return switch (tab) {
+      _PatientDetailsTab.overview => _buildOverviewTab(),
+      _PatientDetailsTab.medical => _buildMedicalTab(),
+      _PatientDetailsTab.homeVisits => _buildHomeVisitsTab(),
+      _PatientDetailsTab.equipment => _buildEquipmentTab(),
+      _PatientDetailsTab.assessments => _buildAssessmentsTab(),
+      _PatientDetailsTab.medicines => _buildMedicineSuppliesTab(),
+      _PatientDetailsTab.socialSupport => _buildSocialSupportTab(),
+    };
   }
 
   SliverAppBar _buildCollapsibleAppBar(AuthService auth, bool canShowMenu) {
@@ -418,31 +450,31 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
 
   List<Widget> _buildHeaderActions(AuthService auth, bool canShowMenu) {
     return [
-      // PDF download button
-      Padding(
-        padding: const EdgeInsets.only(right: 4),
-        child: _isPdfGenerating
-            ? const Padding(
-                padding: EdgeInsets.all(12),
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2.5,
+      if (auth.canAccessPatientPdf)
+        Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: _isPdfGenerating
+              ? const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2.5,
+                    ),
                   ),
+                )
+              : IconButton(
+                  tooltip: 'Download patient report (PDF)',
+                  onPressed: _isMutating ? null : _downloadPatientPdf,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.white.withValues(alpha: 0.14),
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 20),
                 ),
-              )
-            : IconButton(
-                tooltip: 'Download patient report (PDF)',
-                onPressed: _isMutating ? null : _downloadPatientPdf,
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.white.withValues(alpha: 0.14),
-                  foregroundColor: Colors.white,
-                ),
-                icon: const Icon(Icons.picture_as_pdf_outlined, size: 20),
-              ),
-      ),
+        ),
       if (auth.canEdit)
         Padding(
           padding: const EdgeInsets.only(right: 4),
@@ -492,7 +524,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
 
   double _headerActionWidth(AuthService auth, bool canShowMenu) {
     var width = 16.0;
-    width += 52; // PDF download button (always visible)
+    if (auth.canAccessPatientPdf) width += 52;
     if (auth.canEdit) width += 52;
     if (canShowMenu) width += 48;
     return width;
@@ -662,7 +694,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
     );
   }
 
-  Widget _buildTabs() {
+  Widget _buildTabs(List<_PatientDetailsTab> visibleTabs) {
     final visitCount = _details.homeVisits.length;
     final equipmentCount = _details.equipmentSupplies.length;
     final assessmentCount = _details.visitAssessments.length;
@@ -685,7 +717,6 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
         ],
       ),
       child: TabBar(
-        controller: _tabController,
         isScrollable: true,
         tabAlignment: TabAlignment.start,
         dividerColor: Colors.transparent,
@@ -702,15 +733,19 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
           fontWeight: FontWeight.w600,
         ),
         labelPadding: const EdgeInsets.symmetric(horizontal: 14),
-        tabs: [
-          const Tab(text: 'Overview'),
-          const Tab(text: 'Medical'),
-          Tab(text: 'Home Visits ($visitCount)'),
-          Tab(text: 'Equipment ($equipmentCount)'),
-          Tab(text: 'Assessment ($assessmentCount)'),
-          Tab(text: 'Medicines ($medicineSupplyCount)'),
-          Tab(text: 'Social Support ($socialSupportCount)'),
-        ],
+        tabs: visibleTabs.map((tab) {
+          final label = switch (tab) {
+            _PatientDetailsTab.overview => 'Overview',
+            _PatientDetailsTab.medical => 'Medical',
+            _PatientDetailsTab.homeVisits => 'Home Visits ($visitCount)',
+            _PatientDetailsTab.equipment => 'Equipment ($equipmentCount)',
+            _PatientDetailsTab.assessments => 'Assessment ($assessmentCount)',
+            _PatientDetailsTab.medicines => 'Medicines ($medicineSupplyCount)',
+            _PatientDetailsTab.socialSupport =>
+              'Social Support ($socialSupportCount)',
+          };
+          return Tab(text: label);
+        }).toList(),
       ),
     );
   }
@@ -1327,6 +1362,10 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
   }
 
   Widget _assessmentActionButton() {
+    if (!context.watch<AuthService>().canAccessNHC) {
+      return const SizedBox.shrink();
+    }
+
     return FilledButton.icon(
       onPressed: _detailsLoading ? null : _openVisitAssessments,
       icon: const Icon(Icons.add, size: 20),
@@ -1557,9 +1596,17 @@ class _PatientDetailsPageState extends State<PatientDetailsPage>
 
   Future<void> _downloadPatientPdf() async {
     if (_isPdfGenerating) return;
+    final auth = context.read<AuthService>();
+    if (!auth.canAccessPatientPdf) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Patient PDF Reports is not enabled for this unit.'),
+        ),
+      );
+      return;
+    }
     setState(() => _isPdfGenerating = true);
     try {
-      final auth = context.read<AuthService>();
       final bytes = await PatientPdfGenerator.generate(
         _details,
         brand: PatientReportBrand(

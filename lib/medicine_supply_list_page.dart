@@ -9,12 +9,14 @@ import 'package:oruma_app/models/medicine_supply.dart';
 import 'package:oruma_app/models/patient.dart';
 import 'package:oruma_app/models/medicine.dart';
 import 'package:oruma_app/services/auth_service.dart';
+import 'package:oruma_app/services/feature_permissions.dart';
 import 'package:oruma_app/services/medicine_supply_service.dart';
 import 'package:oruma_app/services/patient_service.dart';
 import 'package:oruma_app/services/medicine_service.dart';
 import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
 import 'package:oruma_app/widgets/app_bottom_nav_router.dart';
+import 'package:oruma_app/widgets/feature_permission_gate.dart';
 import 'package:oruma_app/widgets/module_switch_tabs.dart';
 import 'package:oruma_app/widgets/reveal_action_fab.dart';
 
@@ -131,6 +133,13 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
           color: _medicineGreen,
           onSelected: (index) {
             if (index == 1) {
+              if (!FeaturePermissionMiddleware.ensure(
+                context,
+                AppFeature.medicineMaster,
+                moduleName: 'Medicine',
+              )) {
+                return;
+              }
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -145,7 +154,7 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
         ],
       ),
-      floatingActionButton: auth.canCreate
+      floatingActionButton: auth.canCreate && auth.canAccessMedicineSupply
           ? RevealActionFab(
               onPressed: _navigateToCreateSupply,
               backgroundColor: _medicineGreen,

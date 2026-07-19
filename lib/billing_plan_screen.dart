@@ -23,7 +23,6 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
   BillingPortal? _portal;
   String? _error;
   bool _loading = true;
-  bool _submittingEnquiry = false;
 
   @override
   void initState() {
@@ -68,25 +67,33 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
       text: portal.unit.contactPhone ?? '',
     );
     final formKey = GlobalKey<FormState>();
+    // Capture the parent's context/scaffold messenger before the sheet opens,
+    // so we can safely use them after the sheet is dismissed.
+    final parentContext = context;
 
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
+      builder: (sheetContext) {
+        // submitting is kept local to the sheet's StatefulBuilder only.
+        bool submitting = false;
+
         return StatefulBuilder(
-          builder: (context, setSheetState) {
+          builder: (sheetContext, setSheetState) {
             Future<void> submit() async {
               if (!(formKey.currentState?.validate() ?? false)) return;
-              setSheetState(() => _submittingEnquiry = true);
+              setSheetState(() => submitting = true);
               final result = await _billingService.createPlanEnquiry(
                 selectedPlanId: plan.id,
                 contactNumber: controller.text.trim(),
               );
-              setSheetState(() => _submittingEnquiry = false);
+              // Pop the sheet first, then show the snackbar on the parent.
+              if (Navigator.of(sheetContext).canPop()) {
+                Navigator.of(sheetContext).pop();
+              }
               if (!mounted) return;
-              Navigator.of(this.context).pop();
-              ScaffoldMessenger.of(this.context).showSnackBar(
+              ScaffoldMessenger.of(parentContext).showSnackBar(
                 SnackBar(
                   content: Text(
                     result.isSuccess
@@ -99,7 +106,7 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
 
             return Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
+                bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
               ),
               child: Container(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
@@ -161,7 +168,7 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _submittingEnquiry ? null : submit,
+                          onPressed: submitting ? null : submit,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1A73E8),
                             foregroundColor: Colors.white,
@@ -171,9 +178,7 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
                             ),
                           ),
                           child: Text(
-                            _submittingEnquiry
-                                ? 'Sending...'
-                                : 'Create enquiry',
+                            submitting ? 'Sending...' : 'Create enquiry',
                           ),
                         ),
                       ),

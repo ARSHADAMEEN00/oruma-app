@@ -49,7 +49,15 @@ class CompactAppBottomBar extends StatelessWidget {
   static List<AppBottomNavItem> visibleItems(AuthService auth) {
     return items.where((item) {
       if (item.section == AppBottomSection.medicine &&
-          !auth.canAccessMedicine) {
+          !auth.canAccessMedicineSupply) {
+        return false;
+      }
+      if (item.section == AppBottomSection.patients &&
+          !auth.canAccessPatients) {
+        return false;
+      }
+      if (item.section == AppBottomSection.homeVisit &&
+          !auth.canAccessHomeVisits) {
         return false;
       }
       if (item.section == AppBottomSection.nhc && !auth.canAccessNHC) {
