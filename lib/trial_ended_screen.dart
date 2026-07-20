@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:oruma_app/core/theme/app_design_system.dart';
 import 'package:oruma_app/services/auth_service.dart';
+import 'package:oruma_app/shared/widgets/app_widgets.dart';
+import 'package:oruma_app/widgets/unit_brand_avatar.dart';
 import 'package:provider/provider.dart';
 
 class TrialEndedScreen extends StatelessWidget {
@@ -9,140 +12,143 @@ class TrialEndedScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
     final support = auth.accessBlockedSupport ?? const {};
-    final supportName = support['name']?.toString();
-    final supportPhone = support['phone']?.toString();
-    final supportEmail = support['email']?.toString();
+    final supportName = _clean(support['name']);
+    final supportPhone = _clean(support['phone']);
+    final supportEmail = _clean(support['email']);
+    final supportItems = [
+      if (supportName != null)
+        _SupportLine(icon: Icons.person_outline_rounded, text: supportName),
+      if (supportPhone != null)
+        _SupportLine(icon: Icons.phone_outlined, text: supportPhone),
+      if (supportEmail != null)
+        _SupportLine(icon: Icons.mail_outline_rounded, text: supportEmail),
+    ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: AppInsets.page,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 430),
-              child: Container(
-                padding: const EdgeInsets.all(28),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 30,
-                      offset: const Offset(0, 18),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 58,
-                      height: 58,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF1F2),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: const Icon(
-                        Icons.lock_clock_outlined,
-                        color: Color(0xFFE11D48),
-                        size: 30,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Trial period is ended',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
-                        height: 1.12,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      auth.accessBlockedMessage ??
-                          'Trial period is ended. Contact support team to purchase a plan.',
-                      style: const TextStyle(
-                        color: Color(0xFF64748B),
-                        fontSize: 16,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    if ([supportName, supportPhone, supportEmail]
-                        .where(
-                          (value) => value != null && value.trim().isNotEmpty,
-                        )
-                        .isNotEmpty)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Support team',
-                              style: TextStyle(
-                                color: Color(0xFF334155),
-                                fontWeight: FontWeight.w800,
-                                fontSize: 14,
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const UnitBrandAvatar(
+                    size: 72,
+                    preferAppIcon: true,
+                    backgroundColor: AppColors.primaryLight,
+                    iconColor: AppColors.primary,
+                    fallbackIcon: Icons.local_hospital_rounded,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  AppCard(
+                    surfaceLevel: AppSurfaceLevel.modal,
+                    padding: const EdgeInsets.all(AppSpacing.xl),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: AppSemanticColors.background(
+                              AppSemanticStatus.warning,
+                            ),
+                            borderRadius: AppRadius.card,
+                            border: Border.all(
+                              color: AppSemanticColors.border(
+                                AppSemanticStatus.warning,
                               ),
                             ),
-                            const SizedBox(height: 10),
-                            if (supportName != null &&
-                                supportName.trim().isNotEmpty)
-                              _SupportLine(
-                                icon: Icons.person_outline,
-                                text: supportName,
-                              ),
-                            if (supportPhone != null &&
-                                supportPhone.trim().isNotEmpty)
-                              _SupportLine(
-                                icon: Icons.phone_outlined,
-                                text: supportPhone,
-                              ),
-                            if (supportEmail != null &&
-                                supportEmail.trim().isNotEmpty)
-                              _SupportLine(
-                                icon: Icons.email_outlined,
-                                text: supportEmail,
-                              ),
-                          ],
-                        ),
-                      ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () =>
-                            context.read<AuthService>().clearAccessBlocked(),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF1D4ED8),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.lock_clock_rounded,
+                            color: AppColors.warning,
+                            size: AppIcons.feature,
                           ),
                         ),
-                        child: const Text('Back to login'),
-                      ),
+                        const SizedBox(height: AppSpacing.lg),
+                        Text(
+                          'Access needs renewal',
+                          style: Theme.of(context).textTheme.headlineMedium
+                              ?.copyWith(
+                                color: AppColors.text,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(
+                          auth.accessBlockedMessage ??
+                              'Your trial period has ended. Please contact support to renew your plan and continue using Oruma.',
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: AppColors.textSecondary,
+                                height: 1.5,
+                              ),
+                        ),
+                        if (supportItems.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.lg),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            decoration: const BoxDecoration(
+                              color: AppColors.surface1,
+                              borderRadius: AppRadius.md,
+                              border: Border.fromBorderSide(
+                                BorderSide(color: AppColors.border),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Support team',
+                                  style: Theme.of(context).textTheme.titleSmall
+                                      ?.copyWith(
+                                        color: AppColors.text,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                                const SizedBox(height: AppSpacing.xs),
+                                ...supportItems,
+                              ],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: AppSpacing.xl),
+                        AppPrimaryButton(
+                          label: 'Back to login',
+                          icon: Icons.arrow_back_rounded,
+                          fullWidth: true,
+                          onPressed: () =>
+                              context.read<AuthService>().clearAccessBlocked(),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    'Your data remains safe. Access will resume after renewal.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  static String? _clean(Object? value) {
+    final text = value?.toString().trim();
+    return text == null || text.isEmpty ? null : text;
   }
 }
 
@@ -155,16 +161,17 @@ class _SupportLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.only(top: AppSpacing.xs),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF64748B), size: 18),
-          const SizedBox(width: 8),
+          Icon(icon, color: AppColors.textSecondary, size: AppIcons.normal),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                color: Color(0xFF0F172A),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.text,
                 fontWeight: FontWeight.w600,
               ),
             ),

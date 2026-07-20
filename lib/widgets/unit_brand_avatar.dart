@@ -28,8 +28,10 @@ class UnitBrandAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthService>();
-    final source = preferAppIcon
+    final auth = _maybeAuth(context);
+    final source = auth == null
+        ? null
+        : preferAppIcon
         ? auth.unitAppIcon ?? auth.unitLogo
         : auth.unitLogo ?? auth.unitAppIcon;
 
@@ -89,5 +91,13 @@ class UnitBrandAvatar extends StatelessWidget {
 
   Widget _fallbackIcon() {
     return Icon(fallbackIcon, color: iconColor, size: iconSize ?? size * 0.55);
+  }
+
+  AuthService? _maybeAuth(BuildContext context) {
+    try {
+      return context.watch<AuthService>();
+    } on ProviderNotFoundException {
+      return null;
+    }
   }
 }

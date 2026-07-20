@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:oruma_app/core/theme/app_colors.dart';
+import 'package:oruma_app/core/theme/app_motion.dart';
 import 'package:oruma_app/patient_list_page.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_visit_picker_screen.dart';
 import 'package:oruma_app/home_visit_list_page.dart';
@@ -13,7 +15,7 @@ class AppBottomNavRouter {
   AppBottomNavRouter._();
 
   static bool _transitionInProgress = false;
-  static const _transitionDuration = Duration(milliseconds: 360);
+  static const _transitionDuration = AppMotion.page;
 
   static void handle(
     BuildContext context, {
@@ -82,14 +84,15 @@ class AppBottomNavRouter {
       opaque: true,
       transitionDuration: _transitionDuration,
       reverseTransitionDuration: _transitionDuration,
-      pageBuilder: (_, _, _) => ColoredBox(color: Colors.white, child: page),
+      pageBuilder: (_, _, _) =>
+          ColoredBox(color: AppColors.background, child: page),
       transitionsBuilder: (_, animation, _, child) {
         final slideAnimation =
             Tween<Offset>(
               begin: Offset(forward ? 1 : -1, 0),
               end: Offset.zero,
             ).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic),
+              CurvedAnimation(parent: animation, curve: AppMotion.easeInOut),
             );
         return ClipRect(
           child: SlideTransition(position: slideAnimation, child: child),

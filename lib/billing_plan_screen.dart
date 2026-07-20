@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:oruma_app/core/theme/app_design_system.dart';
 import 'package:oruma_app/models/billing.dart';
 import 'package:oruma_app/services/billing_service.dart';
+import 'package:oruma_app/shared/widgets/app_widgets.dart';
+import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+const _billingAccent = AppColors.primary;
+const _billingAccentSoft = AppColors.primaryLight;
 
 class BillingPlanScreen extends StatefulWidget {
   const BillingPlanScreen({super.key});
@@ -53,10 +59,60 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
     final uri = Uri.parse('http://localhost:5173/plan');
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Unable to open plan page')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to open plan page'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
     }
+  }
+
+  InputDecoration _inputDecoration({
+    required String label,
+    required IconData icon,
+  }) {
+    return InputDecoration(
+      isDense: true,
+      labelText: label,
+      prefixIcon: Container(
+        width: 36,
+        height: 36,
+        margin: const EdgeInsets.all(6),
+        decoration: const BoxDecoration(
+          color: _billingAccentSoft,
+          borderRadius: AppRadius.sm,
+        ),
+        child: Icon(icon, color: _billingAccent, size: 20),
+      ),
+      prefixIconConstraints: const BoxConstraints(minWidth: 50, minHeight: 50),
+      filled: true,
+      fillColor: AppColors.surface1,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      border: const OutlineInputBorder(
+        borderRadius: AppRadius.input,
+        borderSide: BorderSide(color: AppColors.border),
+      ),
+      enabledBorder: const OutlineInputBorder(
+        borderRadius: AppRadius.input,
+        borderSide: BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderRadius: AppRadius.input,
+        borderSide: BorderSide(color: _billingAccent, width: 1.4),
+      ),
+      errorBorder: const OutlineInputBorder(
+        borderRadius: AppRadius.input,
+        borderSide: BorderSide(color: AppColors.danger),
+      ),
+      focusedErrorBorder: const OutlineInputBorder(
+        borderRadius: AppRadius.input,
+        borderSide: BorderSide(color: AppColors.danger, width: 1.4),
+      ),
+    );
   }
 
   Future<void> _showUpgradeSheet(BillingPlan plan) async {
@@ -83,106 +139,121 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
           builder: (sheetContext, setSheetState) {
             Future<void> submit() async {
               if (!(formKey.currentState?.validate() ?? false)) return;
+              final navigator = Navigator.of(sheetContext);
+              final messenger = ScaffoldMessenger.of(parentContext);
               setSheetState(() => submitting = true);
               final result = await _billingService.createPlanEnquiry(
                 selectedPlanId: plan.id,
                 contactNumber: controller.text.trim(),
               );
               // Pop the sheet first, then show the snackbar on the parent.
-              if (Navigator.of(sheetContext).canPop()) {
-                Navigator.of(sheetContext).pop();
+              if (navigator.canPop()) {
+                navigator.pop();
               }
               if (!mounted) return;
-              ScaffoldMessenger.of(parentContext).showSnackBar(
+              messenger.showSnackBar(
                 SnackBar(
                   content: Text(
                     result.isSuccess
                         ? 'Upgrade enquiry sent to Oruma team.'
                         : result.error ?? 'Failed to send enquiry.',
                   ),
+                  backgroundColor: result.isSuccess
+                      ? AppColors.success
+                      : AppColors.danger,
                 ),
               );
             }
 
             return Padding(
               padding: EdgeInsets.only(
+                left: AppSpacing.md,
+                right: AppSpacing.md,
                 bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
               ),
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                ),
+              child: Material(
+                color: AppColors.surfaceModal,
+                borderRadius: AppRadius.sheet,
+                clipBehavior: Clip.antiAlias,
                 child: Form(
                   key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 46,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE0E3EA),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                        ),
+                  child: SafeArea(
+                    top: false,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.sm,
+                        AppSpacing.lg,
+                        AppSpacing.lg,
                       ),
-                      const SizedBox(height: 22),
-                      Text(
-                        'Request ${plan.name}',
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF111827),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'We will contact you to confirm pricing, modules, and migration needs.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          height: 1.4,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      TextFormField(
-                        controller: controller,
-                        keyboardType: TextInputType.phone,
-                        decoration: const InputDecoration(
-                          labelText: 'Contact number',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.phone_outlined),
-                        ),
-                        validator: (value) {
-                          if ((value ?? '').trim().isEmpty) {
-                            return 'Contact number is required';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 18),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: submitting ? null : submit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1A73E8),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 42,
+                              height: 4,
+                              margin: const EdgeInsets.only(
+                                bottom: AppSpacing.lg,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.borderStrong,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
                             ),
                           ),
-                          child: Text(
-                            submitting ? 'Sending...' : 'Create enquiry',
+                          Row(
+                            children: [
+                              const _IconTile(
+                                icon: Icons.workspace_premium_outlined,
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: Text(
+                                  'Request ${plan.name}',
+                                  style: Theme.of(
+                                    sheetContext,
+                                  ).textTheme.titleMedium,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            'We will contact you to confirm pricing, modules, and migration needs.',
+                            style: Theme.of(sheetContext).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: AppColors.textSecondary,
+                                  height: 1.45,
+                                ),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          TextFormField(
+                            controller: controller,
+                            keyboardType: TextInputType.phone,
+                            decoration: _inputDecoration(
+                              label: 'Contact number',
+                              icon: Icons.phone_outlined,
+                            ),
+                            validator: (value) {
+                              if ((value ?? '').trim().isEmpty) {
+                                return 'Contact number is required';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          AppPrimaryButton(
+                            label: 'Create enquiry',
+                            icon: Icons.send_outlined,
+                            fullWidth: true,
+                            loading: submitting,
+                            onPressed: submitting ? null : submit,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -197,13 +268,20 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFD),
+    return AdaptiveAppScaffold(
+      backgroundColor: AppColors.background,
+      contentMaxWidth: 980,
       appBar: AppBar(
-        title: const Text('Billing & Plan'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1F2937),
-        elevation: 0.4,
+        toolbarHeight: 76,
+        titleSpacing: AppSpacing.lg,
+        title: Text(
+          'Billing & Plan',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.text,
+        elevation: 0,
+        scrolledUnderElevation: 0,
       ),
       body: _buildBody(),
     );
@@ -211,7 +289,15 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.md,
+          AppSpacing.lg,
+          AppSpacing.lg,
+        ),
+        child: AppListSkeleton(itemCount: 5),
+      );
     }
 
     if (_error != null || _portal == null) {
@@ -225,7 +311,12 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
     return RefreshIndicator(
       onRefresh: _loadBilling,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.md,
+          AppSpacing.lg,
+          AppSpacing.xl,
+        ),
         children: [
           _CurrentPlanCard(
             portal: portal,
@@ -233,13 +324,13 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
             date: _formatDate,
             onOpenPlanPage: _openPlanPage,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.sm),
           _SummaryGrid(
             summary: portal.summary,
             currency: _money,
             date: _formatDate,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.sm),
           _PlansSection(
             plans: portal.plans,
             currentPlanId: portal.currentPlan?.id ?? portal.unit.planId,
@@ -247,26 +338,28 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
             featureLabel: _featureLabel,
             onUpgrade: _showUpgradeSheet,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.sm),
           _SubscriptionSection(portal: portal, date: _formatDate),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.sm),
           _PlanDetailsSection(
             plan: portal.currentPlan,
             featureLabel: _featureLabel,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.sm),
           _MaintenanceSection(
             entries: portal.maintenanceHistory,
             currency: _money,
             date: _formatDate,
+            onEntryTap: _showMaintenanceDetails,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.sm),
           _PaymentSection(
             rows: portal.paymentRows,
             currency: _money,
             date: _formatDate,
+            onRowTap: _showPaymentDetails,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.sm),
           _BillingSummarySection(
             summary: portal.summary,
             currency: _money,
@@ -283,6 +376,154 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
     if (value == null) return '-';
     return _date.format(value.toLocal());
   }
+
+  void _showMaintenanceDetails(MaintenanceHistoryEntry entry) {
+    _showBillingDetailsSheet(
+      icon: Icons.home_repair_service_outlined,
+      title: entry.label,
+      subtitle: 'Maintenance record',
+      badge: entry.status,
+      details: [
+        _BillingDetail('Amount', _money(entry.amount)),
+        _BillingDetail('Due date', _formatDate(entry.dueDate)),
+        _BillingDetail('Status', entry.status),
+        if ((entry.notes ?? '').isNotEmpty)
+          _BillingDetail('Notes', entry.notes!),
+      ],
+    );
+  }
+
+  void _showPaymentDetails(PaymentHistoryRow row) {
+    final isPayment = row.isPayment;
+    _showBillingDetailsSheet(
+      icon: isPayment ? Icons.payments_outlined : Icons.receipt_long_outlined,
+      title: row.label,
+      subtitle: isPayment ? 'Payment record' : 'Invoice record',
+      badge: row.status,
+      details: [
+        _BillingDetail('Type', isPayment ? 'Payment' : 'Invoice'),
+        _BillingDetail('Amount', _money(row.amount)),
+        if (!isPayment) _BillingDetail('Paid amount', _money(row.paidAmount)),
+        if (!isPayment) _BillingDetail('Remaining', _money(row.displayAmount)),
+        _BillingDetail('Due date', _formatDate(row.dueDate)),
+        if (row.paidAt != null)
+          _BillingDetail('Paid on', _formatDate(row.paidAt)),
+        if ((row.method ?? '').isNotEmpty)
+          _BillingDetail('Method', row.method!),
+        _BillingDetail('Status', row.status),
+      ],
+    );
+  }
+
+  void _showBillingDetailsSheet({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String badge,
+    required List<_BillingDetail> details,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: Material(
+            color: AppColors.surfaceModal,
+            borderRadius: AppRadius.sheet,
+            clipBehavior: Clip.antiAlias,
+            child: SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 42,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+                        decoration: BoxDecoration(
+                          color: AppColors.borderStrong,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _IconTile(icon: icon),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: Theme.of(
+                                  sheetContext,
+                                ).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: AppSpacing.xxs),
+                              Text(
+                                subtitle,
+                                style: Theme.of(sheetContext)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(color: AppColors.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                        _StatusBadge(label: badge),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    AppCard(
+                      padding: AppInsets.md,
+                      surfaceLevel: AppSurfaceLevel.surface1,
+                      child: Column(
+                        children: details
+                            .map(
+                              (detail) => _DetailRow(
+                                label: detail.label,
+                                value: detail.value,
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    AppSecondaryButton(
+                      label: 'Close',
+                      icon: Icons.close,
+                      fullWidth: true,
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _BillingDetail {
+  const _BillingDetail(this.label, this.value);
+
+  final String label;
+  final String value;
 }
 
 class _CurrentPlanCard extends StatelessWidget {
@@ -310,32 +551,30 @@ class _CurrentPlanCard extends StatelessWidget {
               Container(
                 width: 52,
                 height: 52,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F0FE),
-                  borderRadius: BorderRadius.circular(14),
+                decoration: const BoxDecoration(
+                  color: _billingAccentSoft,
+                  borderRadius: AppRadius.md,
                 ),
                 child: const Icon(
                   Icons.workspace_premium_outlined,
-                  color: Color(0xFF1A73E8),
+                  color: _billingAccent,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       portal.summary.planName,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF111827),
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xxs),
                     Text(
                       '${portal.unit.name} • ${portal.summary.billingCycle}',
-                      style: TextStyle(color: Colors.grey.shade700),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -343,7 +582,7 @@ class _CurrentPlanCard extends StatelessWidget {
               _StatusBadge(label: portal.summary.subscriptionStatus),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Expanded(
@@ -353,7 +592,7 @@ class _CurrentPlanCard extends StatelessWidget {
                   helper: date(portal.summary.upcomingPaymentDueDate),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: _SmallInfo(
                   label: 'Plan page',
@@ -408,44 +647,42 @@ class _SummaryGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisExtent: 112,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
+        mainAxisExtent: 108,
+        mainAxisSpacing: AppSpacing.sm,
+        crossAxisSpacing: AppSpacing.sm,
       ),
       itemBuilder: (context, index) {
         final item = items[index];
         return _SectionCard(
-          padding: const EdgeInsets.all(12),
+          padding: AppInsets.md,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 item.label.toUpperCase(),
-                style: TextStyle(
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.grey.shade600,
-                  letterSpacing: 0.3,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 item.value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
-                ),
+                style: Theme.of(context).textTheme.titleMedium,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xxs),
               Text(
                 item.helper,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -472,6 +709,9 @@ class _PlansSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentIndex = plans.indexWhere((plan) => plan.id == currentPlanId);
+    final currentPlan = currentIndex == -1 ? null : plans[currentIndex];
+
     return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -480,21 +720,27 @@ class _PlansSection extends StatelessWidget {
             title: 'Available plans',
             subtitle: 'Compare plan levels and request an upgrade.',
           ),
-          const SizedBox(height: 12),
-          ...plans.map((plan) {
+          const SizedBox(height: AppSpacing.md),
+          ...plans.asMap().entries.map((entry) {
+            final planIndex = entry.key;
+            final plan = entry.value;
             final isCurrent = plan.id == currentPlanId;
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
+            final canRequestUpgrade = _isUpperPlan(
+              plan: plan,
+              currentPlan: currentPlan,
+              planIndex: planIndex,
+              currentIndex: currentIndex,
+            );
+            return AnimatedContainer(
+              duration: AppMotion.normal,
+              curve: AppMotion.easeOutCubic,
+              margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+              padding: AppInsets.md,
               decoration: BoxDecoration(
-                color: isCurrent
-                    ? const Color(0xFFE8F0FE)
-                    : const Color(0xFFF8FAFD),
-                borderRadius: BorderRadius.circular(14),
+                color: isCurrent ? AppColors.primarySoft : AppColors.surface1,
+                borderRadius: AppRadius.md,
                 border: Border.all(
-                  color: isCurrent
-                      ? const Color(0xFF1A73E8)
-                      : const Color(0xFFE2E8F0),
+                  color: isCurrent ? _billingAccent : AppColors.border,
                 ),
               ),
               child: Column(
@@ -505,32 +751,30 @@ class _PlansSection extends StatelessWidget {
                       Expanded(
                         child: Text(
                           plan.name,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF111827),
-                          ),
+                          style: Theme.of(context).textTheme.titleSmall,
                         ),
                       ),
                       if (isCurrent) const _StatusBadge(label: 'Current'),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     '${currency(plan.price)} / month • ${currency(plan.oneTimePrice)} one-time',
-                    style: const TextStyle(
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF1A73E8),
+                      color: _billingAccent,
                     ),
                   ),
                   if ((plan.bestFor ?? '').isNotEmpty) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSpacing.xs),
                     Text(
                       plan.bestFor!,
-                      style: TextStyle(color: Colors.grey.shade700),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -538,28 +782,15 @@ class _PlansSection extends StatelessWidget {
                       return _FeatureChip(label: featureLabel(featureId));
                     }).toList(),
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: isCurrent ? null : () => onUpgrade(plan),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1A73E8),
-                        side: BorderSide(
-                          color: isCurrent
-                              ? Colors.grey.shade300
-                              : const Color(0xFF1A73E8),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        isCurrent ? 'Current plan' : 'Request upgrade',
-                      ),
+                  if (canRequestUpgrade) ...[
+                    const SizedBox(height: AppSpacing.md),
+                    AppSecondaryButton(
+                      label: 'Request upgrade',
+                      icon: Icons.arrow_upward_outlined,
+                      fullWidth: true,
+                      onPressed: () => onUpgrade(plan),
                     ),
-                  ),
+                  ],
                 ],
               ),
             );
@@ -567,6 +798,29 @@ class _PlansSection extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  bool _isUpperPlan({
+    required BillingPlan plan,
+    required BillingPlan? currentPlan,
+    required int planIndex,
+    required int currentIndex,
+  }) {
+    if (plan.id == currentPlanId) return false;
+
+    if (currentPlan == null) {
+      return currentIndex != -1 && planIndex > currentIndex;
+    }
+
+    if (plan.price != currentPlan.price) {
+      return plan.price > currentPlan.price;
+    }
+
+    if (plan.oneTimePrice != currentPlan.oneTimePrice) {
+      return plan.oneTimePrice > currentPlan.oneTimePrice;
+    }
+
+    return currentIndex != -1 && planIndex > currentIndex;
   }
 }
 
@@ -586,7 +840,7 @@ class _SubscriptionSection extends StatelessWidget {
             title: 'Subscription',
             subtitle: 'Current subscription terms for this unit.',
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           _DetailRow(label: 'Status', value: portal.summary.subscriptionStatus),
           _DetailRow(
             label: 'Billing cycle',
@@ -633,7 +887,7 @@ class _PlanDetailsSection extends StatelessWidget {
             title: 'Plan details',
             subtitle: plan?.included ?? 'Included features and usage scope.',
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           if (plan == null)
             const _EmptyText('No plan details available.')
           else
@@ -655,11 +909,13 @@ class _MaintenanceSection extends StatelessWidget {
     required this.entries,
     required this.currency,
     required this.date,
+    required this.onEntryTap,
   });
 
   final List<MaintenanceHistoryEntry> entries;
   final String Function(double value) currency;
   final String Function(DateTime? value) date;
+  final ValueChanged<MaintenanceHistoryEntry> onEntryTap;
 
   @override
   Widget build(BuildContext context) {
@@ -671,7 +927,7 @@ class _MaintenanceSection extends StatelessWidget {
             title: 'Maintenance history',
             subtitle: 'Yearly maintenance and service fee records.',
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           if (entries.isEmpty)
             const _EmptyText('No maintenance entries yet.')
           else
@@ -681,6 +937,7 @@ class _MaintenanceSection extends StatelessWidget {
                 subtitle: date(entry.dueDate),
                 trailing: currency(entry.amount),
                 badge: entry.status,
+                onTap: () => onEntryTap(entry),
               );
             }),
         ],
@@ -694,11 +951,13 @@ class _PaymentSection extends StatelessWidget {
     required this.rows,
     required this.currency,
     required this.date,
+    required this.onRowTap,
   });
 
   final List<PaymentHistoryRow> rows;
   final String Function(double value) currency;
   final String Function(DateTime? value) date;
+  final ValueChanged<PaymentHistoryRow> onRowTap;
 
   @override
   Widget build(BuildContext context) {
@@ -719,7 +978,7 @@ class _PaymentSection extends StatelessWidget {
             title: 'Payment details',
             subtitle: 'Open bills and payments recorded for this unit.',
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           if (openBills.isEmpty && paymentHistory.isEmpty)
             const _EmptyText('No billing records found.')
           else ...[
@@ -731,9 +990,10 @@ class _PaymentSection extends StatelessWidget {
                   subtitle: _openBillSubtitle(row),
                   trailing: currency(row.displayAmount),
                   badge: row.paidAmount > 0 ? 'partial due' : row.status,
+                  onTap: () => onRowTap(row),
                 );
               }),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpacing.sm),
             ],
             const _InlineLabel('Payment history'),
             if (paymentHistory.isEmpty)
@@ -745,6 +1005,7 @@ class _PaymentSection extends StatelessWidget {
                   subtitle: _historySubtitle(row),
                   trailing: currency(row.amount),
                   badge: row.status,
+                  onTap: () => onRowTap(row),
                 );
               }),
           ],
@@ -796,7 +1057,7 @@ class _BillingSummarySection extends StatelessWidget {
             subtitle:
                 'Outstanding balance reduces when invoices are marked paid or manual payments are recorded.',
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           _DetailRow(
             label: 'Total invoiced',
             value: currency(summary.totalInvoiced),
@@ -818,31 +1079,36 @@ class _BillingSummarySection extends StatelessWidget {
 }
 
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({
-    required this.child,
-    this.padding = const EdgeInsets.all(16),
-  });
+  const _SectionCard({required this.child, this.padding = AppInsets.card});
 
   final Widget child;
   final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppCard(
       padding: padding,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+      surfaceLevel: AppSurfaceLevel.elevated,
       child: child,
+    );
+  }
+}
+
+class _IconTile extends StatelessWidget {
+  const _IconTile({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: const BoxDecoration(
+        color: _billingAccentSoft,
+        borderRadius: AppRadius.md,
+      ),
+      child: Icon(icon, color: _billingAccent, size: 22),
     );
   }
 }
@@ -858,21 +1124,13 @@ class _SectionTitle extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF111827),
-          ),
-        ),
-        const SizedBox(height: 4),
+        Text(title, style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: AppSpacing.xxs),
         Text(
           subtitle,
-          style: TextStyle(
-            fontSize: 13,
-            height: 1.35,
-            color: Colors.grey.shade700,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            height: 1.45,
+            color: AppColors.textSecondary,
           ),
         ),
       ],
@@ -888,14 +1146,17 @@ class _InlineLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 4),
+      padding: const EdgeInsets.only(
+        top: AppSpacing.xxs,
+        bottom: AppSpacing.xxs,
+      ),
       child: Text(
         label.toUpperCase(),
-        style: TextStyle(
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontSize: 11,
-          fontWeight: FontWeight.w800,
-          color: Colors.grey.shade600,
-          letterSpacing: 0.3,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textSecondary,
+          letterSpacing: 0,
         ),
       ),
     );
@@ -911,15 +1172,14 @@ class _DetailRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 9),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         children: [
           Expanded(
             child: Text(
               label,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade700,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -928,10 +1188,9 @@ class _DetailRow extends StatelessWidget {
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF111827),
-                fontWeight: FontWeight.w800,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.text,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -947,19 +1206,24 @@ class _ListRow extends StatelessWidget {
     required this.subtitle,
     required this.trailing,
     required this.badge,
+    this.onTap,
   });
 
   final String title;
   final String subtitle;
   final String trailing;
   final String badge;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+    final row = Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+      padding: AppInsets.md,
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+        color: AppColors.surface1,
+        borderRadius: AppRadius.md,
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -969,33 +1233,52 @@ class _ListRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF111827),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.text,
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: AppSpacing.xxs),
                 Text(
                   subtitle,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.xs),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 trailing,
-                style: const TextStyle(fontWeight: FontWeight.w800),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 5),
+              const SizedBox(height: AppSpacing.xxs),
               _StatusBadge(label: badge),
             ],
           ),
+          if (onTap != null) ...[
+            const SizedBox(width: AppSpacing.xs),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textMuted,
+              size: 24,
+            ),
+          ],
         ],
       ),
+    );
+
+    if (onTap == null) return row;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: AppRadius.md,
+      child: InkWell(onTap: onTap, borderRadius: AppRadius.md, child: row),
     );
   }
 }
@@ -1012,14 +1295,17 @@ class _StatusBadge extends StatelessWidget {
         normal.contains('paid') ||
             normal.contains('active') ||
             normal.contains('current')
-        ? const Color(0xFF188038)
+        ? AppColors.success
         : normal.contains('trial') ||
               normal.contains('due') ||
               normal.contains('pending')
-        ? const Color(0xFFB06000)
-        : const Color(0xFF5F6368);
+        ? AppColors.warning
+        : AppColors.textSecondary;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xxs,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
@@ -1029,7 +1315,7 @@ class _StatusBadge extends StatelessWidget {
         style: TextStyle(
           color: color,
           fontSize: 11,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -1053,42 +1339,41 @@ class _SmallInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: AppRadius.md,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: AppInsets.md,
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFD),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          color: AppColors.surface1,
+          borderRadius: AppRadius.md,
+          border: Border.all(color: AppColors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Colors.grey.shade700,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF111827),
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xxs),
             Text(
               helper,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -1105,22 +1390,25 @@ class _FeatureChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8F0FE),
-        borderRadius: BorderRadius.circular(999),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: const BoxDecoration(
+        color: _billingAccentSoft,
+        borderRadius: AppRadius.button,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.check, size: 14, color: Color(0xFF1A73E8)),
-          const SizedBox(width: 5),
+          const Icon(Icons.check, size: 14, color: _billingAccent),
+          const SizedBox(width: AppSpacing.xs),
           Text(
             label,
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF174EA6),
+              color: _billingAccent,
             ),
           ),
         ],
@@ -1137,8 +1425,13 @@ class _EmptyText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 18),
-      child: Text(message, style: TextStyle(color: Colors.grey.shade600)),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      child: Text(
+        message,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+      ),
     );
   }
 }
@@ -1151,30 +1444,14 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.receipt_long_outlined,
-              size: 48,
-              color: Color(0xFF5F6368),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF111827),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
-        ),
+    return AppEmptyState(
+      icon: Icons.receipt_long_outlined,
+      title: 'Billing unavailable',
+      message: message,
+      action: AppSecondaryButton(
+        label: 'Retry',
+        icon: Icons.refresh,
+        onPressed: onRetry,
       ),
     );
   }

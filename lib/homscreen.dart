@@ -22,6 +22,8 @@ import 'package:oruma_app/services/feature_permissions.dart';
 import 'package:oruma_app/services/notification_service.dart';
 import 'package:oruma_app/models/app_notification.dart';
 import 'package:oruma_app/models/equipment_supply.dart';
+import 'package:oruma_app/core/theme/app_design_system.dart';
+import 'package:oruma_app/shared/widgets/app_widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:oruma_app/config_page.dart';
 import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
@@ -180,233 +182,214 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      barrierColor: AppColors.scrim,
       isScrollControlled: true,
-      builder: (context) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.64,
-        ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
+      builder: (context) {
+        final textTheme = Theme.of(context).textTheme;
+
+        return SafeArea(
+          top: false,
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.72,
             ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Notifications",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A237E),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      "$_notificationCount Active",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.orange,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: AppRadius.sheet,
+              boxShadow: AppShadow.large,
             ),
-            const Divider(height: 1),
-            Flexible(
-              child: _notificationsLoading && notifications.isEmpty
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(40),
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  : notifications.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(40),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.notifications_none,
-                              size: 64,
-                              color: Colors.grey[300],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              "No notifications",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: AppSpacing.sm),
+                  width: 52,
+                  height: 5,
+                  decoration: const BoxDecoration(
+                    color: AppColors.borderStrong,
+                    borderRadius: AppRadius.xs,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.md,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Notifications',
+                          style: textTheme.headlineMedium?.copyWith(
+                            color: AppColors.text,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shrinkWrap: true,
-                      itemCount: notifications.length,
-                      separatorBuilder: (context, index) => Divider(
-                        height: 1,
-                        indent: 20,
-                        endIndent: 20,
-                        color: Colors.grey[200],
+                      _ShellStatusPill(
+                        label: '$_notificationCount Active',
+                        icon: Icons.bolt_rounded,
+                        color: AppColors.warning,
                       ),
-                      itemBuilder: (context, index) {
-                        final notification = notifications[index];
-                        final color = _notificationColor(notification);
-
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 8,
-                          ),
-                          leading: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              _notificationIcon(notification),
-                              color: color,
-                              size: 24,
-                            ),
-                          ),
-                          title: Text(
-                            notification.title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Icon(
-                                      Icons.info_outline,
-                                      size: 14,
-                                      color: Colors.grey[600],
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        notification.message,
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.grey[600],
-                                        ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 2),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.access_time,
-                                      size: 14,
-                                      color: Colors.grey[600],
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      _formatNotificationTime(
-                                        notification.triggeredAt,
-                                      ),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[500],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          trailing: Icon(
-                            Icons.chevron_right,
-                            color: Colors.grey[400],
-                          ),
-                          onTap: () {
-                            Navigator.pop(context);
-                            _handleNotificationTap(notification);
-                          },
-                        );
-                      },
-                    ),
-            ),
-            if (notifications.isNotEmpty)
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: Colors.grey[200]!)),
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _openNotifications();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1A237E),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      "Refresh Notifications",
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    ],
                   ),
                 ),
-              ),
-          ],
-        ),
-      ),
+                const Divider(height: 1),
+                Flexible(
+                  child: _notificationsLoading && notifications.isEmpty
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(AppSpacing.xl),
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
+                      : notifications.isEmpty
+                      ? const AppEmptyState(
+                          icon: Icons.notifications_none_rounded,
+                          title: 'No notifications',
+                          message:
+                              'Everything is clear. New care alerts will appear here.',
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                            vertical: AppSpacing.md,
+                          ),
+                          shrinkWrap: true,
+                          itemCount: notifications.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: AppSpacing.sm),
+                          itemBuilder: (context, index) {
+                            final notification = notifications[index];
+                            final color = _notificationColor(notification);
+
+                            return Material(
+                              color: AppColors.surface,
+                              borderRadius: AppRadius.card,
+                              child: InkWell(
+                                borderRadius: AppRadius.card,
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  _handleNotificationTap(notification);
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(AppSpacing.md),
+                                  decoration: BoxDecoration(
+                                    borderRadius: AppRadius.card,
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        width: 56,
+                                        height: 56,
+                                        decoration: BoxDecoration(
+                                          color: color.withValues(alpha: 0.1),
+                                          borderRadius: AppRadius.md,
+                                        ),
+                                        child: Icon(
+                                          _notificationIcon(notification),
+                                          color: color,
+                                          size: AppIcons.large,
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppSpacing.md),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              notification.title,
+                                              style: textTheme.titleSmall
+                                                  ?.copyWith(
+                                                    color: AppColors.text,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(
+                                              height: AppSpacing.xxs,
+                                            ),
+                                            Text(
+                                              notification.message,
+                                              style: textTheme.bodyMedium
+                                                  ?.copyWith(
+                                                    color:
+                                                        AppColors.textSecondary,
+                                                    height: 1.45,
+                                                  ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(
+                                              height: AppSpacing.xs,
+                                            ),
+                                            Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.schedule_rounded,
+                                                  size: AppIcons.small,
+                                                  color: AppColors.textMuted,
+                                                ),
+                                                const SizedBox(
+                                                  width: AppSpacing.xxs,
+                                                ),
+                                                Text(
+                                                  _formatNotificationTime(
+                                                    notification.triggeredAt,
+                                                  ),
+                                                  style: textTheme.labelMedium
+                                                      ?.copyWith(
+                                                        color:
+                                                            AppColors.textMuted,
+                                                      ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppSpacing.sm),
+                                      const Icon(
+                                        Icons.chevron_right_rounded,
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+                if (notifications.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    decoration: const BoxDecoration(
+                      color: AppColors.surfaceFloating,
+                      border: Border(top: BorderSide(color: AppColors.border)),
+                    ),
+                    child: AppPrimaryButton(
+                      label: 'Refresh Notifications',
+                      icon: Icons.refresh_rounded,
+                      fullWidth: true,
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _openNotifications();
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -465,7 +448,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
         _buildQuickActionItem(
           icon: Icons.person_add_rounded,
           label: "Patient",
-          color: Colors.blue,
+          color: ModulePalettes.patients.primary,
           onTap: () {
             Navigator.pop(context);
             Navigator.push(
@@ -483,7 +466,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
         _buildQuickActionItem(
           icon: Icons.add_home_work_rounded,
           label: "Visit",
-          color: Colors.green,
+          color: ModulePalettes.homeVisits.primary,
           onTap: () {
             Navigator.pop(context);
             Navigator.push(
@@ -501,7 +484,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
         _buildQuickActionItem(
           icon: Icons.medical_services_rounded,
           label: "Supply",
-          color: Colors.orange,
+          color: ModulePalettes.equipmentSupply.primary,
           onTap: () async {
             Navigator.pop(context);
             await Navigator.push(
@@ -524,37 +507,56 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Quick Add",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1A237E),
-              ),
-            ),
-            const SizedBox(height: 20),
-            if (actions.isEmpty)
+      barrierColor: AppColors.scrim,
+      builder: (context) => SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            AppSpacing.lg,
+          ),
+          decoration: const BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: AppRadius.sheet,
+            boxShadow: AppShadow.large,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Center(child: _SheetHandle()),
+              const SizedBox(height: AppSpacing.lg),
               Text(
-                'No quick actions are enabled for this unit.',
-                style: TextStyle(color: Colors.grey.shade700),
-              )
-            else
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: actions,
+                "Quick Add",
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: AppColors.text,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            const SizedBox(height: 20),
-          ],
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Create common care records faster.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              if (actions.isEmpty)
+                const AppEmptyState(
+                  icon: Icons.add_circle_outline_rounded,
+                  title: 'No quick actions',
+                  message: 'No quick actions are enabled for this unit.',
+                )
+              else
+                Wrap(
+                  spacing: AppSpacing.md,
+                  runSpacing: AppSpacing.md,
+                  children: actions,
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -566,26 +568,41 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
     required Color color,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
+    return SizedBox(
+      width: 104,
+      child: Material(
+        color: AppColors.surface1,
+        borderRadius: AppRadius.card,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppRadius.card,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: AppRadius.md,
+                  ),
+                  child: Icon(icon, color: color, size: AppIcons.large),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: AppColors.text,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
-            child: Icon(icon, color: color, size: 30),
           ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -594,6 +611,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      barrierColor: AppColors.scrim,
       isScrollControlled: true,
       builder: (context) {
         final auth = context.watch<AuthService>();
@@ -605,52 +623,67 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
               maxHeight: MediaQuery.of(context).size.height * 0.86,
             ),
             decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              color: AppColors.surface,
+              borderRadius: AppRadius.sheet,
+              boxShadow: AppShadow.large,
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.lg,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 50,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                  const _SheetHandle(),
+                  const SizedBox(height: AppSpacing.lg),
                   const UnitBrandAvatar(
                     size: 80,
                     preferAppIcon: true,
-                    backgroundColor: Color(0xFF1A237E),
-                    iconColor: Colors.white,
+                    backgroundColor: AppColors.primaryLight,
+                    iconColor: AppColors.primary,
                     fallbackIcon: Icons.person,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
                   Text(
                     auth.unitName,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A237E),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: AppColors.text,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  Text(
-                    user?['name'] ?? "",
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                  Text(
-                    user?['email'] ?? "",
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.xs),
+                  if ((user?['name']?.toString().trim().isNotEmpty ?? false))
+                    Text(
+                      user!['name'].toString(),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  if ((user?['email']?.toString().trim().isNotEmpty ?? false))
+                    Text(
+                      user!['email'].toString(),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  const SizedBox(height: AppSpacing.xl),
                   _buildProfileMenuItem(
                     icon: Icons.settings_outlined,
                     title: "Settings",
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ConfigPage(),
+                        ),
+                      );
+                    },
                   ),
                   _buildProfileMenuItem(
                     icon: Icons.receipt_long_outlined,
@@ -676,7 +709,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                   _buildProfileMenuItem(
                     icon: Icons.logout,
                     title: "Logout",
-                    color: Colors.red,
+                    color: AppColors.danger,
                     onTap: () {
                       Navigator.pop(context); // Close sheet
                       context.read<AuthService>().logout();
@@ -688,7 +721,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                       );
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
                 ],
               ),
             ),
@@ -715,55 +748,58 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
               maxHeight: MediaQuery.of(context).size.height * 0.86,
             ),
             decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              color: AppColors.surface,
+              borderRadius: AppRadius.sheet,
+              boxShadow: AppShadow.large,
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.lg,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  const _SheetHandle(),
+                  const SizedBox(height: AppSpacing.lg),
                   Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1A237E), Color(0xFF0277BD)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
+                    width: 64,
+                    height: 64,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primaryLight,
+                      borderRadius: AppRadius.card,
                     ),
                     child: const Icon(
-                      Icons.contact_support,
-                      size: 36,
-                      color: Colors.white,
+                      Icons.contact_support_rounded,
+                      size: AppIcons.feature,
+                      color: AppColors.primary,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
                     "Help & Support",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A237E),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: AppColors.text,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Contact your unit support team.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[200]!),
+                      color: AppColors.surface1,
+                      borderRadius: AppRadius.card,
+                      border: Border.all(color: AppColors.border),
                     ),
                     child: Column(
                       children: [
@@ -772,79 +808,84 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1A237E).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10),
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: AppRadius.sm,
                               ),
                               child: const Icon(
-                                Icons.business,
-                                color: Color(0xFF1A237E),
-                                size: 20,
+                                Icons.business_rounded,
+                                color: AppColors.primary,
+                                size: AppIcons.normal,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: AppSpacing.sm),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     auth.unitName,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(
+                                          color: AppColors.text,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                   ),
-                                  const SizedBox(height: 2),
+                                  const SizedBox(height: AppSpacing.xxs),
                                   Text(
                                     auth.unitLocation,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey,
-                                    ),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
                                   ),
                                 ],
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.md),
                         const Divider(height: 1),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.md),
                         Row(
                           children: [
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10),
+                                color: AppColors.success.withValues(alpha: 0.1),
+                                borderRadius: AppRadius.sm,
                               ),
                               child: const Icon(
-                                Icons.phone,
-                                color: Colors.green,
-                                size: 20,
+                                Icons.phone_rounded,
+                                color: AppColors.success,
+                                size: AppIcons.normal,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: AppSpacing.sm),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     "Contact Number",
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelMedium
+                                        ?.copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
                                   ),
-                                  const SizedBox(height: 2),
+                                  const SizedBox(height: AppSpacing.xxs),
                                   Text(
                                     supportPhone ?? 'Not added',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(
+                                          color: AppColors.text,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                   ),
                                 ],
                               ),
@@ -854,7 +895,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -874,7 +915,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                                       content: Text(
                                         'Could not launch phone dialer',
                                       ),
-                                      backgroundColor: Colors.red,
+                                      backgroundColor: AppColors.danger,
                                     ),
                                   );
                                 }
@@ -889,13 +930,13 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        backgroundColor: AppColors.success,
+                        foregroundColor: AppColors.textInverse,
+                        minimumSize: const Size.fromHeight(56),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: AppRadius.button,
                         ),
-                        elevation: 2,
+                        elevation: 0,
                       ),
                     ),
                   ),
@@ -912,14 +953,35 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(AppSpacing.lg),
+        child: AppCard(
+          surfaceLevel: AppSurfaceLevel.modal,
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Support QR',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppColors.text,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Close',
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              ClipRRect(
+                borderRadius: AppRadius.card,
                 child: Image.asset(
                   'assets/QR.jpeg',
                   fit: BoxFit.contain,
@@ -937,20 +999,17 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                   },
                 ),
               ),
-            ),
-            const Padding(
-              padding: EdgeInsets.only(bottom: 20.0, left: 16.0, right: 16.0),
-              child: Text(
+              const SizedBox(height: AppSpacing.md),
+              Text(
                 'ORUMA PALLIATIVE CARE SOCIETY KODUR',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A237E),
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: AppColors.text,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -962,25 +1021,32 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
     required VoidCallback onTap,
     Color? color,
   }) {
+    final itemColor = color ?? AppColors.primary;
     return ListTile(
       leading: Container(
-        padding: const EdgeInsets.all(8),
+        width: 44,
+        height: 44,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: (color ?? const Color(0xFF1A237E)).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
+          color: itemColor.withValues(alpha: 0.1),
+          borderRadius: AppRadius.md,
         ),
-        child: Icon(icon, color: color ?? const Color(0xFF1A237E), size: 20),
+        child: Icon(icon, color: itemColor, size: AppIcons.normal),
       ),
       title: Text(
         title,
-        style: TextStyle(
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
           fontWeight: FontWeight.w600,
-          color: color ?? Colors.grey[800],
+          color: color ?? AppColors.text,
         ),
       ),
-      trailing: const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+      trailing: const Icon(
+        Icons.chevron_right_rounded,
+        size: AppIcons.normal,
+        color: AppColors.textMuted,
+      ),
       onTap: onTap,
-      contentPadding: EdgeInsets.zero,
+      contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
     );
   }
 
@@ -999,307 +1065,359 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
     return AdaptiveAppScaffold(
       scaffoldKey: _scaffoldKey,
       drawer: _buildProfessionalDrawer(context),
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       currentSection: AppBottomSection.home,
       onNavigationSelected: _handleBottomNavigation,
       contentMaxWidth: 1040,
-      // floatingActionButton: context.watch<AuthService>().canCreate
-      //     ? FloatingActionButton(
-      //         onPressed: _showQuickAddOptions,
-      //         backgroundColor: const Color(0xFF1A237E),
-      //         child: const Icon(Icons.add, color: Colors.white),
-      //       )
-      //     : null,
-      body: Column(
-        children: [
-          // Header Section
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 40, 20, 20),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF1A237E), // Deep Blue
-                  Color(0xFF0277BD), // Light Blue
-                ],
+      body: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.lg,
+            AppSpacing.xl,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildDashboardHeader(context, auth),
+              const SizedBox(height: AppSpacing.lg),
+              _buildDashboardSectionHeader(
+                context,
+                title: 'Care Modules',
+                subtitle: 'Open the work area you need now.',
               ),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.menu,
-                        color: Colors.white,
-                        size: 26,
+              const SizedBox(height: AppSpacing.md),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth;
+                  final columns = width >= 900
+                      ? 4
+                      : width >= 620
+                      ? 3
+                      : 2;
+                  final cards = <Widget>[
+                    if (auth.canAccessPatients)
+                      _buildModernActionCard(
+                        context,
+                        title: 'Patients',
+                        icon: Icons.people_alt_rounded,
+                        palette: ModulePalettes.patients,
+                        page: const ModuleTheme(
+                          palette: ModulePalettes.patients,
+                          child: PatientListPage(),
+                        ),
                       ),
-                      onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () => _showQRModal(context),
-                          child: Container(
-                            padding: const EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.qr_code_2,
-                              color: Colors.white,
-                              size: 22,
-                            ),
-                          ),
+                    if (auth.canAccessNHC)
+                      _buildModernActionCard(
+                        context,
+                        title: 'Visit Assessment',
+                        icon: Icons.assignment_rounded,
+                        palette: ModulePalettes.patients,
+                        page: const VisitAssessmentVisitPickerScreen(),
+                      ),
+                    if (auth.canAccessHomeVisits)
+                      _buildModernActionCard(
+                        context,
+                        title: 'Home Visits',
+                        icon: Icons.home_rounded,
+                        palette: ModulePalettes.homeVisits,
+                        page: const ModuleTheme(
+                          palette: ModulePalettes.homeVisits,
+                          child: HomeVisitListPage(),
                         ),
-                        const SizedBox(width: 10),
-                        GestureDetector(
-                          onTap: _openNotifications,
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(7),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.notifications_outlined,
-                                  color: Colors.white,
-                                  size: 22,
-                                ),
-                              ),
-                              if (_notificationCount > 0)
-                                Positioned(
-                                  right: -2,
-                                  top: -2,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: const BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    constraints: const BoxConstraints(
-                                      minWidth: 18,
-                                      minHeight: 18,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        _notificationCount > 99
-                                            ? '99+'
-                                            : _notificationCount.toString(),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
+                      ),
+                    if (auth.canAccessSocialSupport)
+                      _buildModernActionCard(
+                        context,
+                        title: 'Social Support',
+                        icon: Icons.volunteer_activism_rounded,
+                        palette: ModulePalettes.socialSupport,
+                        page: const ModuleTheme(
+                          palette: ModulePalettes.socialSupport,
+                          child: SocialSupportListPage(),
                         ),
-                        const SizedBox(width: 10),
-                        GestureDetector(
-                          onTap: () => _showUserProfile(context),
-                          child: const UnitBrandAvatar(
-                            size: 36,
-                            preferAppIcon: true,
-                            backgroundColor: Colors.white,
-                            iconColor: Color(0xFF1A237E),
-                            fallbackIcon: Icons.person,
-                          ),
+                      ),
+                    if (auth.canAccessVolunteers)
+                      _buildModernActionCard(
+                        context,
+                        title: 'Volunteers',
+                        icon: Icons.badge_rounded,
+                        palette: ModulePalettes.volunteers,
+                        page: const ModuleTheme(
+                          palette: ModulePalettes.volunteers,
+                          child: VolunteerListPage(),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    if (auth.canAccessEquipmentDistribution)
+                      _buildModernActionCard(
+                        context,
+                        title: 'Equipment Supply',
+                        icon: Icons.inventory_2_rounded,
+                        palette: ModulePalettes.equipmentSupply,
+                        page: const ModuleTheme(
+                          palette: ModulePalettes.equipmentSupply,
+                          child: EquipmentSupplyListPage(),
+                        ),
+                      ),
+                    if (auth.canAccessMedicineSupply)
+                      _buildModernActionCard(
+                        context,
+                        title: 'Medicine Supply',
+                        icon: Icons.medication_liquid_rounded,
+                        palette: ModulePalettes.medicineSupply,
+                        page: const ModuleTheme(
+                          palette: ModulePalettes.medicineSupply,
+                          child: MedicineSupplyListPage(),
+                        ),
+                      ),
+                  ];
+
+                  if (cards.isEmpty) {
+                    return const AppCard(
+                      surfaceLevel: AppSurfaceLevel.elevated,
+                      child: AppEmptyState(
+                        icon: Icons.lock_outline_rounded,
+                        title: 'No modules enabled',
+                        message:
+                            'Your unit administrator can enable care modules for this account.',
+                      ),
+                    );
+                  }
+
+                  return GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: columns,
+                    crossAxisSpacing: AppSpacing.md,
+                    mainAxisSpacing: AppSpacing.md,
+                    childAspectRatio: columns >= 4
+                        ? 1.42
+                        : columns == 3
+                        ? 1.28
+                        : 1.02,
+                    children: cards,
+                  );
+                },
+              ),
+              if (auth.canAccessEquipmentDistribution) ...[
+                const SizedBox(height: AppSpacing.xl),
+                _buildDashboardSectionHeader(
+                  context,
+                  title: 'Active Supplies',
+                  subtitle: 'Equipment currently assigned to patients.',
+                  actionLabel: 'View all',
+                  onAction: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ModuleTheme(
+                          palette: ModulePalettes.equipmentSupply,
+                          child: EquipmentSupplyListPage(),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  "Welcome Back,",
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  auth.unitName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  auth.unitLocation,
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
-                ),
-                if (auth.unitSupportPhone != null) ...[
-                  const SizedBox(height: 1),
-                  Text(
-                    "Support: ${auth.unitSupportPhone}",
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                ],
+                const SizedBox(height: AppSpacing.md),
+                _buildActiveSuppliesList(context),
               ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDashboardHeader(BuildContext context, AuthService auth) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return AppCard(
+      surfaceLevel: AppSurfaceLevel.elevated,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _buildShellIconButton(
+                tooltip: 'Open menu',
+                icon: Icons.menu_rounded,
+                onTap: () => _scaffoldKey.currentState?.openDrawer(),
+              ),
+              const Spacer(),
+              _buildShellIconButton(
+                tooltip: 'Show QR',
+                icon: Icons.qr_code_2_rounded,
+                onTap: () => _showQRModal(context),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              _buildShellIconButton(
+                tooltip: 'Notifications',
+                icon: Icons.notifications_none_rounded,
+                onTap: _openNotifications,
+                badgeLabel: _notificationCount > 99
+                    ? '99+'
+                    : _notificationCount > 0
+                    ? _notificationCount.toString()
+                    : null,
+              ),
+              if (auth.canCreate) ...[
+                const SizedBox(width: AppSpacing.xs),
+                _buildShellIconButton(
+                  tooltip: 'Quick add',
+                  icon: Icons.add_rounded,
+                  onTap: _showQuickAddOptions,
+                ),
+              ],
+              const SizedBox(width: AppSpacing.xs),
+              GestureDetector(
+                onTap: () => _showUserProfile(context),
+                child: UnitBrandAvatar(
+                  size: 44,
+                  preferAppIcon: true,
+                  backgroundColor: AppColors.primaryLight,
+                  iconColor: AppColors.primary,
+                  border: Border.all(color: AppColors.border),
+                  fallbackIcon: Icons.person_rounded,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            'Good Morning',
+            style: textTheme.labelLarge?.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          // Body Content
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Dashboard Grid
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final width = constraints.maxWidth;
-                      final columns = width >= 900
-                          ? 4
-                          : width >= 620
-                          ? 3
-                          : 2;
-
-                      return GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: columns,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: columns >= 3 ? 1.5 : 1.4,
-                        children: [
-                          if (auth.canAccessPatients)
-                            _buildModernActionCard(
-                              context,
-                              title: "Patients",
-                              icon: Icons.people_alt_rounded,
-                              palette: ModulePalettes.patients,
-                              page: const ModuleTheme(
-                                palette: ModulePalettes.patients,
-                                child: PatientListPage(),
-                              ),
-                            ),
-                          if (auth.canAccessNHC)
-                            _buildModernActionCard(
-                              context,
-                              title: "Visit Assessment\n(NHC)",
-                              icon: Icons.assignment_rounded,
-                              palette: ModulePalettes.patients,
-                              page: const VisitAssessmentVisitPickerScreen(),
-                            ),
-                          if (auth.canAccessHomeVisits)
-                            _buildModernActionCard(
-                              context,
-                              title: "Home Visits",
-                              icon: Icons.home_rounded,
-                              palette: ModulePalettes.homeVisits,
-                              page: const ModuleTheme(
-                                palette: ModulePalettes.homeVisits,
-                                child: HomeVisitListPage(),
-                              ),
-                            ),
-                          if (auth.canAccessSocialSupport)
-                            _buildModernActionCard(
-                              context,
-                              title: "Social Support",
-                              icon: Icons.volunteer_activism_rounded,
-                              palette: ModulePalettes.socialSupport,
-                              page: const ModuleTheme(
-                                palette: ModulePalettes.socialSupport,
-                                child: SocialSupportListPage(),
-                              ),
-                            ),
-                          if (auth.canAccessVolunteers)
-                            _buildModernActionCard(
-                              context,
-                              title: "Volunteers",
-                              icon: Icons.badge_rounded,
-                              palette: ModulePalettes.volunteers,
-                              page: const ModuleTheme(
-                                palette: ModulePalettes.volunteers,
-                                child: VolunteerListPage(),
-                              ),
-                            ),
-                          if (auth.canAccessEquipmentDistribution)
-                            _buildModernActionCard(
-                              context,
-                              title: "Equipment Supply",
-                              icon: Icons.inventory_2_rounded,
-                              palette: ModulePalettes.equipmentSupply,
-                              page: const ModuleTheme(
-                                palette: ModulePalettes.equipmentSupply,
-                                child: EquipmentSupplyListPage(),
-                              ),
-                            ),
-                          if (auth.canAccessMedicineSupply)
-                            _buildModernActionCard(
-                              context,
-                              title: "Medicine Supply",
-                              icon: Icons.medication_liquid_rounded,
-                              palette: ModulePalettes.medicineSupply,
-                              page: const ModuleTheme(
-                                palette: ModulePalettes.medicineSupply,
-                                child: MedicineSupplyListPage(),
-                              ),
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-
-                  if (auth.canAccessEquipmentDistribution) ...[
-                    const SizedBox(height: 18),
-
-                    // Active Supplies Section
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Active Supplies",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1A237E),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ModuleTheme(
-                                  palette: ModulePalettes.equipmentSupply,
-                                  child: EquipmentSupplyListPage(),
-                                ),
-                              ),
-                            );
-                          },
-                          child: const Text("View All"),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    _buildActiveSuppliesList(context),
-                  ],
-                ],
-              ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            auth.unitName,
+            style: textTheme.headlineMedium?.copyWith(
+              color: AppColors.text,
+              fontWeight: FontWeight.w700,
+              height: 1.12,
             ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: [
+              _ShellStatusPill(
+                label: auth.unitLocation,
+                icon: Icons.location_on_outlined,
+                color: AppColors.primary,
+              ),
+              if (auth.unitSupportPhone != null)
+                _ShellStatusPill(
+                  label: auth.unitSupportPhone!,
+                  icon: Icons.support_agent_rounded,
+                  color: AppColors.success,
+                ),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildShellIconButton({
+    required String tooltip,
+    required IconData icon,
+    required VoidCallback onTap,
+    String? badgeLabel,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: AppColors.surface1,
+        borderRadius: AppRadius.md,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppRadius.md,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const SizedBox.square(dimension: 44),
+              Positioned.fill(
+                child: Icon(icon, color: AppColors.text, size: AppIcons.large),
+              ),
+              if (badgeLabel != null)
+                Positioned(
+                  right: -3,
+                  top: -5,
+                  child: Container(
+                    constraints: const BoxConstraints(
+                      minWidth: 20,
+                      minHeight: 20,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    decoration: const BoxDecoration(
+                      color: AppColors.danger,
+                      borderRadius: AppRadius.md,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      badgeLabel,
+                      style: const TextStyle(
+                        color: AppColors.textInverse,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDashboardSectionHeader(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: textTheme.titleLarge?.copyWith(
+                  color: AppColors.text,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xxs),
+              Text(
+                subtitle,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (actionLabel != null && onAction != null) ...[
+          const SizedBox(width: AppSpacing.md),
+          TextButton(onPressed: onAction, child: Text(actionLabel)),
+        ],
+      ],
     );
   }
 
@@ -1310,87 +1428,92 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
     required ModulePalette palette,
     required Widget page,
   }) {
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => page),
-          );
-          if (title == "Equipment Supply") {
-            _loadActiveSupplies();
-          }
-        },
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          decoration: BoxDecoration(
-            color: palette.cardBackground,
-            borderRadius: BorderRadius.circular(20),
+    final textTheme = Theme.of(context).textTheme;
+
+    return AppCard(
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => page),
+        );
+        if (title == "Equipment Supply") {
+          _loadActiveSupplies();
+        }
+      },
+      padding: const EdgeInsets.all(AppSpacing.md),
+      borderColor: palette.primary.withValues(alpha: 0.12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: palette.iconBackground,
+              borderRadius: AppRadius.md,
+            ),
+            child: Icon(icon, color: palette.primary, size: AppIcons.large),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: palette.iconBackground,
-                  shape: BoxShape.circle,
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleSmall?.copyWith(
+                    color: AppColors.text,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                  ),
                 ),
-                child: Icon(icon, color: palette.primary, size: 24),
               ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: palette.primary,
-                  height: 1.2,
-                ),
+              const SizedBox(width: AppSpacing.xs),
+              Icon(
+                Icons.arrow_forward_rounded,
+                color: palette.primary,
+                size: AppIcons.normal,
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildActiveSuppliesList(BuildContext context) {
     if (_activeSuppliesLoading) {
-      return const SizedBox(
-        height: 130,
-        child: Center(child: CircularProgressIndicator()),
+      return const AppCard(
+        padding: EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: [
+            AppSkeletonBox(width: 56, height: 56, borderRadius: AppRadius.md),
+            SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppSkeletonBox(width: double.infinity, height: 16),
+                  SizedBox(height: AppSpacing.xs),
+                  AppSkeletonBox(width: 180, height: 13),
+                ],
+              ),
+            ),
+          ],
+        ),
       );
     }
 
     if (_activeSupplies.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              Icons.inventory_2_outlined,
-              size: 40,
-              color: Colors.grey.shade400,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "No active supplies",
-              style: TextStyle(color: Colors.grey.shade500),
-            ),
-          ],
+      return const AppCard(
+        padding: EdgeInsets.zero,
+        child: AppEmptyState(
+          icon: Icons.inventory_2_outlined,
+          title: 'No active supplies',
+          message: 'Equipment assigned to patients will appear here.',
         ),
       );
     }
@@ -1406,16 +1529,18 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
         return Column(
           children: [
             SizedBox(
-              height: 130,
+              height: 142,
               child: NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
                   if (notification.metrics.axis != Axis.horizontal) {
                     return false;
                   }
-                  final next = (notification.metrics.pixels / (cardWidth + 12))
-                      .round()
-                      .clamp(0, indicatorCount - 1)
-                      .toInt();
+                  final next =
+                      (notification.metrics.pixels /
+                              (cardWidth + AppSpacing.md))
+                          .round()
+                          .clamp(0, indicatorCount - 1)
+                          .toInt();
                   if (next != _activeSuppliesPageIndex) {
                     setState(() => _activeSuppliesPageIndex = next);
                   }
@@ -1429,7 +1554,9 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                   itemBuilder: (context, index) {
                     return Padding(
                       padding: EdgeInsets.only(
-                        right: index == _activeSupplies.length - 1 ? 0 : 12,
+                        right: index == _activeSupplies.length - 1
+                            ? 0
+                            : AppSpacing.md,
                       ),
                       child: SizedBox(
                         width: cardWidth,
@@ -1441,21 +1568,24 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
               ),
             ),
             if (indicatorCount > 1) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
                   indicatorCount,
                   (index) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                    duration: AppMotion.normal,
+                    curve: AppMotion.easeOutCubic,
                     width: _activeSuppliesPageIndex == index ? 16 : 6,
                     height: 6,
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.xxs,
+                    ),
                     decoration: BoxDecoration(
                       color: _activeSuppliesPageIndex == index
-                          ? const Color(0xFF1A237E)
-                          : Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(99),
+                          ? AppColors.primary
+                          : AppColors.borderStrong,
+                      borderRadius: AppRadius.xs,
                     ),
                   ),
                 ),
@@ -1479,111 +1609,60 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
   }
 
   Widget _activeSupplyCard(EquipmentSupply supply) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4, top: 2),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade100),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(width: 4, color: const Color(0xFFFAC775)),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
+    final textTheme = Theme.of(context).textTheme;
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      borderColor: AppColors.warning.withValues(alpha: 0.18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppSemanticColors.background(
+                    AppSemanticStatus.warning,
+                  ),
+                  borderRadius: AppRadius.md,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFAC775),
-                            borderRadius: BorderRadius.circular(7),
-                          ),
-                          child: const Icon(
-                            Icons.medical_services_outlined,
-                            color: Color(0xFF854F0B),
-                            size: 14,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            supply.equipmentName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 12,
-                          color: Colors.grey.shade500,
-                        ),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          child: Text(
-                            _supplyRecipientName(supply),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade700,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          size: 11,
-                          color: Colors.grey.shade400,
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          _formatSupplyDate(supply.supplyDate),
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey.shade400,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                child: const Icon(
+                  Icons.medical_services_outlined,
+                  color: AppColors.warning,
+                  size: AppIcons.normal,
                 ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  supply.equipmentName,
+                  style: textTheme.titleSmall?.copyWith(
+                    color: AppColors.text,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          Column(
+            children: [
+              _buildInfoRow(
+                Icons.person_outline_rounded,
+                _supplyRecipientName(supply),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              _buildInfoRow(
+                Icons.calendar_today_outlined,
+                _formatSupplyDate(supply.supplyDate),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -1595,13 +1674,13 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
   Color _notificationColor(AppNotification notification) {
     switch (notification.severity) {
       case 'danger':
-        return Colors.red;
+        return AppColors.danger;
       case 'warning':
-        return Colors.orange;
+        return AppColors.warning;
       case 'success':
-        return Colors.green;
+        return AppColors.success;
       default:
-        return const Color(0xFF1A237E);
+        return AppColors.primary;
     }
   }
 
@@ -1652,12 +1731,15 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
   Widget _buildInfoRow(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.grey.shade500),
-        const SizedBox(width: 8),
+        const SizedBox(width: 1),
+        Icon(icon, size: AppIcons.small, color: AppColors.textMuted),
+        const SizedBox(width: AppSpacing.xs),
         Expanded(
           child: Text(
             text,
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(color: AppColors.textSecondary),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -1681,54 +1763,61 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
 
     return Drawer(
       width: drawerWidth,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.horizontal(right: Radius.circular(30)),
+        borderRadius: BorderRadius.horizontal(
+          right: Radius.circular(AppRadius.sheetValue),
+        ),
       ),
       child: SafeArea(
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(22, 22, 14, 20),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.md,
+              ),
               child: Row(
                 children: [
                   UnitBrandAvatar(
-                    size: 58,
+                    size: 56,
                     preferAppIcon: true,
-                    border: Border.all(color: const Color(0xFFB5D4F4)),
+                    backgroundColor: AppColors.primaryLight,
+                    iconColor: AppColors.primary,
+                    border: Border.all(color: AppColors.border),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Hello,',
-                          style: TextStyle(
-                            color: Color(0xFF1D1D24),
-                            fontSize: 19,
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: AppColors.text,
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppSpacing.xxs),
                         Text(
                           userName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xFF696974),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
                         ),
                         Text(
                           userDetail,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.grey.shade500,
-                            fontSize: 10,
-                          ),
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(color: AppColors.textMuted),
                         ),
                       ],
                     ),
@@ -1737,15 +1826,20 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                     tooltip: 'Close menu',
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close_rounded),
-                    color: Colors.grey.shade500,
+                    color: AppColors.textMuted,
                   ),
                 ],
               ),
             ),
-            Divider(height: 1, color: Colors.grey.shade200),
+            const Divider(height: 1, color: AppColors.border),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(14, 18, 14, 12),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                ),
                 children: [
                   _buildDrawerItem(
                     context,
@@ -1852,18 +1946,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                   if (auth.canAccessEquipment ||
                       auth.canAccessEquipmentDistribution ||
                       auth.canAccessMedicine)
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(14, 14, 14, 7),
-                      child: Text(
-                        'INVENTORY',
-                        style: TextStyle(
-                          color: Color(0xFF9A9AA5),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.1,
-                        ),
-                      ),
-                    ),
+                    _buildDrawerSectionLabel('INVENTORY'),
                   if (auth.canAccessEquipment)
                     _buildDrawerItem(
                       context,
@@ -1996,18 +2079,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                       },
                     ),
                   if (auth.isAdmin) ...[
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(14, 14, 14, 7),
-                      child: Text(
-                        'SYSTEM',
-                        style: TextStyle(
-                          color: Color(0xFF9A9AA5),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.1,
-                        ),
-                      ),
-                    ),
+                    _buildDrawerSectionLabel('SYSTEM'),
                     _buildDrawerItem(
                       context,
                       icon: Icons.settings_outlined,
@@ -2026,16 +2098,21 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                 ],
               ),
             ),
-            Divider(height: 1, color: Colors.grey.shade200),
+            const Divider(height: 1, color: AppColors.border),
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.md,
+                AppSpacing.md,
+              ),
               child: Column(
                 children: [
                   _buildDrawerItem(
                     context,
                     icon: Icons.logout_rounded,
                     title: "Logout",
-                    color: const Color(0xFFC23B3B),
+                    color: AppColors.danger,
                     onTap: () {
                       auth.logout();
                       Navigator.of(context).pushAndRemoveUntil(
@@ -2064,9 +2141,8 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                     },
                     child: Text(
                       "All rights reserved by AFO",
-                      style: TextStyle(
-                        fontSize: 9,
-                        color: Colors.grey.shade400,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: AppColors.textMuted,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -2080,6 +2156,24 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
     );
   }
 
+  Widget _buildDrawerSectionLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.xs,
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: AppColors.textMuted,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
   Widget _buildDrawerItem(
     BuildContext context, {
     required IconData icon,
@@ -2088,34 +2182,95 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
     bool isSelected = false,
     Color? color,
   }) {
-    final itemColor = color ?? const Color(0xFF20212A);
+    final itemColor = color ?? AppColors.text;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
       child: Material(
-        color: isSelected ? const Color(0xFFF0F1F4) : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        color: isSelected ? AppColors.surface2 : Colors.transparent,
+        borderRadius: AppRadius.md,
         child: ListTile(
-          minLeadingWidth: 28,
+          minLeadingWidth: 32,
           leading: Icon(
             icon,
-            color: isSelected ? const Color(0xFF20212A) : itemColor,
-            size: 22,
+            color: isSelected ? AppColors.primary : itemColor,
+            size: AppIcons.large,
           ),
           title: Text(
             title,
-            style: TextStyle(
-              color: const Color(0xFF20212A),
-              fontSize: 14,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: AppColors.text,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
           onTap: onTap,
           dense: true,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 3,
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.xxs,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SheetHandle extends StatelessWidget {
+  const _SheetHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 52,
+      height: 5,
+      decoration: const BoxDecoration(
+        color: AppColors.borderStrong,
+        borderRadius: AppRadius.xs,
+      ),
+    );
+  }
+}
+
+class _ShellStatusPill extends StatelessWidget {
+  const _ShellStatusPill({
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 280),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: AppRadius.md,
+        border: Border.all(color: color.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: AppIcons.small),
+          const SizedBox(width: AppSpacing.xxs),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2127,20 +2282,23 @@ class _QrImageFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
-      color: const Color(0xFFF5F7FB),
-      child: const Column(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      color: AppColors.surface1,
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.qr_code_2, size: 64, color: Color(0xFF1A237E)),
-          SizedBox(height: 12),
+          const Icon(
+            Icons.qr_code_2_rounded,
+            size: AppIcons.feature,
+            color: AppColors.primary,
+          ),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'QR image unavailable',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1A237E),
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: AppColors.text,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
