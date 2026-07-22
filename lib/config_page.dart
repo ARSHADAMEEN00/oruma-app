@@ -515,6 +515,7 @@ class _ConfigPageState extends State<ConfigPage>
                             const SizedBox(height: AppSpacing.sm),
                             DropdownButtonFormField<String>(
                               initialValue: selectedRole,
+                              style: AppTypography.dropdownTextStyle(context),
                               decoration: _fieldDecoration(
                                 labelText: 'Role',
                                 prefixIcon: Icons.admin_panel_settings,
@@ -858,6 +859,7 @@ class _ConfigPageState extends State<ConfigPage>
           DropdownButtonFormField<String>(
             key: ValueKey(_selectedWardVillage),
             initialValue: _selectedWardVillage,
+            style: AppTypography.dropdownTextStyle(context),
             decoration: _fieldDecoration(
               labelText: 'Village',
               prefixIcon: Icons.location_city_outlined,
@@ -1051,6 +1053,7 @@ class _ConfigPageState extends State<ConfigPage>
             child: DropdownButtonFormField<String>(
               key: ValueKey('${staff.id}:${staff.role}'),
               initialValue: _roles.contains(staff.role) ? staff.role : 'staff',
+              style: AppTypography.dropdownTextStyle(context),
               decoration: _fieldDecoration(
                 labelText: 'Role',
                 prefixIcon: isUpdating ? null : _roleIcon(staff.role),

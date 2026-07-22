@@ -319,6 +319,7 @@ class _patientrigisterState extends State<patientrigister> {
                         Icons.location_city,
                       ),
                       initialValue: popupSelectedVillage,
+                      style: AppTypography.dropdownTextStyle(context),
                       items: villages
                           .map(
                             (v) => DropdownMenuItem(value: v, child: Text(v)),
@@ -888,6 +889,7 @@ class _patientrigisterState extends State<patientrigister> {
                     ),
                     key: ValueKey(_selectedVillage),
                     initialValue: _selectedVillage,
+                    style: AppTypography.dropdownTextStyle(context),
                     items: villages
                         .map((v) => DropdownMenuItem(value: v, child: Text(v)))
                         .toList(),
@@ -913,6 +915,7 @@ class _patientrigisterState extends State<patientrigister> {
                             '${_selectedVillage ?? ''}:${_selectedWardTitle ?? ''}:${filteredWards.length}',
                           ),
                           initialValue: _selectedWardTitle,
+                          style: AppTypography.dropdownTextStyle(context),
                           hint: const Text("Select Ward Number"),
                           items: filteredWards
                               .map(
@@ -978,6 +981,7 @@ class _patientrigisterState extends State<patientrigister> {
                       Icons.assignment_outlined,
                     ),
                     initialValue: _selectedPlan,
+                    style: AppTypography.dropdownTextStyle(context),
                     items: plans
                         .map((p) => DropdownMenuItem(value: p, child: Text(p)))
                         .toList(),

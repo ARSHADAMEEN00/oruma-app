@@ -302,6 +302,7 @@ class _VolunteerListPageState extends State<VolunteerListPage> {
       isExpanded: true,
       dropdownColor: AppColors.surface,
       iconEnabledColor: AppColors.textSecondary,
+      style: AppTypography.dropdownTextStyle(context),
       decoration: _compactInputDecoration(labelFor(value), icon),
       items: items
           .map(
@@ -951,6 +952,7 @@ class _VolunteerFormPageState extends State<VolunteerFormPage> {
                         ? _selectedVillage
                         : null,
                     isExpanded: true,
+                    style: AppTypography.dropdownTextStyle(context),
                     decoration: _inputDecoration(
                       'Village',
                       Icons.location_city_outlined,
@@ -981,6 +983,7 @@ class _VolunteerFormPageState extends State<VolunteerFormPage> {
                         ? _selectedWard
                         : null,
                     isExpanded: true,
+                    style: AppTypography.dropdownTextStyle(context),
                     decoration: _inputDecoration(
                       'Ward',
                       Icons.apartment_outlined,

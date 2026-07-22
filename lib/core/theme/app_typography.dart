@@ -5,6 +5,14 @@ class AppTypography {
 
   static const _fallbackFonts = <String>['NotoSansMalayalam'];
 
+  static TextStyle? dropdownTextStyle(BuildContext context, {Color? color}) {
+    final style = Theme.of(context).textTheme.bodyLarge;
+    return style?.copyWith(
+      color: color ?? style.color,
+      fontWeight: FontWeight.normal,
+    );
+  }
+
   static TextTheme textTheme(Color color) {
     const base = TextStyle(
       fontFamilyFallback: _fallbackFonts,

@@ -1667,7 +1667,8 @@ class _EditPatientDialogState extends State<_EditPatientDialog> {
                         'Care Plan',
                         Icons.assignment_outlined,
                       ).copyWith(hintText: "Select care plan..."),
-                      value: _selectedPlan,
+                      initialValue: _selectedPlan,
+                      style: AppTypography.dropdownTextStyle(context),
                       items: _availablePlans
                           .map(
                             (plan) => DropdownMenuItem(

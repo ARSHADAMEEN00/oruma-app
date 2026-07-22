@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:oruma_app/core/theme/app_typography.dart';
 import 'package:oruma_app/medicine_stock_entry_page.dart';
 import 'package:oruma_app/medicine_stock_history_page.dart';
 import 'package:oruma_app/medicine_supply_list_page.dart';
@@ -1769,6 +1770,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
   }) {
     return DropdownButtonFormField<String>(
       initialValue: value,
+      style: AppTypography.dropdownTextStyle(context),
       decoration: _inputDecoration(
         label,
         Icons.arrow_drop_down_circle_outlined,

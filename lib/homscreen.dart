@@ -35,6 +35,8 @@ import 'package:oruma_app/widgets/unit_brand_avatar.dart';
 import 'package:intl/intl.dart';
 import 'package:oruma_app/features/visit_assessment/presentation/screens/visit_assessment_visit_picker_screen.dart';
 
+const _appVersionLabel = 'Version 1.0.0 (Build 1)';
+
 class Homescreen extends StatefulWidget {
   const Homescreen({super.key});
 
@@ -2146,6 +2148,14 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                       ),
                       textAlign: TextAlign.center,
                     ),
+                  ),
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(
+                    _appVersionLabel,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: AppColors.textMuted,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),

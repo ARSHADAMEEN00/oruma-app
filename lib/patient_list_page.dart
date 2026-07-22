@@ -834,7 +834,7 @@ class _PatientDropdown extends StatelessWidget {
           ),
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
             color: AppColors.text,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.normal,
           ),
           selectedItemBuilder: (context) {
             return items.map((item) {

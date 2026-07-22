@@ -206,6 +206,7 @@ class _EquipmentRegistrationState extends State<EquipmentRegistration> {
                       const SizedBox(height: AppSpacing.md),
                       DropdownButtonFormField<String>(
                         initialValue: selectedValue,
+                        style: AppTypography.dropdownTextStyle(context),
                         decoration: _inputDecoration(
                           'Choose equipment',
                           Icons.category_outlined,

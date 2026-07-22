@@ -413,7 +413,9 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
         appBar: AppBar(
           backgroundColor: _medicineDarkGreen,
           foregroundColor: Colors.white,
-          title: const Text('New Supply', style: TextStyle(fontSize: 18)),
+          iconTheme: const IconThemeData(color: Colors.white),
+          titleTextStyle: const TextStyle(color: Colors.white, fontSize: 18),
+          title: const Text('New Supply'),
         ),
         body: const Center(
           child: CircularProgressIndicator(color: _medicineGreen),
@@ -427,7 +429,9 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
       appBar: AppBar(
         backgroundColor: _medicineDarkGreen,
         foregroundColor: Colors.white,
-        title: const Text('New Supply', style: TextStyle(fontSize: 18)),
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(color: Colors.white, fontSize: 18),
+        title: const Text('New Supply'),
       ),
       body: Form(
         key: _formKey,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:oruma_app/core/theme/app_typography.dart';
 import 'package:oruma_app/medicine_stock_history_page.dart';
 import 'package:oruma_app/models/medicine.dart';
 import 'package:oruma_app/models/medicine_stock_entry.dart';
@@ -776,6 +777,7 @@ class _MedicineStockEntryPageState extends State<MedicineStockEntryPage> {
           value: row.qtyUnit,
           isExpanded: true,
           icon: const Icon(Icons.keyboard_arrow_down_rounded),
+          style: AppTypography.dropdownTextStyle(context),
           items: _stockUnits
               .map(
                 (unit) => DropdownMenuItem(
