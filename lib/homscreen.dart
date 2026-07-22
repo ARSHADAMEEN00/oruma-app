@@ -1,6 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:oruma_app/billing_plan_screen.dart';
 import 'package:oruma_app/eq_supply.dart';
@@ -952,6 +952,11 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
   }
 
   void _showQRModal(BuildContext context) {
+    final auth = context.read<AuthService>();
+    final supportQr = auth.unitSupportQr;
+    if (supportQr == null) return;
+    final supportQrLabel = auth.unitName.toUpperCase();
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -984,26 +989,11 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
               const SizedBox(height: AppSpacing.md),
               ClipRRect(
                 borderRadius: AppRadius.card,
-                child: Image.asset(
-                  'assets/QR.jpeg',
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    if (kIsWeb) {
-                      return Image.network(
-                        'assets/QR.jpeg',
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const _QrImageFallback(),
-                      );
-                    }
-
-                    return const _QrImageFallback();
-                  },
-                ),
+                child: _SupportQrImage(source: supportQr),
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
-                'ORUMA PALLIATIVE CARE SOCIETY KODUR',
+                supportQrLabel,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   color: AppColors.text,
@@ -1250,12 +1240,14 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                 onTap: () => _scaffoldKey.currentState?.openDrawer(),
               ),
               const Spacer(),
-              _buildShellIconButton(
-                tooltip: 'Show QR',
-                icon: Icons.qr_code_2_rounded,
-                onTap: () => _showQRModal(context),
-              ),
-              const SizedBox(width: AppSpacing.xs),
+              if (auth.unitSupportQr != null) ...[
+                _buildShellIconButton(
+                  tooltip: 'Show QR',
+                  icon: Icons.qr_code_2_rounded,
+                  onTap: () => _showQRModal(context),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+              ],
               _buildShellIconButton(
                 tooltip: 'Notifications',
                 icon: Icons.notifications_none_rounded,
@@ -2314,5 +2306,44 @@ class _QrImageFallback extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _SupportQrImage extends StatelessWidget {
+  const _SupportQrImage({this.source});
+
+  final String? source;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageSource = source?.trim();
+
+    if (imageSource != null && imageSource.isNotEmpty) {
+      if (imageSource.startsWith('data:image/')) {
+        final commaIndex = imageSource.indexOf(',');
+        if (commaIndex > -1) {
+          try {
+            return Image.memory(
+              base64Decode(imageSource.substring(commaIndex + 1)),
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => const _QrImageFallback(),
+            );
+          } catch (_) {
+            return const _QrImageFallback();
+          }
+        }
+      }
+
+      if (imageSource.startsWith('http://') ||
+          imageSource.startsWith('https://')) {
+        return Image.network(
+          imageSource,
+          fit: BoxFit.contain,
+          errorBuilder: (_, _, _) => const _QrImageFallback(),
+        );
+      }
+    }
+
+    return const _QrImageFallback();
   }
 }

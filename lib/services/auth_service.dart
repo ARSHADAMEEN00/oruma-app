@@ -159,6 +159,7 @@ class AuthService with ChangeNotifier {
 
   String? get unitLogo => _cleanString(unit?['logo']);
   String? get unitAppIcon => _cleanString(unit?['appIcon']);
+  String? get unitSupportQr => _cleanString(unit?['supportQr']);
 
   String? get unitSupportName =>
       _cleanString(_supportValue('name')) ?? unitName;
