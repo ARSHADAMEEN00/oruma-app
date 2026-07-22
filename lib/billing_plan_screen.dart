@@ -155,7 +155,7 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
                 SnackBar(
                   content: Text(
                     result.isSuccess
-                        ? 'Upgrade enquiry sent to Oruma team.'
+                        ? 'Upgrade enquiry sent to CareNest team.'
                         : result.error ?? 'Failed to send enquiry.',
                   ),
                   backgroundColor: result.isSuccess
@@ -324,6 +324,14 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
             date: _formatDate,
             onOpenPlanPage: _openPlanPage,
           ),
+          if (portal.pendingMaintenanceEntries.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.sm),
+            _MaintenanceDueBanner(
+              entries: portal.pendingMaintenanceEntries,
+              currency: _money,
+              date: _formatDate,
+            ),
+          ],
           const SizedBox(height: AppSpacing.sm),
           _SummaryGrid(
             summary: portal.summary,
@@ -571,7 +579,7 @@ class _CurrentPlanCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.xxs),
                     Text(
-                      '${portal.unit.name} • ${portal.summary.billingCycle}',
+                      '${portal.unit.name} • ${_billingCycleLabel(portal.summary.billingCycle)}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -623,7 +631,11 @@ class _SummaryGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      _SummaryItem('Plan', summary.planName, summary.billingCycle),
+      _SummaryItem(
+        'Plan',
+        summary.planName,
+        _billingCycleLabel(summary.billingCycle),
+      ),
       _SummaryItem(
         'Outstanding',
         currency(summary.outstandingAmount),
@@ -844,7 +856,7 @@ class _SubscriptionSection extends StatelessWidget {
           _DetailRow(label: 'Status', value: portal.summary.subscriptionStatus),
           _DetailRow(
             label: 'Billing cycle',
-            value: portal.summary.billingCycle,
+            value: _billingCycleLabel(portal.summary.billingCycle),
           ),
           _DetailRow(
             label: 'Start date',
@@ -898,6 +910,70 @@ class _PlanDetailsSection extends StatelessWidget {
                 return _FeatureChip(label: featureLabel(featureId));
               }).toList(),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MaintenanceDueBanner extends StatelessWidget {
+  const _MaintenanceDueBanner({
+    required this.entries,
+    required this.currency,
+    required this.date,
+  });
+
+  final List<MaintenanceHistoryEntry> entries;
+  final String Function(double value) currency;
+  final String Function(DateTime? value) date;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = entries.fold<double>(0, (sum, entry) => sum + entry.amount);
+    final first = entries.first;
+    final title = entries.length == 1
+        ? first.label
+        : '${entries.length} maintenance payments due';
+
+    return Container(
+      padding: AppInsets.md,
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.1),
+        borderRadius: AppRadius.card,
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.16),
+              borderRadius: AppRadius.md,
+            ),
+            child: const Icon(
+              Icons.info_outline_rounded,
+              color: AppColors.warning,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  '${currency(total)} pending${first.dueDate == null ? '' : ' • due ${date(first.dueDate)}'}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -1487,4 +1563,13 @@ String _featureLabel(String featureId) {
     'custom_forms': 'Custom forms',
   };
   return labels[featureId] ?? featureId.replaceAll('_', ' ');
+}
+
+String _billingCycleLabel(String value) {
+  final normalized = value.trim().toLowerCase();
+  if (normalized == 'one_time') return 'One Time';
+  if (normalized == 'yearly') return 'Yearly';
+  if (normalized == 'monthly') return 'Monthly';
+  if (normalized == 'custom') return 'Custom';
+  return value.replaceAll('_', ' ');
 }

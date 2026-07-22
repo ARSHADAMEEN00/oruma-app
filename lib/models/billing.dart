@@ -17,6 +17,16 @@ class BillingPortal {
   final List<MaintenanceHistoryEntry> maintenanceHistory;
   final List<PaymentHistoryRow> paymentRows;
 
+  List<MaintenanceHistoryEntry> get pendingMaintenanceEntries {
+    final entries = maintenanceHistory.where((entry) => entry.isDue).toList();
+    entries.sort((a, b) {
+      final aTime = a.dueDate?.millisecondsSinceEpoch ?? 0;
+      final bTime = b.dueDate?.millisecondsSinceEpoch ?? 0;
+      return aTime.compareTo(bTime);
+    });
+    return entries;
+  }
+
   factory BillingPortal.fromJson(Map<String, dynamic> json) {
     return BillingPortal(
       unit: BillingUnit.fromJson(_asMap(json['unit'])),
@@ -243,6 +253,8 @@ class BillingSummary {
 
 class MaintenanceHistoryEntry {
   const MaintenanceHistoryEntry({
+    this.id,
+    this.periodKey,
     required this.label,
     required this.status,
     this.dueDate,
@@ -250,14 +262,20 @@ class MaintenanceHistoryEntry {
     this.notes,
   });
 
+  final String? id;
+  final String? periodKey;
   final String label;
   final DateTime? dueDate;
   final double amount;
   final String status;
   final String? notes;
 
+  bool get isDue => status.toLowerCase() == 'due';
+
   factory MaintenanceHistoryEntry.fromJson(Map<String, dynamic> json) {
     return MaintenanceHistoryEntry(
+      id: _nullableString(json['id'] ?? json['_id']),
+      periodKey: _nullableString(json['periodKey']),
       label: _string(json['label']),
       dueDate: _date(json['dueDate']),
       amount: _number(json['amount']),

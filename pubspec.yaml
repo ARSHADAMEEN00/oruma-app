@@ -1,5 +1,5 @@
 name: oruma_app
-description: "Kodur PCC - Comprehensive Palliative Care Management System. A compassionate digital solution for managing palliative care services, patient records, home visits, equipment tracking, and volunteer coordination. Empowering healthcare providers to deliver dignified, person-centered care to patients and families facing serious illness."
+description: "CareNest - Comprehensive Palliative Care Management System. A compassionate digital solution for managing palliative care services, patient records, home visits, equipment tracking, and volunteer coordination."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -111,12 +111,12 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/logo/logo.png"
+  image_path: "assets/logo/app_icon.png"
   min_sdk_android: 21
   
   # Android adaptive icon configuration
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/logo/logo.png"
+  adaptive_icon_foreground: "assets/logo/app_icon.png"
   
   # iOS icon configuration
   remove_alpha_ios: true
@@ -124,6 +124,6 @@ flutter_launcher_icons:
   # Web icon configuration (optional)
   web:
     generate: true
-    image_path: "assets/logo/logo.png"
+    image_path: "assets/logo/app_icon.png"
     background_color: "#FFFFFF"
     theme_color: "#2196F3"

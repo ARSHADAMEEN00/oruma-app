@@ -54,6 +54,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
   int _notificationCount = 0;
   List<AppNotification> _notifications = [];
   bool _notificationsLoading = true;
+  final Set<String> _dismissedMaintenanceBannerKeys = {};
 
   @override
   void initState() {
@@ -74,6 +75,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       context.read<AuthService>().fetchUserProfile();
+      _loadNotifications(refresh: true);
     }
   }
 
@@ -89,7 +91,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
         _activeSuppliesLoading = false;
       });
     }
-    _loadNotifications();
+    _loadNotifications(refresh: true);
   }
 
   Future<void> _loadActiveSupplies() async {
@@ -396,6 +398,14 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
   }
 
   Future<void> _handleNotificationTap(AppNotification notification) async {
+    if (_isBillingNotification(notification)) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const BillingPlanScreen()),
+      );
+      return;
+    }
+
     if (notification.id != null) {
       NotificationService.markRead(
         notification.id!,
@@ -1054,6 +1064,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     debugPrint('User Role: ${context.read<AuthService>().role}');
     final auth = context.watch<AuthService>();
+    final maintenanceNotification = _visibleMaintenanceDueNotification();
     return AdaptiveAppScaffold(
       scaffoldKey: _scaffoldKey,
       drawer: _buildProfessionalDrawer(context),
@@ -1075,6 +1086,10 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildDashboardHeader(context, auth),
+              if (maintenanceNotification != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                _buildMaintenanceDueBanner(context, maintenanceNotification),
+              ],
               const SizedBox(height: AppSpacing.lg),
               _buildDashboardSectionHeader(
                 context,
@@ -1110,6 +1125,28 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                         palette: ModulePalettes.patients,
                         page: const VisitAssessmentVisitPickerScreen(),
                       ),
+                    if (auth.canAccessEquipmentDistribution)
+                      _buildModernActionCard(
+                        context,
+                        title: 'Equipment Supply',
+                        icon: Icons.inventory_2_rounded,
+                        palette: ModulePalettes.equipmentSupply,
+                        page: const ModuleTheme(
+                          palette: ModulePalettes.equipmentSupply,
+                          child: EquipmentSupplyListPage(),
+                        ),
+                      ),
+                    if (auth.canAccessMedicineSupply)
+                      _buildModernActionCard(
+                        context,
+                        title: 'Medicine Supply',
+                        icon: Icons.medication_liquid_rounded,
+                        palette: ModulePalettes.medicineSupply,
+                        page: const ModuleTheme(
+                          palette: ModulePalettes.medicineSupply,
+                          child: MedicineSupplyListPage(),
+                        ),
+                      ),
                     if (auth.canAccessHomeVisits)
                       _buildModernActionCard(
                         context,
@@ -1141,28 +1178,6 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                         page: const ModuleTheme(
                           palette: ModulePalettes.volunteers,
                           child: VolunteerListPage(),
-                        ),
-                      ),
-                    if (auth.canAccessEquipmentDistribution)
-                      _buildModernActionCard(
-                        context,
-                        title: 'Equipment Supply',
-                        icon: Icons.inventory_2_rounded,
-                        palette: ModulePalettes.equipmentSupply,
-                        page: const ModuleTheme(
-                          palette: ModulePalettes.equipmentSupply,
-                          child: EquipmentSupplyListPage(),
-                        ),
-                      ),
-                    if (auth.canAccessMedicineSupply)
-                      _buildModernActionCard(
-                        context,
-                        title: 'Medicine Supply',
-                        icon: Icons.medication_liquid_rounded,
-                        palette: ModulePalettes.medicineSupply,
-                        page: const ModuleTheme(
-                          palette: ModulePalettes.medicineSupply,
-                          child: MedicineSupplyListPage(),
                         ),
                       ),
                   ];
@@ -1219,6 +1234,120 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  AppNotification? _visibleMaintenanceDueNotification() {
+    for (final notification in _notifications) {
+      if (notification.type != 'maintenance_due') continue;
+      if (_dismissedMaintenanceBannerKeys.contains(
+        _maintenanceNotificationKey(notification),
+      )) {
+        continue;
+      }
+      return notification;
+    }
+    return null;
+  }
+
+  String _maintenanceNotificationKey(AppNotification notification) {
+    return notification.id ??
+        notification.entityId ??
+        notification.metadata['periodKey']?.toString() ??
+        notification.message;
+  }
+
+  Widget _buildMaintenanceDueBanner(
+    BuildContext context,
+    AppNotification notification,
+  ) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.warning.withValues(alpha: 0.1),
+        borderRadius: AppRadius.card,
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.16),
+              borderRadius: AppRadius.md,
+            ),
+            child: const Icon(
+              Icons.info_outline_rounded,
+              color: AppColors.warning,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  notification.title,
+                  style: textTheme.titleSmall?.copyWith(
+                    color: AppColors.text,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  notification.message,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.warning,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    textStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const BillingPlanScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.receipt_long_outlined, size: 14),
+                  label: const Text('View Billing & Plan'),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Close',
+            onPressed: () {
+              setState(() {
+                _dismissedMaintenanceBannerKeys.add(
+                  _maintenanceNotificationKey(notification),
+                );
+              });
+            },
+            icon: const Icon(Icons.close_rounded),
+            color: AppColors.textMuted,
+          ),
+        ],
       ),
     );
   }
@@ -1689,9 +1818,20 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
         return Icons.event_repeat_outlined;
       case 'subscription_paid':
         return Icons.payments_outlined;
+      case 'maintenance_due':
+        return Icons.home_repair_service_outlined;
+      case 'billing_due':
+        return Icons.receipt_long_outlined;
       default:
         return Icons.notifications_outlined;
     }
+  }
+
+  bool _isBillingNotification(AppNotification notification) {
+    return notification.type == 'maintenance_due' ||
+        notification.type == 'billing_due' ||
+        notification.type == 'subscription_renewal' ||
+        notification.type == 'subscription_paid';
   }
 
   String _formatNotificationTime(DateTime? date) {
@@ -2134,7 +2274,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                       }
                     },
                     child: Text(
-                      "All rights reserved by AFO",
+                      "All rights reserved by CareNest",
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: AppColors.textMuted,
                       ),

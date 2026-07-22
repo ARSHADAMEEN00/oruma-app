@@ -50,10 +50,8 @@ class PatientPdfGenerator {
   static const Color _altRow = Color(0xFFF0F6FC);
 
   // ─── Org info ─────────────────────────────────────────────────────────────
-  static const String _orgName = 'Team Oruma';
-  static const String _orgSub = 'Kodur, Malappuram';
-  static const String _phone1 = 'Office: 9495006193';
-  static const String _phone2 = 'Home care: 9495006192';
+  static const String _orgName = 'CareNest';
+  static const String _orgSub = 'Palliative Care Management';
 
   // ═══════════════════════════════════════════════════════════════════════════
   // Public API
@@ -1017,7 +1015,7 @@ class PatientReportBrand {
       if (phone != null && !phones.contains(phone)) phones.add(phone);
     }
     if (phones.isEmpty) {
-      return '${PatientPdfGenerator._phone1}   |   ${PatientPdfGenerator._phone2}';
+      return 'Support contact not configured';
     }
     return phones.join('   |   ');
   }

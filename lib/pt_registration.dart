@@ -1216,7 +1216,7 @@ class _patientrigisterState extends State<patientrigister> {
       if (volunteer.phone.isNotEmpty) volunteer.phone,
       if (volunteer.phone2.isNotEmpty) volunteer.phone2,
       if (volunteer.place.isNotEmpty) volunteer.place,
-      if (volunteer.ward.isNotEmpty) 'Ward ${volunteer.ward}',
+      if (volunteer.ward.isNotEmpty) 'Ward\u00A0${volunteer.ward}',
     ].join(' - ');
     return details.isEmpty ? volunteer.name : '${volunteer.name} - $details';
   }

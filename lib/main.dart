@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
     final pageTransitionsTheme = PageTransitionsTheme(
       builders: {
         for (final platform in TargetPlatform.values)
-          platform: _OrumaPageTransitionsBuilder(),
+          platform: _CareNestPageTransitionsBuilder(),
       },
     );
     final lightTheme = AppTheme.light(
@@ -53,7 +53,7 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Oruma App',
+      title: 'CareNest',
       themeMode: ThemeMode.light,
       builder: (context, child) {
         final content = child ?? const SizedBox.shrink();
@@ -91,7 +91,7 @@ class MyApp extends StatelessWidget {
 /// Hooks Flutter's [PageTransitionsTheme] system so that every
 /// [MaterialPageRoute] automatically uses the smooth slide transition
 /// defined in [buildSlideTransition].
-class _OrumaPageTransitionsBuilder extends PageTransitionsBuilder {
+class _CareNestPageTransitionsBuilder extends PageTransitionsBuilder {
   @override
   Widget buildTransitions<T>(
     PageRoute<T> route,

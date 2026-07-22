@@ -1,4 +1,4 @@
-/// API Configuration for the Oruma app.
+/// API Configuration for the CareNest app.
 ///
 /// Contains the base URL and common headers for API requests.
 class ApiConfig {
@@ -9,7 +9,8 @@ class ApiConfig {
   static const String baseUrl = 'https://api-erp-palliative.osperb.com/api';
 
   /// Health check endpoint
-  static const String healthUrl = 'https://api-erp-palliative.osperb.com/health';
+  static const String healthUrl =
+      'https://api-erp-palliative.osperb.com/health';
 
   /// API Endpoints
   static String get patientsEndpoint => '$baseUrl/patients';

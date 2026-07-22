@@ -1,11 +1,11 @@
 {
-    "name": "oruma_app",
-    "short_name": "oruma_app",
+    "name": "CareNest",
+    "short_name": "CareNest",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
     "theme_color": "#2196F3",
-    "description": "A new Flutter project.",
+    "description": "CareNest palliative care management.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

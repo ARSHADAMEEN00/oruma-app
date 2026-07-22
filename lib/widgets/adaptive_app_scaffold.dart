@@ -418,7 +418,7 @@ class _RailBrand extends StatelessWidget {
             Flexible(
               fit: FlexFit.loose,
               child: Text(
-                auth?.unitName ?? 'Oruma',
+                auth?.unitName ?? 'CareNest',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(

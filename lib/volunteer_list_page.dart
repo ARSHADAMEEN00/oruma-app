@@ -1009,16 +1009,6 @@ class _VolunteerFormPageState extends State<VolunteerFormPage> {
                         ? 'Place is required'
                         : null,
                   ),
-                  TextFormField(
-                    controller: _addressController,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: _inputDecoration(
-                      'Address',
-                      Icons.home_outlined,
-                    ),
-                    minLines: 1,
-                    maxLines: 3,
-                  ),
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -1033,6 +1023,16 @@ class _VolunteerFormPageState extends State<VolunteerFormPage> {
                     validator: (value) => value?.trim().isEmpty == true
                         ? 'Name is required'
                         : null,
+                  ),
+                  TextFormField(
+                    controller: _addressController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: _inputDecoration(
+                      'Address',
+                      Icons.home_outlined,
+                    ),
+                    minLines: 1,
+                    maxLines: 3,
                   ),
                   TextFormField(
                     controller: _phoneController,
