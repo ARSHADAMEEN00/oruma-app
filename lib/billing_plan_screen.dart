@@ -56,7 +56,7 @@ class _BillingPlanScreenState extends State<BillingPlanScreen> {
   }
 
   Future<void> _openPlanPage() async {
-    final uri = Uri.parse('http://localhost:5173/plan');
+    final uri = Uri.parse('https://api-erp-palliative.osperb.com/plan');
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

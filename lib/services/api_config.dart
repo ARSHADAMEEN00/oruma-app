@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// API Configuration for the Oruma app.
 ///
 /// Contains the base URL and common headers for API requests.
@@ -8,26 +6,10 @@ class ApiConfig {
   ApiConfig._();
 
   /// Base URL for the API server.
-  /// Uses localhost:5001 for web/desktop development.
-  /// For mobile emulators, you may need to use:
-  /// - Android Emulator: http://10.0.2.2:5001/api
-  /// - iOS Simulator: http://localhost:5001/api
-  static String get baseUrl {
-    if (kDebugMode) {
-      if (kIsWeb) {
-        // Chrome: localhost resolves correctly
-        return 'http://localhost:5001/api';
-      }
-      // Android emulator maps host localhost to 10.0.2.2
-      return 'http://10.0.2.2:5001/api';
-    }
-    return 'https://api-erp-palliative.osperb.com/api';
-  }
+  static const String baseUrl = 'https://api-erp-palliative.osperb.com/api';
 
   /// Health check endpoint
-  static String get healthUrl => kDebugMode
-      ? 'http://localhost:5001/health'
-      : 'https://api-erp-palliative.osperb.com/health';
+  static const String healthUrl = 'https://api-erp-palliative.osperb.com/health';
 
   /// API Endpoints
   static String get patientsEndpoint => '$baseUrl/patients';
