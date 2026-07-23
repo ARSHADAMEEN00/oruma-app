@@ -84,7 +84,12 @@ class _MedicineStockHistoryPageState extends State<MedicineStockHistoryPage> {
       appBar: AppBar(
         backgroundColor: _medicineDarkGreen,
         foregroundColor: Colors.white,
-        title: const Text('Stock History', style: TextStyle(fontSize: 18)),
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Stock History',
+          style: TextStyle(fontSize: 18, color: Colors.white),
+        ),
         actions: [
           IconButton(
             tooltip: 'Refresh',

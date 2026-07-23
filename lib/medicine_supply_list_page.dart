@@ -378,41 +378,48 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
               }
 
               return AlertDialog(
+                insetPadding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 24,
+                ),
                 title: const Text('Return Medicine'),
-                content: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextFormField(
-                        controller: qtyController,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(
-                          labelText: 'Returned Quantity',
-                          helperText: 'Max: ${supply.qtyGiven}',
+                content: SizedBox(
+                  width: 520,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: qtyController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Returned Quantity',
+                            helperText: 'Max: ${supply.qtyGiven}',
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      _dateTile(
-                        title: 'Return Date',
-                        date: returnDate,
-                        onTap: pickReturnDate,
-                      ),
-                      const SizedBox(height: 8),
-                      _dateTile(
-                        title: 'Expiry Date',
-                        date: expiryDate,
-                        onTap: pickExpiryDate,
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: noteController,
-                        maxLines: 2,
-                        decoration: const InputDecoration(
-                          labelText: 'Note',
-                          hintText: 'Optional',
+                        const SizedBox(height: 12),
+                        _dateTile(
+                          title: 'Return Date',
+                          date: returnDate,
+                          onTap: pickReturnDate,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        _dateTile(
+                          title: 'Expiry Date',
+                          date: expiryDate,
+                          onTap: pickExpiryDate,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: noteController,
+                          maxLines: 2,
+                          decoration: const InputDecoration(
+                            labelText: 'Note',
+                            hintText: 'Optional',
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 actions: [
@@ -873,7 +880,7 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      contentPadding: EdgeInsets.zero,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       tileColor: Colors.grey.shade100,
       title: Text(title),

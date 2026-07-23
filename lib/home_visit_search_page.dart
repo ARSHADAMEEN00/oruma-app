@@ -31,7 +31,7 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
   static const _modeOptions = [
     _FilterOption('all', 'All modes', Icons.all_inclusive_rounded),
     _FilterOption('new', 'New', Icons.add_circle_outline),
-    _FilterOption('monthly', 'Planned', Icons.calendar_month_outlined),
+    _FilterOption('monthly', 'Planned NHC', Icons.calendar_month_outlined),
     _FilterOption('emergency', 'Emergency', Icons.emergency_outlined),
     _FilterOption('dhc_visit', 'DHC', Icons.home_work_outlined),
     _FilterOption('vhc_visit', 'VHC', Icons.local_hospital_outlined),
@@ -930,7 +930,7 @@ class _HomeVisitSearchPageState extends State<HomeVisitSearchPage> {
   String _visitModeLabel(String mode) {
     return switch (mode) {
       'new' => 'New',
-      'monthly' => 'Planned',
+      'monthly' => 'Planned NHC',
       'emergency' => 'Emergency',
       'dhc_visit' => 'DHC',
       'vhc_visit' => 'VHC',

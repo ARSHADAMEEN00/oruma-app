@@ -2110,7 +2110,7 @@ class _PatientDetailsPageState extends State<PatientDetailsPage> {
       case 'new':
         return 'New';
       case 'monthly':
-        return 'Planned';
+        return 'Planned NHC';
       case 'emergency':
         return 'Emergency';
       case 'dhc_visit':

@@ -244,7 +244,12 @@ class _MedicineStockEntryPageState extends State<MedicineStockEntryPage> {
       appBar: AppBar(
         backgroundColor: _medicineDarkGreen,
         foregroundColor: Colors.white,
-        title: const Text('Add Stock', style: TextStyle(fontSize: 18)),
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Add Stock',
+          style: TextStyle(fontSize: 18, color: Colors.white),
+        ),
         actions: [
           IconButton(
             tooltip: 'Stock history',
