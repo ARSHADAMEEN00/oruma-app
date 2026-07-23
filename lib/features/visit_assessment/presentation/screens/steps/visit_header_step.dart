@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 
 const _visitModeOptions = <({String value, String label, IconData icon})>[
   (value: 'new', label: 'New', icon: Icons.add_circle_outline),
-  (value: 'monthly', label: 'Monthly', icon: Icons.calendar_month_outlined),
+  (value: 'monthly', label: 'Planned', icon: Icons.calendar_month_outlined),
   (value: 'emergency', label: 'Emergency', icon: Icons.emergency),
   (value: 'dhc_visit', label: 'DHC', icon: Icons.home_work_outlined),
   (value: 'vhc_visit', label: 'VHC', icon: Icons.local_hospital_outlined),

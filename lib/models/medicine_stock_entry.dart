@@ -8,6 +8,10 @@ class MedicineStockEntryDraft {
   final DateTime expiryDate;
   final DateTime? entryDate;
   final String? batchNumber;
+  final String sourceType;
+  final String sourceLabel;
+  final String? sourcePatientName;
+  final String? sourceSupplyId;
   final String? note;
 
   const MedicineStockEntryDraft({
@@ -18,6 +22,10 @@ class MedicineStockEntryDraft {
     required this.expiryDate,
     this.entryDate,
     this.batchNumber,
+    this.sourceType = 'main_stock',
+    this.sourceLabel = 'Main Stock',
+    this.sourcePatientName,
+    this.sourceSupplyId,
     this.note,
   });
 
@@ -31,6 +39,12 @@ class MedicineStockEntryDraft {
       if (entryDate != null) 'entryDate': entryDate!.toIso8601String(),
       if (batchNumber?.trim().isNotEmpty == true)
         'batchNumber': batchNumber!.trim(),
+      'sourceType': sourceType,
+      'sourceLabel': sourceLabel,
+      if (sourcePatientName?.trim().isNotEmpty == true)
+        'sourcePatientName': sourcePatientName!.trim(),
+      if (sourceSupplyId?.trim().isNotEmpty == true)
+        'sourceSupplyId': sourceSupplyId!.trim(),
       if (note?.trim().isNotEmpty == true) 'note': note!.trim(),
     };
   }
@@ -46,6 +60,10 @@ class MedicineStockEntry {
   final DateTime entryDate;
   final DateTime expiryDate;
   final String? batchNumber;
+  final String sourceType;
+  final String sourceLabel;
+  final String? sourcePatientName;
+  final String? sourceSupplyId;
   final String? note;
   final MedicineUserSummary? createdBy;
   final DateTime? createdAt;
@@ -61,6 +79,10 @@ class MedicineStockEntry {
     required this.entryDate,
     required this.expiryDate,
     this.batchNumber,
+    this.sourceType = 'main_stock',
+    this.sourceLabel = 'Main Stock',
+    this.sourcePatientName,
+    this.sourceSupplyId,
     this.note,
     this.createdBy,
     this.createdAt,
@@ -83,6 +105,10 @@ class MedicineStockEntry {
       entryDate: _toDate(json['entryDate']) ?? DateTime.now(),
       expiryDate: _toDate(json['expiryDate']) ?? DateTime.now(),
       batchNumber: json['batchNumber']?.toString(),
+      sourceType: json['sourceType']?.toString() ?? 'main_stock',
+      sourceLabel: json['sourceLabel']?.toString() ?? 'Main Stock',
+      sourcePatientName: json['sourcePatientName']?.toString(),
+      sourceSupplyId: json['sourceSupplyId']?.toString(),
       note: json['note']?.toString(),
       createdBy: _userFromJson(json['createdBy']),
       createdAt: _toDate(json['createdAt']),

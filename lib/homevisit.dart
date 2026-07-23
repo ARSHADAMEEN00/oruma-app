@@ -39,7 +39,7 @@ class _HomevisitState extends State<Homevisit> {
   String _selectedVisitMode = 'new';
   final List<Map<String, String>> _visitModeOptions = [
     {'value': 'new', 'label': 'New'},
-    {'value': 'monthly', 'label': 'Monthly'},
+    {'value': 'monthly', 'label': 'Planned'},
     {'value': 'emergency', 'label': 'Emergency'},
     {'value': 'dhc_visit', 'label': 'DHC'},
     {'value': 'vhc_visit', 'label': 'VHC'},

@@ -47,6 +47,20 @@ class MedicineSupplyItem {
     return '';
   }
 
+  String get sourceLabel {
+    if (stockEntryId is Map) {
+      return stockEntryId['sourceLabel']?.toString() ?? 'Main Stock';
+    }
+    return 'Main Stock';
+  }
+
+  String? get sourcePatientName {
+    if (stockEntryId is Map) {
+      return stockEntryId['sourcePatientName']?.toString();
+    }
+    return null;
+  }
+
   DateTime? get expiryDate {
     if (stockEntryId is Map && stockEntryId['expiryDate'] != null) {
       return DateTime.tryParse(stockEntryId['expiryDate'].toString());

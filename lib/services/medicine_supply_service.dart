@@ -86,6 +86,50 @@ class MedicineSupplyService {
     throw Exception(result.error ?? 'Failed to update medicine supply');
   }
 
+  static Future<MedicineSupply> returnMedicineSupply(
+    String id, {
+    required int qtyReturned,
+    required DateTime returnedAt,
+    required DateTime expiryDate,
+    String? staffNote,
+  }) async {
+    final result = await ApiService.post<Map<String, dynamic>>(
+      '${ApiConfig.v2MedicineSuppliesEndpoint}/$id/return',
+      body: {
+        'qtyReturned': qtyReturned,
+        'returnedAt': returnedAt.toIso8601String(),
+        'expiryDate': expiryDate.toIso8601String(),
+        if (staffNote?.trim().isNotEmpty == true)
+          'staffNote': staffNote!.trim(),
+      },
+    );
+
+    if (result.isSuccess && result.data != null) {
+      AppCache.invalidatePrefix(_prefix);
+      AppCache.invalidatePrefix('medicines:');
+      AppCache.invalidatePrefix('medicine_stock_entries:');
+      return MedicineSupply.fromJson(result.data!);
+    }
+
+    throw Exception(result.error ?? 'Failed to return medicine supply');
+  }
+
+  static Future<MedicineSupply> cancelMedicineSupply(String id) async {
+    final result = await ApiService.post<Map<String, dynamic>>(
+      '${ApiConfig.v2MedicineSuppliesEndpoint}/$id/cancel',
+      body: const {},
+    );
+
+    if (result.isSuccess && result.data != null) {
+      AppCache.invalidatePrefix(_prefix);
+      AppCache.invalidatePrefix('medicines:');
+      AppCache.invalidatePrefix('medicine_stock_entries:');
+      return MedicineSupply.fromJson(result.data!);
+    }
+
+    throw Exception(result.error ?? 'Failed to cancel medicine supply');
+  }
+
   /// Delete a medicine supply and invalidate the cache.
   static Future<bool> deleteMedicineSupply(String id) async {
     final result = await ApiService.delete(

@@ -687,7 +687,7 @@ class _HomescreenState extends State<Homescreen> with WidgetsBindingObserver {
                   const SizedBox(height: AppSpacing.xl),
                   _buildProfileMenuItem(
                     icon: Icons.settings_outlined,
-                    title: "Settings",
+                    title: "Settings & Staff Management",
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.of(context).push(

@@ -470,6 +470,7 @@ class _MedicineListPageState extends State<MedicineListPage> {
                 'Received ${_number(batch.originalQuantity)} ${_stockUnitLabel(batch.qtyUnit)}',
                 color,
               ),
+              _batchChip(Icons.label_outline, _batchSourceText(batch), color),
               if (batch.entryDate != null)
                 _batchChip(
                   Icons.login_outlined,
@@ -1065,6 +1066,19 @@ class _MedicineListPageState extends State<MedicineListPage> {
     return value?.trim().isNotEmpty == true ? value!.trim() : 'Not recorded';
   }
 
+  String _batchSourceText(MedicineBatch batch) {
+    final label = batch.sourceLabel.trim().isEmpty
+        ? 'Main Stock'
+        : batch.sourceLabel.trim();
+    final patientName = batch.sourcePatientName?.trim();
+    if (batch.sourceType == 'return' &&
+        patientName != null &&
+        patientName.isNotEmpty) {
+      return '$label • $patientName';
+    }
+    return label;
+  }
+
   String _titleCase(String value) {
     if (value.isEmpty) return value;
     return '${value[0].toUpperCase()}${value.substring(1).toLowerCase()}';
@@ -1171,7 +1185,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     _formulation = medicine?.formulation;
     _strengthUnit = medicine?.strengthUnit ?? 'mg';
     _isActive = medicine?.isActive ?? true;
-    _showMore = _editing;
+    _showMore = false;
     _codeController.addListener(_refreshDuplicateHints);
     _nameController.addListener(_refreshDuplicateHints);
     _loadExistingMedicines();
@@ -1512,8 +1526,16 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                   ),
                 )
               else
-                IconButton.filledTonal(
+                IconButton(
                   visualDensity: VisualDensity.compact,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.grey.shade100,
+                    foregroundColor: Colors.grey.shade600,
+                    disabledBackgroundColor: Colors.grey.shade50,
+                    disabledForegroundColor: Colors.grey.shade400,
+                    minimumSize: const Size(36, 36),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   onPressed: batchId == null
                       ? null
                       : () => _showBatchEditor(batch),
@@ -1537,6 +1559,11 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
               _editableBatchChip(
                 Icons.playlist_add_check_outlined,
                 'Received ${_number(batch.originalQuantity)} ${_stockUnitLabel(batch.qtyUnit)}',
+                color,
+              ),
+              _editableBatchChip(
+                Icons.label_outline,
+                _batchSourceText(batch),
                 color,
               ),
               if (batch.entryDate != null)
@@ -1820,12 +1847,13 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
         backgroundColor: _medicineDarkGreen,
         foregroundColor: Colors.white,
         leading: BackButton(
+          color: Colors.white,
           onPressed: () =>
               Navigator.pop(context, _batchesChanged ? true : null),
         ),
         title: Text(
           _editing ? 'Edit Medicine' : 'New Medicine',
-          style: const TextStyle(fontSize: 18),
+          style: const TextStyle(fontSize: 18, color: Colors.white),
         ),
       ),
       body: Form(
@@ -2290,6 +2318,19 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
 
   String _displayValue(String? value) {
     return value?.trim().isNotEmpty == true ? value!.trim() : 'Not recorded';
+  }
+
+  String _batchSourceText(MedicineBatch batch) {
+    final label = batch.sourceLabel.trim().isEmpty
+        ? 'Main Stock'
+        : batch.sourceLabel.trim();
+    final patientName = batch.sourcePatientName?.trim();
+    if (batch.sourceType == 'return' &&
+        patientName != null &&
+        patientName.isNotEmpty) {
+      return '$label • $patientName';
+    }
+    return label;
   }
 
   String _nextMedicineCodeFrom(List<Medicine> medicines) {

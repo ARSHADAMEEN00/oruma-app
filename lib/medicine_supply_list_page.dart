@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/medicine_supply_page.dart';
 import 'package:oruma_app/medicine_list_page.dart';
@@ -338,114 +337,92 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
     );
   }
 
-  Future<void> _deleteSupply(MedicineSupply supply) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Supply'),
-        content: Text(
-          'Are you sure you want to delete this medicine supply record?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+  Future<void> _returnSupply(MedicineSupply supply) async {
+    if (supply.id == null || supply.status != 'given') return;
+
+    final qtyController = TextEditingController(
+      text: supply.qtyGiven.toString(),
     );
+    final noteController = TextEditingController();
+    var returnDate = DateTime.now();
+    var expiryDate = DateTime.now().add(const Duration(days: 365));
 
-    if (confirm == true && supply.id != null) {
-      try {
-        await MedicineSupplyService.deleteMedicineSupply(supply.id!);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Supply deleted successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          _loadData();
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error deleting supply: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
-  }
-
-  Future<void> _changeStatus(MedicineSupply supply, String newStatus) async {
-    if (supply.status == newStatus) return;
-
-    int? qtyReturned;
-    DateTime? returnedAt;
-
-    if (newStatus == 'returned') {
-      final TextEditingController qtyController = TextEditingController(
-        text: supply.qtyGiven.toString(),
-      );
-      DateTime selectedDate = DateTime.now();
-
-      final bool? confirm = await showDialog<bool>(
+    try {
+      final confirm = await showDialog<bool>(
         context: context,
-        builder: (context) {
+        builder: (dialogContext) {
           return StatefulBuilder(
-            builder: (context, setState) {
+            builder: (dialogContext, setDialogState) {
+              Future<void> pickReturnDate() async {
+                final picked = await showDatePicker(
+                  context: dialogContext,
+                  initialDate: returnDate,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime.now(),
+                );
+                if (picked != null) {
+                  setDialogState(() => returnDate = picked);
+                }
+              }
+
+              Future<void> pickExpiryDate() async {
+                final picked = await showDatePicker(
+                  context: dialogContext,
+                  initialDate: expiryDate,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(DateTime.now().year + 30),
+                );
+                if (picked != null) {
+                  setDialogState(() => expiryDate = picked);
+                }
+              }
+
               return AlertDialog(
                 title: const Text('Return Medicine'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      controller: qtyController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Returned Quantity',
-                        helperText: 'Max: ${supply.qtyGiven}',
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: qtyController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Returned Quantity',
+                          helperText: 'Max: ${supply.qtyGiven}',
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('Return Date'),
-                      subtitle: Text(
-                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                      const SizedBox(height: 12),
+                      _dateTile(
+                        title: 'Return Date',
+                        date: returnDate,
+                        onTap: pickReturnDate,
                       ),
-                      trailing: const Icon(Icons.calendar_today),
-                      onTap: () async {
-                        final DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: selectedDate,
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime.now(),
-                        );
-                        if (picked != null) {
-                          setState(() {
-                            selectedDate = picked;
-                          });
-                        }
-                      },
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      _dateTile(
+                        title: 'Expiry Date',
+                        date: expiryDate,
+                        onTap: pickExpiryDate,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: noteController,
+                        maxLines: 2,
+                        decoration: const InputDecoration(
+                          labelText: 'Note',
+                          hintText: 'Optional',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 actions: [
                   TextButton(
-                    onPressed: () => Navigator.pop(context, false),
+                    onPressed: () => Navigator.pop(dialogContext, false),
                     child: const Text('Cancel'),
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      final int? qty = int.tryParse(qtyController.text);
+                      final qty = int.tryParse(qtyController.text.trim());
                       if (qty == null || qty <= 0 || qty > supply.qtyGiven) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -454,7 +431,7 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
                         );
                         return;
                       }
-                      Navigator.pop(context, true);
+                      Navigator.pop(dialogContext, true);
                     },
                     child: const Text('Confirm'),
                   ),
@@ -467,35 +444,79 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
 
       if (confirm != true) return;
 
-      qtyReturned = int.tryParse(qtyController.text);
-      returnedAt = selectedDate;
-    }
-
-    try {
-      final updated = supply.copyWith(
-        status: newStatus,
-        qtyReturned: qtyReturned ?? supply.qtyReturned,
-        returnedAt: returnedAt ?? supply.returnedAt,
+      await MedicineSupplyService.returnMedicineSupply(
+        supply.id!,
+        qtyReturned: int.parse(qtyController.text.trim()),
+        returnedAt: returnDate,
+        expiryDate: expiryDate,
+        staffNote: noteController.text,
       );
-      await MedicineSupplyService.updateMedicineSupply(supply.id!, updated);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Status updated'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Medicine returned and batch created'),
+          backgroundColor: Colors.green,
+        ),
+      );
       _loadData(showLoading: false);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error updating status: $e'),
-            backgroundColor: Colors.red,
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error returning medicine: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      qtyController.dispose();
+      noteController.dispose();
+    }
+  }
+
+  Future<void> _cancelSupply(MedicineSupply supply) async {
+    if (supply.id == null || supply.status != 'given') return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel Supply'),
+        content: const Text(
+          'Cancel this supply and restore the medicines to their original batches?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No'),
           ),
-        );
-      }
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Cancel Supply'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await MedicineSupplyService.cancelMedicineSupply(supply.id!);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Supply cancelled'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      _loadData(showLoading: false);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error cancelling supply: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -794,6 +815,17 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                 ),
+                const SizedBox(height: 2),
+                Text(
+                  _itemSourceText(item),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
           ),
@@ -820,6 +852,45 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
     if (returnedAt == null) return returnedText;
 
     return '$returnedText (${returnedAt.day}/${returnedAt.month}/${returnedAt.year})';
+  }
+
+  String _itemSourceText(MedicineSupplyItem item) {
+    final label = item.sourceLabel.trim().isEmpty
+        ? 'Main Stock'
+        : item.sourceLabel.trim();
+    final patientName = item.sourcePatientName?.trim();
+    if (label.toLowerCase() == 'return' &&
+        patientName != null &&
+        patientName.isNotEmpty) {
+      return '$label • $patientName';
+    }
+    return label;
+  }
+
+  Widget _dateTile({
+    required String title,
+    required DateTime date,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      tileColor: Colors.grey.shade100,
+      title: Text(title),
+      subtitle: Text('${date.day}/${date.month}/${date.year}'),
+      trailing: const Icon(Icons.calendar_today),
+      onTap: onTap,
+    );
+  }
+
+  String _statusText(MedicineSupply supply) {
+    final status = supply.status ?? 'given';
+    return switch (status) {
+      'returned' => 'Returned',
+      'cancelled' => 'Cancelled',
+      'partially_given' => 'Partially Given',
+      _ => 'Given',
+    };
   }
 
   Widget _buildSupplyCard(MedicineSupply supply, AuthService auth) {
@@ -859,67 +930,26 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            PopupMenuButton<String>(
-                              initialValue: supply.status ?? 'given',
-                              onSelected: (value) =>
-                                  _changeStatus(supply, value),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade50,
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                    color: Colors.grey.shade200,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      supply.status?.toUpperCase() ?? 'GIVEN',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade700,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    if (auth.canEdit) ...[
-                                      const SizedBox(width: 4),
-                                      Icon(
-                                        Icons.arrow_drop_down,
-                                        size: 14,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ],
-                                  ],
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: statusColor.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: statusColor.withValues(alpha: 0.18),
                                 ),
                               ),
-                              itemBuilder: (context) => [
-                                if (auth.canEdit) ...[
-                                  const PopupMenuItem(
-                                    value: 'given',
-                                    child: Text('Given'),
-                                  ),
-                                  const PopupMenuItem(
-                                    value: 'returned',
-                                    child: Text('Returned'),
-                                  ),
-                                  const PopupMenuItem(
-                                    value: 'cancelled',
-                                    child: Text('Cancelled'),
-                                  ),
-                                ] else ...[
-                                  PopupMenuItem(
-                                    value: supply.status ?? 'given',
-                                    child: Text(
-                                      supply.status?.toUpperCase() ?? 'GIVEN',
-                                    ),
-                                  ),
-                                ],
-                              ],
+                              child: Text(
+                                _statusText(supply).toUpperCase(),
+                                style: TextStyle(
+                                  color: statusColor,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
                             Row(
                               children: [
@@ -931,18 +961,41 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                if (auth.canDelete) ...[
+                                if (auth.canEdit &&
+                                    supply.status == 'given') ...[
                                   const SizedBox(width: 8),
-                                  InkWell(
-                                    onTap: () => _deleteSupply(supply),
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(4.0),
-                                      child: Icon(
-                                        Icons.delete_outline,
-                                        size: 18,
-                                        color: Colors.red.shade400,
-                                      ),
+                                  IconButton(
+                                    visualDensity: VisualDensity.compact,
+                                    tooltip: 'Return medicine',
+                                    onPressed: () => _returnSupply(supply),
+                                    icon: const Icon(
+                                      Icons.assignment_return_outlined,
+                                      size: 18,
+                                    ),
+                                    style: IconButton.styleFrom(
+                                      foregroundColor: _medicineGreen,
+                                      backgroundColor: _medicineGreen
+                                          .withValues(alpha: 0.08),
+                                      minimumSize: const Size(32, 32),
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  IconButton(
+                                    visualDensity: VisualDensity.compact,
+                                    tooltip: 'Cancel supply',
+                                    onPressed: () => _cancelSupply(supply),
+                                    icon: const Icon(
+                                      Icons.cancel_outlined,
+                                      size: 18,
+                                    ),
+                                    style: IconButton.styleFrom(
+                                      foregroundColor: Colors.red.shade600,
+                                      backgroundColor: Colors.red.shade50,
+                                      minimumSize: const Size(32, 32),
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
                                     ),
                                   ),
                                 ],
@@ -1022,25 +1075,6 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
         ),
       ),
     );
-
-    if (auth.canDelete) {
-      return Slidable(
-        key: ValueKey(supply.id),
-        endActionPane: ActionPane(
-          motion: const ScrollMotion(),
-          children: [
-            SlidableAction(
-              onPressed: (_) => _deleteSupply(supply),
-              backgroundColor: const Color(0xFFFE4A49),
-              foregroundColor: Colors.white,
-              icon: Icons.delete,
-              label: 'Delete',
-            ),
-          ],
-        ),
-        child: cardContent,
-      );
-    }
 
     return cardContent;
   }

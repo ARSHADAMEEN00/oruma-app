@@ -65,7 +65,7 @@ class VisitAssessmentPdfGenerator {
 
   static const _visitModeLabels = <String, String>{
     'new': 'New',
-    'monthly': 'Monthly',
+    'monthly': 'Planned',
     'emergency': 'Emergency',
     'dhc_visit': 'DHC',
     'vhc_visit': 'VHC',

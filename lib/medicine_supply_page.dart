@@ -1029,6 +1029,17 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  const SizedBox(height: 3),
+                  Text(
+                    _batchSourceText(batch),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: color.withValues(alpha: 0.72),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1163,6 +1174,19 @@ class _MedicineSupplyPageState extends State<MedicineSupplyPage> {
       null || '' => 'units',
       _ => value!.trim(),
     };
+  }
+
+  String _batchSourceText(MedicineBatch batch) {
+    final label = batch.sourceLabel.trim().isEmpty
+        ? 'Main Stock'
+        : batch.sourceLabel.trim();
+    final patientName = batch.sourcePatientName?.trim();
+    if (batch.sourceType == 'return' &&
+        patientName != null &&
+        patientName.isNotEmpty) {
+      return '$label • $patientName';
+    }
+    return label;
   }
 
   String _formatDate(DateTime? date) {

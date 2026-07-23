@@ -283,6 +283,7 @@ class _MedicineStockHistoryPageState extends State<MedicineStockHistoryPage> {
                         Icons.confirmation_number_outlined,
                         entry.batchNumber!.trim(),
                       ),
+                    _detailChip(Icons.label_outline, _sourceText(entry)),
                   ],
                 ),
                 if (footer.isNotEmpty) ...[
@@ -326,6 +327,19 @@ class _MedicineStockHistoryPageState extends State<MedicineStockHistoryPage> {
         ],
       ),
     );
+  }
+
+  String _sourceText(MedicineStockEntry entry) {
+    final label = entry.sourceLabel.trim().isEmpty
+        ? 'Main Stock'
+        : entry.sourceLabel.trim();
+    final patientName = entry.sourcePatientName?.trim();
+    if (entry.sourceType == 'return' &&
+        patientName != null &&
+        patientName.isNotEmpty) {
+      return '$label • $patientName';
+    }
+    return label;
   }
 
   Widget _messageState(

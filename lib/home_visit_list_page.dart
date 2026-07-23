@@ -715,7 +715,7 @@ class _HomeVisitListPageState extends State<HomeVisitListPage> {
       case 'monthly':
         icon = Icons.calendar_month_outlined;
         color = AppColors.primary;
-        label = 'Monthly';
+        label = 'Planned';
         break;
       case 'emergency':
         icon = Icons.emergency_outlined;
@@ -1359,7 +1359,7 @@ class _VisitDetailsSheetState extends State<_VisitDetailsSheet> {
       case 'new':
         return 'New';
       case 'monthly':
-        return 'Monthly';
+        return 'Planned';
       case 'emergency':
         return 'Emergency';
       case 'dhc_visit':
