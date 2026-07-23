@@ -13,6 +13,7 @@ import 'package:oruma_app/models/medicine.dart';
 import 'package:oruma_app/services/auth_service.dart';
 import 'package:oruma_app/services/feature_permissions.dart';
 import 'package:oruma_app/services/medicine_service.dart';
+import 'package:oruma_app/services/medicine_stock_service.dart';
 import 'package:provider/provider.dart';
 import 'package:oruma_app/widgets/adaptive_app_scaffold.dart';
 import 'package:oruma_app/widgets/compact_app_bottom_bar.dart';
@@ -1084,6 +1085,7 @@ class MedicineFormPage extends StatefulWidget {
 }
 
 class _MedicineFormPageState extends State<MedicineFormPage> {
+  static final RegExp _medicineCodePattern = RegExp(r'^MED-(\d+)$');
   static const categories = [
     'opioid',
     'nsaid',
@@ -1119,11 +1121,16 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
   bool _isActive = true;
   bool _showMore = false;
   bool _saving = false;
+  bool _loadingCode = false;
+  bool _batchesChanged = false;
+  String? _savingBatchId;
   List<Medicine> _existingMedicines = [];
+  List<MedicineBatch> _batches = [];
   List<String> _photos = [];
 
   bool get _editing => widget.medicine != null;
   bool get _hasDuplicateCode {
+    if (!_editing) return false;
     final code = _codeController.text.trim().toUpperCase();
     if (code.isEmpty) return false;
     return _existingMedicines.any(
@@ -1159,6 +1166,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     );
     _descriptionController = TextEditingController(text: medicine?.description);
     _photos = List<String>.from(medicine?.photos ?? const []);
+    _batches = List<MedicineBatch>.from(medicine?.batches ?? const []);
     _category = medicine?.category ?? 'other';
     _formulation = medicine?.formulation;
     _strengthUnit = medicine?.strengthUnit ?? 'mg';
@@ -1167,6 +1175,9 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     _codeController.addListener(_refreshDuplicateHints);
     _nameController.addListener(_refreshDuplicateHints);
     _loadExistingMedicines();
+    if (!_editing) {
+      _loadNextMedicineCode();
+    }
   }
 
   @override
@@ -1189,9 +1200,25 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     try {
       final medicines = await MedicineService.getMedicines();
       if (!mounted) return;
+      if (!_editing && _codeController.text.trim().isEmpty) {
+        _codeController.text = _nextMedicineCodeFrom(medicines);
+      }
       setState(() => _existingMedicines = medicines);
     } catch (_) {
       // Duplicate checks still run on the server if this lookup is unavailable.
+    }
+  }
+
+  Future<void> _loadNextMedicineCode() async {
+    setState(() => _loadingCode = true);
+    try {
+      final code = await MedicineService.getNextMedicineCode();
+      if (!mounted) return;
+      _codeController.text = code;
+      setState(() => _loadingCode = false);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingCode = false);
     }
   }
 
@@ -1393,6 +1420,398 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     );
   }
 
+  Widget _batchesSection() {
+    return _formCard(
+      title: 'Batches',
+      subtitle: _batches.isEmpty
+          ? 'No stock batches added yet.'
+          : '${_batches.length} stock batches recorded.',
+      icon: Icons.inventory_2_outlined,
+      children: _batches.isEmpty
+          ? [_emptyEditableBatchesCard()]
+          : _batches.map(_editableBatchCard).toList(),
+    );
+  }
+
+  Widget _emptyEditableBatchesCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7FAF9),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Text(
+        'Add stock entries to create batches for this medicine.',
+        style: TextStyle(
+          color: Colors.grey.shade600,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _editableBatchCard(MedicineBatch batch) {
+    final batchId = batch.id;
+    final isEmpty = batch.isEmpty;
+    final expiryWarning = !isEmpty && batch.expiresWithin60Days;
+    final color = isEmpty
+        ? Colors.grey.shade600
+        : expiryWarning
+        ? Colors.red.shade700
+        : _medicineGreen;
+    final background = isEmpty
+        ? Colors.grey.shade100
+        : expiryWarning
+        ? Colors.red.shade50
+        : _medicineSurface;
+    final saving = batchId != null && _savingBatchId == batchId;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isEmpty
+              ? Colors.grey.shade300
+              : expiryWarning
+              ? Colors.red.shade300
+              : _medicineIconBackground,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.inventory_2_outlined, color: color, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _displayValue(batch.batchNumber),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: color, fontWeight: FontWeight.w900),
+                ),
+              ),
+              _editableBatchQtyPill(batch, color),
+              const SizedBox(width: 6),
+              if (saving)
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: Padding(
+                    padding: const EdgeInsets.all(7),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: color,
+                    ),
+                  ),
+                )
+              else
+                IconButton.filledTonal(
+                  visualDensity: VisualDensity.compact,
+                  onPressed: batchId == null
+                      ? null
+                      : () => _showBatchEditor(batch),
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  tooltip: batchId == null
+                      ? 'Legacy batch cannot be edited'
+                      : 'Edit batch',
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _editableBatchChip(
+                Icons.event_outlined,
+                'Exp ${_formatDate(batch.expiryDate)}',
+                color,
+              ),
+              _editableBatchChip(
+                Icons.playlist_add_check_outlined,
+                'Received ${_number(batch.originalQuantity)} ${_stockUnitLabel(batch.qtyUnit)}',
+                color,
+              ),
+              if (batch.entryDate != null)
+                _editableBatchChip(
+                  Icons.login_outlined,
+                  'Entry ${_formatDate(batch.entryDate)}',
+                  color,
+                ),
+              if (batch.updatedAt != null)
+                _editableBatchChip(
+                  Icons.update_outlined,
+                  'Updated ${_formatDate(batch.updatedAt)}',
+                  color,
+                ),
+            ],
+          ),
+          if (batch.note?.trim().isNotEmpty == true) ...[
+            const SizedBox(height: 10),
+            Text(
+              batch.note!.trim(),
+              style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _editableBatchQtyPill(MedicineBatch batch, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: color.withValues(alpha: 0.28)),
+      ),
+      child: Text(
+        '${_number(batch.quantity)} ${_stockUnitLabel(batch.qtyUnit)}',
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+
+  Widget _editableBatchChip(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showBatchEditor(MedicineBatch batch) async {
+    final batchId = batch.id;
+    if (batchId == null) return;
+
+    final quantityController = TextEditingController(
+      text: _number(batch.quantity),
+    );
+    DateTime? expiryDate = batch.expiryDate;
+    var saving = false;
+
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        isDismissible: false,
+        enableDrag: false,
+        showDragHandle: true,
+        builder: (sheetContext) {
+          return StatefulBuilder(
+            builder: (sheetContext, setModalState) {
+              Future<void> pickExpiryDate() async {
+                final today = DateTime.now();
+                final picked = await showDatePicker(
+                  context: sheetContext,
+                  initialDate: expiryDate ?? today,
+                  firstDate: DateTime(today.year - 10),
+                  lastDate: DateTime(today.year + 30),
+                );
+                if (picked != null) {
+                  setModalState(() => expiryDate = picked);
+                }
+              }
+
+              Future<void> saveBatch() async {
+                final quantity = double.tryParse(
+                  quantityController.text.trim(),
+                );
+                final selectedExpiry = expiryDate;
+                final messenger = ScaffoldMessenger.of(context);
+                final navigator = Navigator.of(context);
+
+                if (quantity == null || quantity < 0) {
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Enter a valid quantity'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                if (selectedExpiry == null) {
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Choose an expiry date'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
+                setModalState(() => saving = true);
+                setState(() => _savingBatchId = batchId);
+
+                try {
+                  await MedicineStockService.updateStockEntry(
+                    batchId,
+                    quantity: quantity,
+                    expiryDate: selectedExpiry,
+                  );
+                  final medicineId = widget.medicine?.id;
+                  if (medicineId != null) {
+                    final refreshed = await MedicineService.getMedicineById(
+                      medicineId,
+                    );
+                    if (!mounted) return;
+                    setState(() {
+                      _batches = refreshed.batches;
+                      _batchesChanged = true;
+                    });
+                  }
+                  if (!mounted) return;
+                  navigator.pop();
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Batch updated'),
+                      backgroundColor: _medicineDarkGreen,
+                    ),
+                  );
+                } catch (error) {
+                  if (!mounted) return;
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        error.toString().replaceFirst(
+                          RegExp(r'^Exception:\s*'),
+                          '',
+                        ),
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  setModalState(() => saving = false);
+                } finally {
+                  if (mounted) {
+                    setState(() => _savingBatchId = null);
+                  }
+                }
+              }
+
+              return Padding(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  0,
+                  20,
+                  MediaQuery.of(sheetContext).viewInsets.bottom + 20,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Edit batch',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: saving
+                              ? null
+                              : () => Navigator.pop(sheetContext),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _displayValue(batch.batchNumber),
+                      style: const TextStyle(
+                        color: _medicineDarkGreen,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: quantityController,
+                      enabled: !saving,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: _inputDecoration(
+                        'Available quantity',
+                        Icons.inventory_2_outlined,
+                        hint: '0',
+                      ).copyWith(suffixText: _stockUnitLabel(batch.qtyUnit)),
+                    ),
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: saving ? null : pickExpiryDate,
+                      borderRadius: BorderRadius.circular(14),
+                      child: InputDecorator(
+                        decoration: _inputDecoration(
+                          'Expiry date',
+                          Icons.event_outlined,
+                        ),
+                        child: Text(_formatDate(expiryDate)),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton.icon(
+                      onPressed: saving ? null : saveBatch,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _medicineGreen,
+                        minimumSize: const Size.fromHeight(50),
+                      ),
+                      icon: saving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.save_outlined),
+                      label: Text(saving ? 'Saving' : 'Save batch'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      quantityController.dispose();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AdaptiveAppScaffold(
@@ -1400,6 +1819,10 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
       appBar: AppBar(
         backgroundColor: _medicineDarkGreen,
         foregroundColor: Colors.white,
+        leading: BackButton(
+          onPressed: () =>
+              Navigator.pop(context, _batchesChanged ? true : null),
+        ),
         title: Text(
           _editing ? 'Edit Medicine' : 'New Medicine',
           style: const TextStyle(fontSize: 18),
@@ -1420,16 +1843,18 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                 _textField(
                   _codeController,
                   'Medicine code',
-                  hint: 'MED-0042',
+                  hint: _loadingCode ? 'Loading code' : 'MED-001',
                   icon: Icons.tag_outlined,
-                  required: true,
+                  required: _editing,
+                  readOnly: true,
                   textCapitalization: TextCapitalization.characters,
-                  supportingText: _hasDuplicateCode
+                  supportingText: _editing && _hasDuplicateCode
                       ? 'This medicine code already exists'
                       : null,
                   supportingColor: Colors.red.shade700,
-                  validator: (_) =>
-                      _hasDuplicateCode ? 'Medicine code already exists' : null,
+                  validator: (_) => _editing && _hasDuplicateCode
+                      ? 'Medicine code already exists'
+                      : null,
                 ),
                 _textField(
                   _nameController,
@@ -1480,6 +1905,7 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
                 ),
               ],
             ),
+            if (_editing) ...[const SizedBox(height: 14), _batchesSection()],
             const SizedBox(height: 14),
             InkWell(
               onTap: () => setState(() => _showMore = !_showMore),
@@ -1738,12 +2164,14 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     String? supportingText,
     Color? supportingColor,
     String? Function(String?)? validator,
+    bool readOnly = false,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       textCapitalization: textCapitalization,
       maxLines: maxLines,
+      readOnly: readOnly,
       decoration: _inputDecoration(
         label,
         icon,
@@ -1842,6 +2270,40 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
     return value == value.roundToDouble()
         ? value.toInt().toString()
         : value.toString();
+  }
+
+  String _formatDate(DateTime? value) {
+    if (value == null) return 'Not recorded';
+    return DateFormat('dd MMM yyyy').format(value.toLocal());
+  }
+
+  String _stockUnitLabel(String? value) {
+    return switch (value?.trim().toLowerCase()) {
+      'tab' => 'Tab',
+      'bottle' => 'Bottle',
+      'gel' => 'Gel',
+      'piece' => 'Piece',
+      null || '' => 'units',
+      _ => value!.trim(),
+    };
+  }
+
+  String _displayValue(String? value) {
+    return value?.trim().isNotEmpty == true ? value!.trim() : 'Not recorded';
+  }
+
+  String _nextMedicineCodeFrom(List<Medicine> medicines) {
+    var maxSequence = 0;
+    for (final medicine in medicines) {
+      final match = _medicineCodePattern.firstMatch(
+        medicine.code.trim().toUpperCase(),
+      );
+      final sequence = int.tryParse(match?.group(1) ?? '');
+      if (sequence != null && sequence > maxSequence) {
+        maxSequence = sequence;
+      }
+    }
+    return 'MED-${(maxSequence + 1).toString().padLeft(3, '0')}';
   }
 
   String _titleCase(String value) {

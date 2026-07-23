@@ -81,6 +81,25 @@ class MedicineStockService {
     throw Exception(result.error ?? 'Failed to add medicine stock');
   }
 
+  static Future<MedicineStockEntry> updateStockEntry(
+    String id, {
+    required double quantity,
+    required DateTime expiryDate,
+  }) async {
+    final result = await ApiService.patch<Map<String, dynamic>>(
+      '${ApiConfig.v2MedicineStockEntriesEndpoint}/$id',
+      body: {'quantity': quantity, 'expiryDate': expiryDate.toIso8601String()},
+    );
+
+    if (result.isSuccess && result.data != null) {
+      AppCache.invalidatePrefix(_prefix);
+      AppCache.invalidatePrefix('medicines:');
+      return MedicineStockEntry.fromJson(result.data!);
+    }
+
+    throw Exception(result.error ?? 'Failed to update medicine stock');
+  }
+
   static void invalidateCache() {
     AppCache.invalidatePrefix(_prefix);
   }
