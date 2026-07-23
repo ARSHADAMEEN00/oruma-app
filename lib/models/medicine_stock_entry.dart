@@ -11,6 +11,7 @@ class MedicineStockEntryDraft {
   final String sourceType;
   final String sourceLabel;
   final String? sourcePatientName;
+  final String? sourcePatientRegisterId;
   final String? sourceSupplyId;
   final String? note;
 
@@ -25,6 +26,7 @@ class MedicineStockEntryDraft {
     this.sourceType = 'main_stock',
     this.sourceLabel = 'Main Stock',
     this.sourcePatientName,
+    this.sourcePatientRegisterId,
     this.sourceSupplyId,
     this.note,
   });
@@ -43,6 +45,8 @@ class MedicineStockEntryDraft {
       'sourceLabel': sourceLabel,
       if (sourcePatientName?.trim().isNotEmpty == true)
         'sourcePatientName': sourcePatientName!.trim(),
+      if (sourcePatientRegisterId?.trim().isNotEmpty == true)
+        'sourcePatientRegisterId': sourcePatientRegisterId!.trim(),
       if (sourceSupplyId?.trim().isNotEmpty == true)
         'sourceSupplyId': sourceSupplyId!.trim(),
       if (note?.trim().isNotEmpty == true) 'note': note!.trim(),
@@ -63,6 +67,7 @@ class MedicineStockEntry {
   final String sourceType;
   final String sourceLabel;
   final String? sourcePatientName;
+  final String? sourcePatientRegisterId;
   final String? sourceSupplyId;
   final String? note;
   final MedicineUserSummary? createdBy;
@@ -82,6 +87,7 @@ class MedicineStockEntry {
     this.sourceType = 'main_stock',
     this.sourceLabel = 'Main Stock',
     this.sourcePatientName,
+    this.sourcePatientRegisterId,
     this.sourceSupplyId,
     this.note,
     this.createdBy,
@@ -108,6 +114,7 @@ class MedicineStockEntry {
       sourceType: json['sourceType']?.toString() ?? 'main_stock',
       sourceLabel: json['sourceLabel']?.toString() ?? 'Main Stock',
       sourcePatientName: json['sourcePatientName']?.toString(),
+      sourcePatientRegisterId: json['sourcePatientRegisterId']?.toString(),
       sourceSupplyId: json['sourceSupplyId']?.toString(),
       note: json['note']?.toString(),
       createdBy: _userFromJson(json['createdBy']),

@@ -339,10 +339,14 @@ class _MedicineStockHistoryPageState extends State<MedicineStockHistoryPage> {
         ? 'Main Stock'
         : entry.sourceLabel.trim();
     final patientName = entry.sourcePatientName?.trim();
+    final registerId = entry.sourcePatientRegisterId?.trim();
     if (entry.sourceType == 'return' &&
         patientName != null &&
         patientName.isNotEmpty) {
-      return '$label • $patientName';
+      final patientText = registerId != null && registerId.isNotEmpty
+          ? '$patientName ($registerId)'
+          : patientName;
+      return '$label • $patientText';
     }
     return label;
   }

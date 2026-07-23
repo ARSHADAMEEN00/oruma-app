@@ -1071,10 +1071,14 @@ class _MedicineListPageState extends State<MedicineListPage> {
         ? 'Main Stock'
         : batch.sourceLabel.trim();
     final patientName = batch.sourcePatientName?.trim();
+    final registerId = batch.sourcePatientRegisterId?.trim();
     if (batch.sourceType == 'return' &&
         patientName != null &&
         patientName.isNotEmpty) {
-      return '$label • $patientName';
+      final patientText = registerId != null && registerId.isNotEmpty
+          ? '$patientName ($registerId)'
+          : patientName;
+      return '$label • $patientText';
     }
     return label;
   }
@@ -2325,10 +2329,14 @@ class _MedicineFormPageState extends State<MedicineFormPage> {
         ? 'Main Stock'
         : batch.sourceLabel.trim();
     final patientName = batch.sourcePatientName?.trim();
+    final registerId = batch.sourcePatientRegisterId?.trim();
     if (batch.sourceType == 'return' &&
         patientName != null &&
         patientName.isNotEmpty) {
-      return '$label • $patientName';
+      final patientText = registerId != null && registerId.isNotEmpty
+          ? '$patientName ($registerId)'
+          : patientName;
+      return '$label • $patientText';
     }
     return label;
   }

@@ -866,10 +866,14 @@ class _MedicineSupplyListPageState extends State<MedicineSupplyListPage> {
         ? 'Main Stock'
         : item.sourceLabel.trim();
     final patientName = item.sourcePatientName?.trim();
+    final registerId = item.sourcePatientRegisterId?.trim();
     if (label.toLowerCase() == 'return' &&
         patientName != null &&
         patientName.isNotEmpty) {
-      return '$label • $patientName';
+      final patientText = registerId != null && registerId.isNotEmpty
+          ? '$patientName ($registerId)'
+          : patientName;
+      return '$label • $patientText';
     }
     return label;
   }

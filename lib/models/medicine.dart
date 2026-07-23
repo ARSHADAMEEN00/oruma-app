@@ -27,6 +27,7 @@ class MedicineBatch {
   final String sourceType;
   final String sourceLabel;
   final String? sourcePatientName;
+  final String? sourcePatientRegisterId;
   final String? sourceSupplyId;
   final String? note;
   final DateTime? createdAt;
@@ -43,6 +44,7 @@ class MedicineBatch {
     this.sourceType = 'main_stock',
     this.sourceLabel = 'Main Stock',
     this.sourcePatientName,
+    this.sourcePatientRegisterId,
     this.sourceSupplyId,
     this.note,
     this.createdAt,
@@ -62,6 +64,7 @@ class MedicineBatch {
       sourceType: json['sourceType']?.toString() ?? 'main_stock',
       sourceLabel: json['sourceLabel']?.toString() ?? 'Main Stock',
       sourcePatientName: json['sourcePatientName']?.toString(),
+      sourcePatientRegisterId: json['sourcePatientRegisterId']?.toString(),
       sourceSupplyId: json['sourceSupplyId']?.toString(),
       note: json['note']?.toString(),
       createdAt: _toDate(json['createdAt']),
